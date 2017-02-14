@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="">
+<html class="theme-next pisces use-motion" lang="en">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -90,7 +90,7 @@
 <meta name="description" content="功力必不唐捐">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Joshua's Blog">
-<meta property="og:url" content="http://yoursite.com/page/2/index.html">
+<meta property="og:url" content="http://blog.joshuajiang.com/page/2/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="功力必不唐捐">
 <meta name="twitter:card" content="summary">
@@ -103,7 +103,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -123,7 +123,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/page/2/"/>
+  <link rel="canonical" href="http://blog.joshuajiang.com/page/2/"/>
 
 
 
@@ -132,7 +132,7 @@
   <title> Joshua's Blog </title>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="">
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
 
   
 
@@ -204,7 +204,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
             
-            Startseite
+            Home
           </a>
         </li>
       
@@ -214,7 +214,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
             
-            Archiv
+            Archives
           </a>
         </li>
       
@@ -225,6 +225,26 @@
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
             
             Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
           </a>
         </li>
       
@@ -257,881 +277,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-03-05-jvm-gc-flags/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/14/2016-03-05-jvm-gc-flags/" itemprop="url">
-                  JVM实践 - 堆调优
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/14/2016-03-05-jvm-gc-flags/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-03-05-jvm-gc-flags/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="打印GC日志"><a href="#打印GC日志" class="headerlink" title="打印GC日志"></a>打印GC日志</h2><p>使用下面三个参数可以打印Oracle Hotspot JVM每次的GC日志。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">-verbose:gc : 打印GC日志</div><div class="line">-XX:+PrintGCDateStamps ：添加时间戳</div><div class="line">-XX:+PrintGCDetails ：打印GC详细</div></pre></td></tr></table></figure>
-<p>同时将GC日志重定向到单独的log文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-Xloggc:&lt;file-path&gt; ： 保存GC日志到单独文件，方便分析</div></pre></td></tr></table></figure>
-<p>GC的日志可以使用以下工具分析：</p>
-<ol>
-<li>IBM GCMV (Garbage Collection and Memory Visualizer)<br>这款工具可以作为eclipse插件安装并切换到GCMV视图。GCMV同时支持Oracle Hotspot JVM 和 IBM， HP等JVM实现。</li>
-</ol>
-<h2 id="Heap-Dump文件"><a href="#Heap-Dump文件" class="headerlink" title="Heap Dump文件"></a>Heap Dump文件</h2><h3 id="生成hprof文件"><a href="#生成hprof文件" class="headerlink" title="生成hprof文件"></a>生成hprof文件</h3><p>Heap dump文件在分析JVM性能，优化应用程序，检查内存泄漏时十分重要，尤其是在发生内存溢出（OutOfMemoryError）时更加必要。通常可以设置JVM参数在OOM时候触发生成Heap Dump文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:+HeapDumpOnOutofMemoryError</div></pre></td></tr></table></figure>
-<p>或者添加触发命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:OnOutOfMemoryError=&quot;jmap -F -dump:format=b,file=java_pid%p.hprof %p; chmod +r java_pid%p.hprof; kill -9 %p&quot;</div></pre></td></tr></table></figure>
-<p>对于本地的JVM进程，可以使用JDk自带的GUI Debug工具如JVisualVM来生成.hprof文件。</p>
-<p>有一类比较复杂的情况是，在生产环境的某台机器上出现了JVM异常，但是使用jmap命令十分耗时，这会影响应用程序的执行，造成很大的暂停，甚至jmap执行可能失败。这时候可以借助Linux/Unix的gdb工具生成core文件，再使用jmap从core文件中生成hpprof文件。生成core文件非常快，通常只需要几秒钟。以下是详细步骤：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"># 1. install gdb</div><div class="line">$sudo apt-get install gdb – for Debian/Ubuntu systems.</div><div class="line">$sudo yum install gdb – for RedHat/CentOS systems.</div><div class="line"># 2. get the Process ID of JVM</div><div class="line">$ps -ef|egrep &quot;PID|[keyword]&quot;</div><div class="line"># 3. get the core files</div><div class="line">$gdb --pid=[pid]</div><div class="line">...bunch of info...</div><div class="line">$(gdb) gcore /tmp/jvm.core</div><div class="line">Saved corefile /tmp/jvm.core</div><div class="line">$(gdb) detach</div><div class="line">$(gdb) quit</div><div class="line"># 4. get the hprof binary dump for core file using jmap</div><div class="line">$jmap -dump:format=b,file=jvm.hprof /usr/bin/java /tmp/jvm.core</div></pre></td></tr></table></figure>
-<p><a href="http://blogs.atlassian.com/2013/03/so-you-want-your-jvms-heap/" title="use core file to generate heap dump" target="_blank" rel="external">[SEE ALSO]use core file to generate heap dump</a></p>
-<h3 id="分析heap-dump"><a href="#分析heap-dump" class="headerlink" title="分析heap dump"></a>分析heap dump</h3><p>hprof文件可以使用JVisualVM或者MAT(Eclipse Memory Analyzer)来装载并分析。MAT工具的使用介绍。MAT会首先解析hprof文件并生成一系列的index文件，这个过程比较耗时，但是下一次加载时会载入上一次分析好的index文件。</p>
-<p><a href="http://eclipsesource.com/blogs/2013/01/21/10-tips-for-using-the-eclipse-memory-analyzer/" target="_blank" rel="external">[SEE ALSO]MAT工具的使用介绍</a></p>
-<p>因为Heap Dump是当前内存的一份快照，因此在线上机器生成的heap dump会很大，无法用MAT GUI工具装载。可以在线下某台拥有和线上同等配置的机器上使用MAT自带的ParseHeapDump.sh文件来生成索引文件，并生成一系列的report。这样就可以方便的在开发机器上用MAT GUI加载这些生成好的report文件了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./ParseHeapDump.sh ../today_heap_dump/jvm.hprof org.eclipse.mat.api:suspects</div></pre></td></tr></table></figure>
-<p>其他可用的report参数有：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">org.eclipse.mat.api:suspects </div><div class="line">org.eclipse.mat.api:overview</div><div class="line">org.eclipse.mat.api:top_components</div></pre></td></tr></table></figure>
-<p>另外一个工具为bheapsampler, 这个工具对heap dump文件进行抽象，生成 一份更简洁的heap dump文件，虽然有点不太准确但是在MAT失败的情况下总比没有好。</p>
-<p><a href="http://javaforu.blogspot.com/2013/11/analyzing-large-java-heap-dumps-when.html" target="_blank" rel="external">[SEE ALSO]Analyzing Large Java Heap when MAT UI fails</a></p>
-<h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><h3 id="XX-UseGCOverheadLimit"><a href="#XX-UseGCOverheadLimit" class="headerlink" title="-XX:-UseGCOverheadLimit"></a>-XX:-UseGCOverheadLimit</h3><p>JVM的Parallel GC如果占用应用程序大部分的执行时间。将会抛出OutOfMemoryError：如果98%的时间都浪费在垃圾回收上，而且只有不到2%的堆内存被回收的话，JVM将会抛出OutOfMemoryError。这个设计的作用是防止应用程序因为堆大小不足导致浪费时间在GC上并且毫无进展。但是可以使用参数<br><em>-XX:-UseGCOverheadLimit</em>来禁用该功能。<br>JVM的CMS GC也有相同的功能，不过只有造成应用程序暂停的GC时间才会被计算到98%这个指标中，这一类GC通常是因为在CMS GC发生Concurrent Mode Failure或者显式的GC调用时发生（System.gc()）。</p>
-<p><a href="http://www.oracle.com/technetwork/java/javase/gc-tuning-6-140523.html" title="Java SE 6 HotSpot[tm] Virtual Machine Garbage Collection Tuning" target="_blank" rel="external">[SEE ALSO]Java SE 6 HotSpot[tm] Virtual Machine Garbage Collection Tuning</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-19-linux-vim/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/14/2016-2-19-linux-vim/" itemprop="url">
-                  Linux Command - vim
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/14/2016-2-19-linux-vim/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-19-linux-vim/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-19-linux-screen/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/14/2016-2-19-linux-screen/" itemprop="url">
-                  Linux Command - Screen 使用
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/14/2016-2-19-linux-screen/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-19-linux-screen/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><a href="http://www.cnblogs.com/mchina/archive/2013/01/30/2880680.html" target="_blank" rel="external">linux screen 命令详解-cnblogs</a></p>
-<p><a href="http://superuser.com/questions/370510/rename-screen-session" target="_blank" rel="external">rename screen session - stackoverflow</a></p>
-<p><a href="http://unix.stackexchange.com/questions/26248/tabs-when-using-screen" target="_blank" rel="external">config .screenrc - stackexchange</a></p>
-<p><a href="http://www.tecmint.com/screen-command-examples-to-manage-linux-terminals/" target="_blank" rel="external">10 Screen Command Examples to Manage Linux Terminals</a></p>
-<p><a href="http://damien.krotkine.com/2011/09/01/protect-a-screen-session-with-a-password.html" target="_blank" rel="external">protect a screen session with a password</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-18-jvm-shutdown/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/14/2016-2-18-jvm-shutdown/" itemprop="url">
-                  JVM 实践 - 优雅停机 
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/14/2016-2-18-jvm-shutdown/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-18-jvm-shutdown/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><strong>引言</strong></p>
-<p>在线上环境中，遇到一个定时任务无法退出的问题。观察日志发现Spring的Bean已经完成销毁，但是通过<code>ps aux |grep &lt;keyword&gt;</code> 观察发现进程仍然执行。 通过<code>jstack &lt;pid&gt;</code>工具查看所有的线程栈，线程堆栈输出如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div></pre></td><td class="code"><pre><div class="line">2016-02-16 15:09:58</div><div class="line">Full thread dump Java HotSpot(TM) 64-Bit Server VM (17.0-b17 mixed mode):</div><div class="line"></div><div class="line">&quot;Attach Listener&quot; daemon prio=10 tid=0x000000004011c800 nid=0x1c73 waiting on condition [0x0000000000000000]</div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line">&quot;DestroyJavaVM&quot; prio=10 tid=0x00007f3548c61000 nid=0x7dfd waiting on condition [0x0000000000000000]</div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line">&quot;pa-sql-cache-0&quot; prio=10 tid=0x00007f3547d71800 nid=0x7e2c waiting on condition [0x00000000418e0000]</div><div class="line">   java.lang.Thread.State: TIMED_WAITING (parking)</div><div class="line">        at sun.misc.Unsafe.park(Native Method)</div><div class="line">        - parking to wait for  &lt;0x00007f35ad0eb440&gt; (a java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject)</div><div class="line">        at java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:198)</div><div class="line">        at java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:2025)</div><div class="line">        at java.util.concurrent.DelayQueue.take(DelayQueue.java:164)</div><div class="line">        at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:583)</div><div class="line">        at java.util.concurrent.ScheduledThreadPoolExecutor$DelayedWorkQueue.take(ScheduledThreadPoolExecutor.java:576)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor.getTask(ThreadPoolExecutor.java:947)</div><div class="line">        at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:907)</div><div class="line">        at java.lang.Thread.run(Thread.java:619)</div><div class="line"></div><div class="line">&quot;Low Memory Detector&quot; daemon prio=10 tid=0x00007f354cb76000 nid=0x7e0e runnable [0x0000000000000000]</div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line">&quot;CompilerThread1&quot; daemon prio=10 tid=0x00007f354cb73800 nid=0x7e0d waiting on condition [0x0000000000000000]</div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line">&quot;CompilerThread0&quot; daemon prio=10 tid=0x00007f354cb70800 nid=0x7e0c waiting on condition [0x0000000000000000]</div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line">&quot;Signal Dispatcher&quot; daemon prio=10 tid=0x00007f354cb6e800 nid=0x7e0b runnable [0x0000000000000000]</div><div class="line">   java.lang.Thread.State: RUNNABLE</div><div class="line"></div><div class="line">&quot;Finalizer&quot; daemon prio=10 tid=0x00007f354cb50000 nid=0x7e0a in Object.wait() [0x00000000417df000]</div><div class="line">   java.lang.Thread.State: WAITING (on object monitor)</div><div class="line">        at java.lang.Object.wait(Native Method)</div><div class="line">        - waiting on &lt;0x00007f35b7838178&gt; (a java.lang.ref.ReferenceQueue$Lock)</div><div class="line">        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:118)</div><div class="line">        - locked &lt;0x00007f35b7838178&gt; (a java.lang.ref.ReferenceQueue$Lock)</div><div class="line">        at java.lang.ref.ReferenceQueue.remove(ReferenceQueue.java:134)</div><div class="line">        at java.lang.ref.Finalizer$FinalizerThread.run(Finalizer.java:159)</div><div class="line"></div><div class="line">&quot;Reference Handler&quot; daemon prio=10 tid=0x00007f354cb4e000 nid=0x7e09 in Object.wait() [0x0000000040c84000]</div><div class="line">   java.lang.Thread.State: WAITING (on object monitor)</div><div class="line">        at java.lang.Object.wait(Native Method)</div><div class="line">        - waiting on &lt;0x00007f35b7850150&gt; (a java.lang.ref.Reference$Lock)</div><div class="line">        at java.lang.Object.wait(Object.java:485)</div><div class="line">        at java.lang.ref.Reference$ReferenceHandler.run(Reference.java:116)</div><div class="line">        - locked &lt;0x00007f35b7850150&gt; (a java.lang.ref.Reference$Lock)</div><div class="line"></div><div class="line">&quot;VM Thread&quot; prio=10 tid=0x00007f354cb4a000 nid=0x7e08 runnable </div><div class="line"></div><div class="line">&quot;GC task thread#0 (ParallelGC)&quot; prio=10 tid=0x000000004012f800 nid=0x7dfe runnable </div><div class="line"></div><div class="line">&quot;GC task thread#1 (ParallelGC)&quot; prio=10 tid=0x0000000040131000 nid=0x7dff runnable </div><div class="line"></div><div class="line">....&lt;skipped&gt; </div><div class="line"></div><div class="line">&quot;GC task thread#9 (ParallelGC)&quot; prio=10 tid=0x00007f354cb04800 nid=0x7e07 runnable </div><div class="line"></div><div class="line">&quot;VM Periodic Task Thread&quot; prio=10 tid=0x00007f354cb81000 nid=0x7e0f waiting on condition </div><div class="line"></div><div class="line">JNI global references: 1761</div></pre></td></tr></table></figure>
-<p>输出发现有一个non-daemon线程 <em>pa-sql-cache-0</em> 仍然在TIMED_WAITING状态，除此之外都是daemon线程和JVM自身的GC线程等。通过代码分析，发现是一个在一个Spring Bean对象内部初始化的线程池，但是Spring在销毁Bean的时候，没有在<code>@PreDestory</code>钩子方法中关闭掉这个线程池。<br>这篇博客是对相关知识点的总结。</p>
-<p><strong>JVM优雅关机</strong></p>
-<p><strong>Reference</strong></p>
-<p><a href="http://stackoverflow.com/questions/2541597/how-to-gracefully-handle-the-sigkill-signal-in-java" target="_blank" rel="external">How to gracefully handle the SIGKILL signal in Java-stackoverflow</a></p>
-<p><a href="http://www.oracle.com/technetwork/java/javase/index-137495.html" target="_blank" rel="external">Troubleshooting Guide -Hotspot JVM</a></p>
-<p><a href="http://tldp.org/LDP/Bash-Beginners-Guide/html/sect_12_01.html" target="_blank" rel="external">Linux Process Singals</a></p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-17-perfmon-cpu-1/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/14/2016-2-17-perfmon-cpu-1/" itemprop="url">
-                  性能调优 - Part 1( CPU监控 )
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/14/2016-2-17-perfmon-cpu-1/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-17-perfmon-cpu-1/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。</p>
-<p>在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为<strong>中断&gt;内核&gt;用户进程</strong>。关于CPU资源有以下三个重要的概念：</p>
-<ul>
-<li><p>上下文切换 Context Switching</p>
-<p>  Linux是采取的抢占式调度执行任务，每个CPU统一时刻只能执行一个线程（有些CPU可以通过超线程技术同时执行多个线程）。当到达执行是相见，线程中有IO阻塞或者高优先级的线程要执行时，Linux就会切换执行的线程，这个过程需要保存当前线程的执行状态，并恢复要执行的线程的状态，这个过程叫做上下文切换。</p>
-<p>  在Java应用中，典型的如进行IO操作（网络或者文件），锁等待，或者线程sleep时，当前线程会进入阻塞或者休眠状态，触发上下文切换。频繁的上下文切换会造成内核占据较多的CPU使用，使得应用的响应速度下降。</p>
-<p>  CS数目可以通过<code>vmstat</code> 和 <code>pidstat</code> 命令查看。</p>
-</li>
-<li><p>运行队列 System Load</p>
-<p>  每个CPU都维护了一个可运行的线程队列，例如一个某台机器共有四个单核CPU，Java应用共启动了8个线程，且都处于可运行状态，则平均下来每个CPU的的运行队列就有两个线程。 运行队列值越大， 意味着线程要消耗更长的时间才能执行完， 建议每个CPU核心上的运行队列的值在1~3个。</p>
-<p>  运行队列可以通过<code>top</code>命令查看。</p>
-</li>
-<li><p>利用率</p>
-<p>   CPU利用率为CPU在用户进程，内核、中断处理、IO等待以及空闲五个部分的使用百分比，这是五个分析CPU消耗情况的关键指标。建议用户进程的CPU消耗为65%~70%, 内核态为30%~35%左右。</p>
-<p>  CPU利用率可以通过<code>top</code> <code>vmstat</code> 和 <code>pidstat</code>查看。</p>
-</li>
-</ul>
-<h3 id="1-top"><a href="#1-top" class="headerlink" title="1. top"></a>1. top</h3><p>top命令类似于windows的资源监控器，用于监控整个系统的CPU资源的使用情况，并可以排序动态刷新状态，提供交互式的命令。</p>
-<p><img src="!--￼6--&gt;/images/top.png" alt="top命令"></p>
-<ol>
-<li><p><em>load average</em></p>
-<p> 表示1min, 5min, 15min到现在的平均值，注意这里对于多核CPU的情况，需要除以核心数目才能得到每个CPU核心上的运行队列的大小。</p>
-</li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[work@44224012 ~]$ nproc</div><div class="line">24</div></pre></td></tr></table></figure>
-<ol>
-<li><em>us, sy, ni, id, wa ,hi, si</em></li>
-</ol>
-<p>当CPU消耗严重时，主要体现在us，sy, wa 或者hi的值变高，wa的值主要是CPU时间片内的IO等待造成的，hi的值主要是硬件中断造成的，如频繁的网卡接收数据。 </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">us	用户进程处理所占的百分比</div><div class="line">sy	内核态下操作系统线程处理所占的百分比</div><div class="line">ni	被nice命令改变优先级的任务所占的百分比</div><div class="line">id  CPU的空闲时间所占的百分比</div><div class="line">wa  CPU的执行过程中等待IO所占的百分比， 这个指标用来总和判断IO消耗情况。</div><div class="line">hi	硬件中断所占的百分比，一般由文件或者网络IO引起。</div><div class="line">si	软件中断所占的百分比</div></pre></td></tr></table></figure>
-<p>us高(大于建议的70%)，表示应用消耗了大部分的CPU时间， 主要是线程一直处于可运行状态，通常是在执行无阻塞、循环、正则或者纯粹的计算任务造成的。另一个造成us高的原因是频繁的GC。这里需要结合top的输出找到最耗CPU的线程，再结合jstack的输找到对应的线程。</p>
-<p>sy高(大于建议的35%),可能是Linux花费了更多的时间来进行线程切换，这些线程多数处于不断的阻塞（锁等待，IO等待）和执行状态的变化过程中，对于Java应用重要的是找出这种状态的线程。如果很多的线程处于TIMED_WAITING（on object monitor）状态和Runnable状态的切换中，通过on obejct monitor的对应的堆栈信息可以找到系统中锁竞争激烈的代码，这造成了系统频繁的上下文切换。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#jstack -l &lt;pid&gt; : print additonal information about locks</span></div></pre></td></tr></table></figure>
-<ol>
-<li>交互命令</li>
-</ol>
-<p><em>查看每个线程的CPU使用情况</em> : shift+h, 此时pid显示的是十进制的线程tid</p>
-<p><em>查看每个核上的cpu消耗情况</em> ： 进入top后按1</p>
-<h3 id="2-pidstat"><a href="#2-pidstat" class="headerlink" title="2. pidstat"></a>2. pidstat</h3><p>pidstat最大的好处是可以具体到每个线程上的资源信息，包括CPU信息， IO信息。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"># 显示pid为463的进程上所有线程(-t参数)的CPU使用情况，采样间隔为1s，采样次数为5</div><div class="line">[work@44224012 ~]$ pidstat -p 463 -t  1 5                                                                                                                 </div><div class="line">Linux 2.6.32_1-15-0-0 (44224012.aaf236c9-f59c-4fee-8d40-80abc7cdde60.jpaas.guid)        05/02/2016      _x86_64_        (24 CPU)                                                                                                                                                                                    </div><div class="line">01:50:50 PM      TGID       TID    %usr %system  %guest    %CPU   CPU  Command                                                                            </div><div class="line">01:50:51 PM       463         -    0.99    0.00    0.00    0.99    18  java                                                                               </div><div class="line">01:50:51 PM         -       463    0.00    0.00    0.00    0.00    18  |__java                                                                            </div><div class="line">01:50:51 PM         -       470    0.00    0.00    0.00    0.00     9  |__java                                                                            </div><div class="line">01:50:51 PM         -       471    0.00    0.00    0.00    0.00    13  |__java                                                                            </div><div class="line">01:50:51 PM         -       472    0.00    0.00    0.00    0.00     1  |__java                                                                            </div><div class="line">01:50:51 PM         -       473    0.00    0.00    0.00    0.00     0  |__java</div><div class="line">...</div></pre></td></tr></table></figure>
-<p><code>pidstat</code> 可以打印出进程的context switch的信息，对于判断sy使用率过高的情况很有帮助。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pidstat -w -p &lt;pid&gt;</div></pre></td></tr></table></figure>
-<ol>
-<li><p><strong>cswch/s</strong></p>
-<p> Total number of voluntary context switches the task made per second.  A voluntary context switch occurs when a task blocks because it requires a resource that is unavailable.</p>
-</li>
-<li><p><strong>nvcswch/s</strong></p>
-<p> Total  number  of  non voluntary context switches the task made per second.  A involuntary context switch takes place when a task executes for the duration of its time slice and then is forced to relinquish the processor.</p>
-</li>
-</ol>
-<h3 id="3-vmstat"><a href="#3-vmstat" class="headerlink" title="3. vmstat"></a>3. vmstat</h3><p><code>vmstat</code> 可以用来查看系统层级context switch的信息， 以固定时间间隔对系统采样，打印如下信息。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">[work@44224012 ~]$ vmstat 1 5                                                                                                                             </div><div class="line">procs -----------memory---------- ---swap-- -----io---- --system-- -----cpu-----                                                                          </div><div class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   <span class="keyword">in</span>   cs us sy id wa st                                                                          </div><div class="line"> 2  0      0 40835040 667160 32114372    0    0     6    70    0    0  4  6 89  0  0                                                                      </div><div class="line"> 3  0      0 40827760 667160 32113680    0    0     0    44 127855 253237  6  8 86  0  0                                                                  </div><div class="line">11  0      0 40826772 667160 32114644    0    0     0   132 135581 260254  7 11 82  0  0                                                                  </div><div class="line"> 7  0      0 40828832 667160 32115720    0    0     0   160 132777 257887  8 11 82  0  0                                                                  </div><div class="line"> 4  1      0 40826496 667160 32116412    0    0     0  2132 132769 257816  9 12 79  1  0</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-13-linux-bash-widgets/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2017/02/14/2016-2-13-linux-bash-widgets/" itemprop="url">
-                  Linux Bash 小工具
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Veröffentlicht am</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2017/02/14/2016-2-13-linux-bash-widgets/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-13-linux-bash-widgets/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h3><h4 id="1-ps-with-headers"><a href="#1-ps-with-headers" class="headerlink" title="1. ps with headers"></a>1. ps with headers</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 利用grep的OR条件</span></div><div class="line">$ ps -ef |egrep <span class="string">"PID|[your-pattern-goes-here]"</span></div><div class="line"><span class="comment"># 两次查询，第一次获取header，第二次grep实际的查询</span></div><div class="line">ps -ef | head -1; ps -ef | grep <span class="string">"[your-pattern-goes-here]"</span></div></pre></td></tr></table></figure>
-<h3 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h3><h4 id="1-find"><a href="#1-find" class="headerlink" title="1. find"></a>1. find</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># find files with modified time 36hours ago and calcualate total size</div><div class="line">$ find . -mmin  +$((60*36)) -type f -name &quot;*&quot;  -exec du -hc  &#123;&#125; +</div></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-8/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-13-jvmflags-8/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -1171,7 +317,7 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -1183,6 +329,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -1291,7 +459,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-7/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-13-jvmflags-7/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -1331,7 +499,7 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -1343,6 +511,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -1383,7 +573,7 @@
           
             <p><a href="https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="external">Useful JVM Flags – Part 7</a></p>
 <p>Hotspot JVM的并发标记-清除回收器（Concurrent Mark-Sweep Collector, CMS collector）的首要目标就是减少应用程序暂停时间。这个指标对于大部分交互类型的应用如Web应用是至关重要的。在介绍相关JVM参数时先简单了解一下CMS回收器的基本操作和使用时候的挑战。</p>
-<p>CMS(暂停时间优先)收集器和Parallel GC(吞吐量优先)的回收器（<a href="http://blog.joshuajiang.com/jvmflags-6/" target="_blank" rel="external">第六部分</a>）一样都是用来处理年老代中的对象回收，但是实现上更为复杂。吞吐量优先的回收器都会暂停应用程序相当一段时间，这样至少避免了可能的并发问题。而CMS回收器被设计成大部分阶段和应用程序并发执行，只在少数阶段会暂停应用。并发执行的缺点在于需要处理同步和数据不一致的问题。为了并发的线程安全性，CMS回收器的GC过程被划分成若干连续的子阶段。</p>
+<p>CMS(暂停时间优先)收集器和Parallel GC(吞吐量优先)的回收器（<a href="http://blog.joshuajiang.com/jvmflags-6/">第六部分</a>）一样都是用来处理年老代中的对象回收，但是实现上更为复杂。吞吐量优先的回收器都会暂停应用程序相当一段时间，这样至少避免了可能的并发问题。而CMS回收器被设计成大部分阶段和应用程序并发执行，只在少数阶段会暂停应用。并发执行的缺点在于需要处理同步和数据不一致的问题。为了并发的线程安全性，CMS回收器的GC过程被划分成若干连续的子阶段。</p>
 <p><strong>CMS回收器的步骤</strong></p>
 <p>CMS回收器的一个完整GC过程包括六个阶段，其中有四个阶段与应用程序并发执行，另外两个需要暂停应用程序。</p>
 <ol>
@@ -1469,7 +659,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-6/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-13-jvmflags-6/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -1509,7 +699,7 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -1521,6 +711,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -1633,7 +845,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-12-jvmflags-5/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-12-jvmflags-5/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -1673,7 +885,7 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -1685,6 +897,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -1794,11 +1028,1028 @@
 
 
     
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-11-jvmflags-4/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/02/14/2016-2-11-jvmflags-4/" itemprop="url">
+                  JVM参数 - Part 4（堆调优）
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-2-11-jvmflags-4/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-11-jvmflags-4/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-4-heap-tuning/" target="_blank" rel="external">Useful JVM Flags – Part 4</a></p>
+<p>理想情况下，JVM的默认配置就可以让Java程序运行的很好，也就没有必要手工干预任何参数。但是一旦出现性能问题（很不幸的是，这些问题还经常出现），一些与之相关的JVM参数的知识会是解决问题的好帮手。这篇文章将介绍一些与内存管理相关的JVM参数。知道和理解这些参数将会极大帮助开发和运维相关的人员。</p>
+<p>所有现有的Hotspot内存管理和垃圾回收算法都基于对堆内存的同一种划分，即包含新创建的对象和存活期短的对象的新生代，和包含存活期超过一定时长的对象的年老代。另外永久代包括那些存活期伴随整个程序的对象，如类加载相关的对象以及内联的字符串常量池。以下的讨论都基于这种堆空间的传统划分。不过注意到其他可能的划分也很有前景，其中如G1垃圾回收算法对新生代和年老代的区分较为模糊。另外Hotspot JVM的未来版本有计划将不再区分年老代和永久代（译者注：Java 8取消了永久代划分，新增的MetaSpace不再属于堆空间）。</p>
+<p><strong>-Xms 和 -Xmx ( -XX:InitialHeapSize 和 -XX:MaxHeapSize)</strong></p>
+<p><code>-Xms</code>和<code>-Xmx</code>可以说是最流行的JVM参数，用来分别设置JVM堆空间的起始值和最大值。这两个参数均支持字节为单位的值，或者”k”,”K”, “m”,”M”以及”g”,”G”。例如下面的例子的初始内存为128M，最大内存2G。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -Xms128m -Xmx2g MyApp</div></pre></td></tr></table></figure>
+<p>注意在实际工作中，起始堆空间值通常也是最小堆空间值。虽然JVM确实会动态的调整堆的大小，理论上有些应用的堆大小可能低于起始值设定。不过笔者在实际工作中没有遇到这种情况，即使程序占用的内存很小。这一点对开发和人员人员还是很方便的，如果有必要的话，可以将<code>-Xms</code>和<code>-Xmx</code>设定为同一值，这样堆空间的大小将始终保持不变。</p>
+<p>另外有必要了解<code>-Xms</code>和<code>-Xmx</code>是<code>-XX:InitialHeapSize</code> 和 <code>-XX:MaxHeapSize</code>的快捷方式.JVM内部会将内部映射这两对参数。但是在使用<code>-XX:PrintCommandLineFlags</code>打印启动参数，或者使用JMX查询JVM参数时，会显示<code>-XX:InitialHeapSize</code> 和 <code>-XX:MaxHeapSize</code>而非简称。</p>
+<p><strong>-XX:+HeapDumpOnOutOfMemoryError and -XX:HeapDumpPath</strong></p>
+<p>如果我们没有置<code>-Xmx</code>为足够大就会来内存溢出(OOM)的风险，这也可能是与JVM打交道的过程最糟糕的问题之一了。正如我们另一个博客系列所描述的那样，处理这种问题必须仔细的定位导致溢出的根本原因。通常我们可以从分析溢出时的Heap Dump着手。报错后没有Heap Dump文件将会非常难以定位原因，特别对于线上环境上那些正常运行数小时甚至数天才会报错的程序，再次重现会非常耗时。</p>
+<p>幸运的是，JVM的-XX:+HeapDumpOnOutOfMemoryError参数可以在OOM时自动生成HeapDump文件。启用这个参数将会在发生OOM时节约大量的时间。默认情况下Heap Dump文件会以<code>java_pid&lt;pid&gt;.hprof</code>文件名存储在当前的工作目录(译者注：通常是Shell环境下的启动JVM时的当前工作目录)。<code>pid</code>是JVM的进程ID。可以通过指定<br><code>-XX:HeapDumpPath</code>参数的值改变Heap Dump文件的路径和名称。 例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:HeapDumpPath=/var/log/java/java_heapdump.hprof</div></pre></td></tr></table></figure>
+<p>有一点需要牢记，Heap Dump文件在内存溢出的时候可能可能会很庞大，所以推荐使用<code>-XX:HeapDumpPath</code>来指定一个有足够空间的位置用来存放。</p>
+<p><strong>-XX:OnOutOfMemoryError</strong></p>
+<p>在内存溢出时我们甚至可以执行一段自定义的命令，例如发送邮件给管理员或执行一些清理工作。这些可以通过<code>-XX:OnOutOfMemoryError</code>参数来完成。这个参数可以接受一串命令以及其参数。本文不会讨论细节但是给出了以下实例，在内存溢出时，将会写文件到<code>/tmp/headdump.hprof</code>文件中，并在当前用户的Home目录下执行<code>cleanup.sh</code>脚本。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof -XX:OnOutOfMemoryError =&quot;sh ~/cleanup.sh&quot; MyApp</div></pre></td></tr></table></figure>
+<p><strong>-XX:PermSize and -XX:MaxPermSize</strong></p>
+<p>JVM的永久代是一块与堆隔离开的内存空间，它包含了JVM加载的类文件的对象表示。如果一个应用需要加载大量的类（比如因为使用了很多第三方的库，这些库又依赖了更多别的库），就需要增大永久代的大小。这里，<code>-XX:MaxPermSize</code>设置永久代的最大值，而<code>-XX:PermSize</code>设置JVM启动时的初始值。例子如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:PermSize=128m -XX:MaxPermSize=256m MyApp</div></pre></td></tr></table></figure>
+<p>注意永久代空间的大小不计入<code>-XX:MaxHeapSize</code>的指定值。除了<code>-XX:MaxHeapSize</code>参数之外，还需要额外指定<code>-XX:MaxPermSize</code>的值。</p>
+<p><strong>-XX:InitialCodeCacheSize 和 -XX:ReservedCodeCacheSize</strong></p>
+<p>JVM中有一块专门存储已编译方法生成的本地代码，称为”Code Cache”，这一点常常被忽略。不过一般情况下CodeCache不会引入性能问题，但是一旦产生此类问题后果会很严重。如果CodeCache已满，JVM会打印警告信息同时切换到编译模式运行：JIT编译器会被停用，字节码将不会再被编译成本地代码。程序会继续运行，但是速度会降低一个数量级，直到有人注意到。</p>
+<p>和其他内存空间区域一样，可以通过<code>-XX:InitialCodeCacheSize</code>和 <code>-XX:ReservedCodeCacheSize</code>来指定Code Cache的大小，这两个参数也接受与上述其他参数类似的值。</p>
+<p><strong>-XX:+UseCodeCacheFlushing</strong></p>
+<p>如果代码缓存不断增长，例如，因为热部署引起的内存泄漏，那么提高Code Cache的大小只会延缓但不会阻止其溢出。为了避免这种情况的发生，我们可以尝试一个有趣的新参数：当代码缓存被填满时，通过使用<code>-XX:+UseCodeCacheFlushing</code> 这个参数让JVM放弃一些编译代码。这样至少可以避免当代码缓存被填满的时候JVM切换到interpreted-only 模式。不过笔者建议一旦发现缓存问题应该尽快找出根本原因并解决，如找出可能的内存泄漏并修复。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-11-jvmflags-3/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/02/14/2016-2-11-jvmflags-3/" itemprop="url">
+                  JVM参数 - Part 3( 打印XX参数列表 )
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-2-11-jvmflags-3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-11-jvmflags-3/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-3-printing-all-xx-flags-and-their-values/" target="_blank" rel="external"> Useful JVM Flags – Part 3</a></p>
+<p>Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。</p>
+<p><strong>-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial</strong></p>
+<p>在ClientVM上使用<code>-XX:+PrintFlagsFinal</code>参数可以打印出所有按照字母排序的XX参数（不同的JVM版本数目有所不同, 这个版本有590个之多）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ java -client -XX:+PrintFlagsFinal Benchmark</div><div class="line">[Global flags]</div><div class="line">uintx AdaptivePermSizeWeight               = 20               &#123;product&#125;</div><div class="line">uintx AdaptiveSizeDecrementScaleFactor     = 4                &#123;product&#125;</div><div class="line">uintx AdaptiveSizeMajorGCDecayTimeScale    = 10               &#123;product&#125;</div><div class="line">uintx AdaptiveSizePausePolicy              = 0                &#123;product&#125;</div><div class="line">[...]</div><div class="line">uintx YoungGenerationSizeSupplementDecay   = 8                &#123;product&#125;</div><div class="line">uintx YoungPLABSize                        = 4096             &#123;product&#125;</div><div class="line"> bool ZeroTLAB                             = false            &#123;product&#125;</div><div class="line"> intx hashCode                             = 0                &#123;product&#125;</div></pre></td></tr></table></figure>
+<p>输出的每一行的XX参数都有5列，第一列表示参数类型，第二列为参数名称，第四列是值，第五列为参数类别。第三列如果为”=”表示是默认值，为”:=”表示为非默认值（由用户或者JVM添加）。</p>
+<p>在Server VM 上需要添加<code>-XX:+UnlockExperimentalVMOptions</code>和<code>-XX:+UnlockDiagnosticVMOptions</code>来解锁所有的附加隐藏的参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark</div></pre></td></tr></table></figure>
+<p>结果产生的数目众多，有724个参数。下面可以着重看下非默认值得参数，用<code>:=</code>条件过滤一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark | grep &quot;:&quot;</div><div class="line">uintx InitialHeapSize                     := 57505088         &#123;product&#125;</div><div class="line">uintx MaxHeapSize                         := 920649728        &#123;product&#125;</div><div class="line">uintx ParallelGCThreads                   := 4                &#123;product&#125;</div><div class="line"> bool PrintFlagsFinal                     := true             &#123;product&#125;</div><div class="line"> bool UseParallelGC                       := true             &#123;product&#125;</div></pre></td></tr></table></figure>
+<p>这其中只有<code>-XX:+PrintFlagsFinal</code>参数是我们添加的，其余的是ServerVM添加的用来选取合适的堆空间以及垃圾回收选项。</p>
+<p><code>-XX:+PrintFlagsInitial</code>参数可以只显示那些默认值的参数。这个参数的输出是第三列为”=”的参数。但是这个列表以<code>-XX:+PrintFlagsFinal</code>的过滤结果要少，因为有些是动态参数的缘故。</p>
+<p>通过这些参数可以很直观的比较Server VM和Client VM的不同，而且哪些参数会影响另外的参数的赋值。<a href="http://q-redux.blogspot.com/2011/01/inspecting-hotspot-jvm-options.html" target="_blank" rel="external">这篇博客</a>值得深入研究，并且这篇文章提到了第五列的参数类别的含义。</p>
+<p><strong>-XX:PrintCommandLineFlags</strong></p>
+<p>作为本文的结束，让我们认识一下另一个存在已久的参数<code>-XX:PrintCommandLineFlags</code>。这个参数可以让JVM显式的打印出所有由用户指定或者JVM自身启动时优化设置的参数。<br>换句话说，它会列举出<code>-XX:+PrintFlagsFinal</code>参数输出的结果中所有第三列为”:=”的参数，这个可以作为一个获取修改的参数的快捷方式。例子如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+PrintCommandLineFlags Benchmark</div><div class="line">-XX:InitialHeapSize=57505088 -XX:MaxHeapSize=920081408 -XX:ParallelGCThreads=4 -XX:+PrintCommandLineFlags -XX:+UseParallelGC</div></pre></td></tr></table></figure>
+<p>如果我们每次启动JVM时能设置<code>-XX:PrintCommandLineFlags</code>则可以从日志中直观的记录下参数设定对每次性能的影响。所以同<code>-showversion</code>参数一样，笔者建议<code>-XX:PrintCommandLineFlags</code>参数应该总是被启用，这个参数并不复杂，单提供的信息有时候可能非常需要。</p>
+<p>有个奇怪的地方，是这里的参数<code>-XX:PrintCommandLineFlags</code>打印出来的堆空间的最大值比参数<code>-XX:+PrintFlagsFinal</code>的值略小，如果谁知道原因，请告诉我。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-10-jvmflags-2/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/02/14/2016-2-10-jvmflags-2/" itemprop="url">
+                  JVM参数 - Part 2( 参数归类和JIT编译诊断 )
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-2-10-jvmflags-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-10-jvmflags-2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-2-flag-categories-and-jit-compiler-diagnostics/" target="_blank" rel="external"> Useful JVM Flags – Part 2</a></p>
+<p>在这个系列博客的第二部分，笔者将介绍Hotspot虚拟机提供的不同类别的参数。另外还将介绍一些关于JIT编译器诊断的讨论。</p>
+<p><strong>JVM 参数类别</strong></p>
+<p>Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行<code>java</code>命令就可以列出所有的标准参数（或者 <code>java -help</code>，这正好是一个标准参数命令）。博客的<a href="http://blog.joshuajiang.com/JVMFlags-1/">第一部分</a>已经提及了一些标准参数，如<code>-server</code>参数。</p>
+<p>第二类为X参数，这些为非标准参数，其行为和可用性在后续版本中未知。<code>java  -X</code>命令可以列出以<code>-X</code>开头的参数，这个列表并不完全，例如并不包括<code>-Xcomp</code>参数。</p>
+<p>第三类也是目前数目最多的一类是XX参数，这些参数也是非标准参数，后面会讲到如何列出这些参数。从使用角度，X参数和XX参数并无不同。<em>X参数</em>更稳定一点，而XX参数实验性更强（且通常只会由开发者用于诊断和JVM调优用途）。<a href="http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="external">这篇文档</a>对于了解XX参数值得一读，其中明确提出应该谨慎使用XX参数。这种说法笔者认为同样适用于X参数和有些标准参数。总之无论何种参数，在使用前都值得花时间理解其行为和可能的副作用。</p>
+<p>简单的说，所有的XX参数都以<code>-XX:</code>开头，但是具体参数有所不同：</p>
+<ul>
+<li>boolean类型的参数使用<code>+</code>和<code>-</code>。例如 <code>-XX:+&lt;name&gt;</code>打开该选项，而<code>-XX:-&lt;name&gt;</code>关闭该选项。</li>
+<li>非boolean参数，例如字符串或者整型数字，按照<code>-XX:&lt;name&gt;=&lt;value&gt;</code>的方式来为选项赋值。</li>
+</ul>
+<p>下面将介绍一些与JIT编译有关的XX参数。</p>
+<p><strong>-XX:+PrintCompilation 和 -XX：+CITime</strong></p>
+<p>如果能在程序运行的同时观察JIT编译怎样工作可以更直观的理解JIT的行为。<code>-XX:+PrintCompilation</code>参数可以打印出JIT编译字节码到本地代码的输出。下面是一个Server VM的输出实例。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+PrintCompilation Benchmark</div><div class="line">  1       java.lang.String::<span class="built_in">hash</span>Code (64 bytes)</div><div class="line">  2       java.lang.AbstractStringBuilder::stringSizeOfInt (21 bytes)</div><div class="line">  3       java.lang.Integer::getChars (131 bytes)</div><div class="line">  4       java.lang.Object::&lt;init&gt; (1 bytes)</div><div class="line">---   n   java.lang.System::arraycopy (static)</div><div class="line">  5       java.util.HashMap::indexFor (6 bytes)</div><div class="line">  6       java.lang.Math::min (11 bytes)</div><div class="line">  7       java.lang.String::getChars (66 bytes)</div><div class="line">  8       java.lang.AbstractStringBuilder::append (60 bytes)</div><div class="line">  9       java.lang.String::&lt;init&gt; (72 bytes)</div><div class="line"> 10       java.util.Arrays::copyOfRange (63 bytes)</div><div class="line"> 11       java.lang.StringBuilder::append (8 bytes)</div><div class="line"> 12       java.lang.AbstractStringBuilder::&lt;init&gt; (12 bytes)</div><div class="line"> 13       java.lang.StringBuilder::toString (17 bytes)</div><div class="line"> 14       java.lang.StringBuilder::&lt;init&gt; (18 bytes)</div><div class="line"> 15       java.lang.StringBuilder::append (8 bytes)</div><div class="line">[...]</div><div class="line"> 29       java.util.regex.Matcher::reset (83 bytes)</div></pre></td></tr></table></figure>
+<p><code>-XX:+PrintCompilation</code>参数会在每个方法编译时打印出一行信息，包括一个运行时顺序号（编译任务的ID），方法的名称和大小。因此上述第一行表示JIT编译器将<code>String:hashcode</code>方法编译成本地代码，方法不同或者编译任务不同输出也不同。例如创建本地包装方法会标记成”n”，例如<code>System:arraycopy</code>方法，注意这一行被没有顺序号和方法大小，因为它不需要编译成本地代码。另外有些方法被重复编译了，例如11行，15行的<code>StringBuilder:append</code>方法。输出停留在序号29，表示共执行了29个方法编译。</p>
+<p>对于<code>-XX:+PrintCompilation</code>参数并没有官方文档，但是<a href="https://gist.github.com/rednaxelafx/1165804#file_notes.md" target="_blank" rel="external">这篇介绍</a>推荐阅读。</p>
+<p>JIT编译器的输出帮助我们理解了Server VM和Client VM的区别。Server VM在上面的例子中打印了29行编译输出，而Client VM有55行（无图）。这看起来奇怪因为Server VM理应执行更多的优化。而实际情况是，Server VM在判断方法是不是热点和需不需要编译时时间更久。因此Server VM会推迟某些方法的编译时间。</p>
+<p>另外<code>-XX:CITime</code>参数可以在JVM关闭之前打印JIT编译的统计信息，下面是一个例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+CITime Benchmark</div><div class="line">[...]</div><div class="line">Accumulated compiler <span class="built_in">times</span> (<span class="keyword">for</span> compiled methods only)</div><div class="line">------------------------------------------------</div><div class="line">  Total compilation time   :  0.178 s</div><div class="line">    Standard compilation   :  0.129 s, Average : 0.004</div><div class="line">    On stack replacement   :  0.049 s, Average : 0.024</div><div class="line">[...]</div></pre></td></tr></table></figure>
+<p>如上所示，29个编译任务总共耗时总共0.178秒，其中0.0.49秒花在栈上替换(OSR, On Stack Replacement)，即对正在执行的方法进行编译并在及时替换栈帧上该方法。OSR技术想达到高性能并不简单，但是非常重要。如果没有OSR技术，对于长时间执行的方法（例如该方法体是一个很长的循环），无法立即在运行时由编译的本地码替换掉。</p>
+<p>另外Client VM编译了55个方法，但是只耗时0.021秒。因此尽管Server VM执行的编译比Client VM少，但是却花了很多的时间。原因是在编译方法的过程中，Server VM执行了更多的优化。</p>
+<p>在博客的第一部分讲到了<code>-Xint</code>和<code>-Xcomp</code>参数。通过<code>-XX:+PrintCompilation</code>和<code>-XX:CITime</code>参数能更进一步的了解之间的差别。<code>-Xint</code>参数不会产生任何编译输出，而不会有任何编译耗时。使用<code>-Xcomp</code>参数的话，对于Client VM启动后会立即打印726行编译信息，但是之后不会再新增，因为所有方法都立即编译了。而ServerVM会打印993行，表明ServerVM的优化更积极。另外Server VM编译时间上的统计如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ java -server -Xcomp -XX:+CITime Benchmark</div><div class="line">[...]</div><div class="line">Accumulated compiler <span class="built_in">times</span> (<span class="keyword">for</span> compiled methods only)</div><div class="line">------------------------------------------------</div><div class="line">  Total compilation time   :  1.567 s</div><div class="line">    Standard compilation   :  1.567 s, Average : 0.002</div><div class="line">    On stack replacement   :  0.000 s, Average : -1.<span class="comment">#IO</span></div><div class="line">[...]</div></pre></td></tr></table></figure>
+<p>可以看出Server VM在编译执行模式下耗时1.567秒执行编译，比混合模式慢了10倍，程序反而更慢。而Client VM使用了0.208秒执行编译，但是程序执行时间比Server VM还要慢。另外，在编译模式下不会触发OSR技术，因为所有的方法都是再首次调用之前就编译了。这里Average行显示时间错误，也从侧面印证了XX参数并不那么十分可靠。</p>
+<p><strong>-XX:+UnlockExperimentalVMOptions</strong></p>
+<p>有时候当你设置完JVM参数并启动后，JVM会意外退出并打印”Unrecongized VM option”错误。当然首先你应该检查是否有参数拼写错误。<br>但是有时候一切无误后仍旧报错，这时候需要使用<code>-XX:+UnlockExperimentalVMOptions</code>。笔者不是很清楚这种安全机制的意义，但是猜测这种类型的参数如果不正确使用可能会影响JVM的稳定性，比如打印过多的调试信息。这个参数更适用于JVM开发者而不是普通的Java应用开发人员。<br>如果某个参数无法通过添加<code>-XX:+UnlockExperimentalVMOptions</code>开启，而你真的需要使用这个参数，你可以尝试编译Debug版本JVM。</p>
+<p><strong>-XX:+LogCompilation and -XX:+PrintOptoAssembly</strong></p>
+<p>如果<code>-XX:+PrintCompilation</code>提供的信息仍旧有限，可以尝试<code>-XX:+LogCompilation</code>打印的”hotspot.log”文件，这个文件会包含更多方法编译的细节以及编译任务的启动线程等。<br>另外这个参数需要搭配<code>-XX:+UnlockExperimentalVMOptions</code>。</p>
+<p><code>-XX:+PrintOptoAssembly</code>参数可以让你得以窥探字节码编译后的本地代码，本地代码会同时打印到标准输出和”hotspot.log”文件中。这个参数需要ServerVM模式下的Debug版本的JVM实现。通过了解<code>-XX:+PrintOptoAssembly</code>的输出可以理解JVM使用了那些优化方法，比如如何消除死代码。<a href="https://community.oracle.com/people/kohsuke/blog/2008/03/30/deep-dive-assembly-code-java?customTheme=otn" target="_blank" rel="external">这篇文章</a>有一些介绍。</p>
+<p><strong>更多关于XX参数</strong></p>
+<p>如果这篇文章激发了你对Hot Spot JVM的XX参数的兴趣，可以从<a href="http://stas-blogspot.blogspot.de/2011/07/most-complete-list-of-xx-options-for.html" target="_blank" rel="external">这个列表</a>了解更多。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-10-jvmflags-1/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2017/02/14/2016-2-10-jvmflags-1/" itemprop="url">
+                  JVM参数 - Part 1( JVM类型和编译器模式 )
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-2-10-jvmflags-1/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-10-jvmflags-1/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-1-jvm-types-and-compiler-modes/" title="Original Link Useful JVM flags - Part 1" target="_blank" rel="external">Useful JVM flags - Part 1</a></p>
+<p>现在的JVM已经为Java和虚拟机上其他兼容语言(如Groovy, JRuby, Jython等)的应用程序出色的完成了大部分工作，并且性能高效且稳定。例如当下流行JVM提供了包括自适应的内存管理(Adaptive Memory Mangement)，垃圾回收(Garbage Collection),JIT编译，动态类加载(Dynamic class Loading)，锁优化等一系列功能，这些还只是引用了其中一部分。更重要的是这些功能很少直接影响一般的Java开发者。总的来说，在运行时状态JVM会以一种持续评估和动态分析的方式来优化其对应用程序的处理。</p>
+<p>尽管JVM的自动化程序已经很高（甚至某些意见已经认为已经非常高了），JVM仍然提供了很多工具来方便进行外部监控和人工调优。以防万一出现错误或者性能低下时，人工干预会变得非常可能且必要。<br>值得一提的是，现代JVM的实现同样提供了很多人工优化的工具，其中特别被提及的就是JMV启动时的命令行参数。一些JVM的实现提供了几百个这样的启动参数，使得缺乏经验的开发者很容易不知所措。这个博客系列的目的就是着重介绍日常开发中最相关的参数，并解释其功能。这里的JVM特指Sun/Orcale HotSpot JVM的Java 6版本，不过大部分情况下其他流行的JVM实现也提供了类似的参数。</p>
+<p><strong>-server 和 -client</strong></p>
+<p>“server”和”client”是两种类型的Hotspot JVM。server类型的JVM（以下简称 Server VM）默认使用更大的堆内存，并行的垃圾回收(parellel garbage collecor), 并且在运行时采用更积极的代码优化策略。client类型的JVM(以下简称 Client VM)更加保守，这会带来更短的启动时间，更少的内存占用。谢天谢地有这样一个名词叫”虚拟机工效学”(JVM ergonomics),旨在根据一定的标准例如可用的硬件和操作系统等来自动的选择合适的JVM类型。具体的标准可以参考<a href="http://docs.oracle.com/javase/6/docs/technotes/guides/vm/server-class.html" target="_blank" rel="external">这里</a>。从这个标准中可以看出，Client VM只在32位系统上可用。</p>
+<p>如果我们对预先选择的JVM类型不满意，可以使用参数<code>-server</code>和<code>-client</code>来规定相应的JVM类型。尽管Server VM最初是用于长时间执行的进程，但是如今在很多独立的进程场景中，Server VM也展现出更高的性能。因此我这里推荐使用<code>-server</code>参数，只要程序的首要性能指标是更快的执行时间。简单的记住：32位的系统上, Hotspot JDK要求能够以server方式启动JVM，而32位JRE只有client VM。</p>
+<p><strong>-version和-showversion</strong></p>
+<p>假设你的机器安装了多个版本的JVM实现，能够准确的知道你启动的JVM类型就变得特别重要了。这个问题在Linux版本上更为常见。<br>幸运的是，我们可以使用1<code>version</code>参数，它可以打印出以下信息到标准输出上，例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ java -version</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Client VM (build 19.1-b02, mixed mode, sharing)</div></pre></td></tr></table></figure>
+<p>输出显示Java版本号为1.6_024,准确的JRE的构建编号(1.6.0_24-b07),JVM为Hotspot, 类型为Client，JVM的构建编号为19.1-b02。另外我们知道JVM以Mixed Mode方式运行，这也是Hotspot的默认模式，表示JVM会动态的在运行时将字节码(byte code)编译为本地编码(native mode)。最后Sharing是指类加载数据会共享。类数据共享是指JRE的系统类会加载到一个只读的缓存中(jsa文件，”Java Shared Archive”)，这个缓存会被所有的Java进程共享。相比较重复读取jar包而言，类数据共享能优化性能。</p>
+<p><code>-version</code>参数在打印完上述信息后会退出，但是<code>-showversion</code>不仅可以产生同样的输出，而且也可以指定指定的Java程序。因此<code>-showversion</code>参数在生产环境下打印JVM信息很有用处。你永远不确定何时你会需要这些JVM信息来定位一些程序崩溃的问题，因此在启动时候加上<code>-showversion</code>参数能保证这些信息可以及时获取。</p>
+<p><strong>-Xint, -Xcomp和-Xmixed</strong></p>
+<p>参数<code>-Xint</code>和<code>-Xcomp</code>对于日常开发并不相关，但是可以帮助更好的学习JVM。<code>-Xint</code>参数使JVM以解释执行的方式执行所有的字节码，因此会显著的降低执行速度，通常会降低10倍以上。参数<code>-Xcomp</code>正好相反，即JVM在首次使用时将所有的字节码编译成本地代码，采用了最高的优化等级。这听起来不错，因为它完全避免了缓慢的解释执行过程。但是很多应用在使用<code>-Xcomp</code>也会有性能损失，尽管没有使用<code>-Xint</code>参数严重。原因是<code>-Xcomp</code>使得JVM无法充分利用JIT编译。JIT编译能在运行时创建方法调用文件(method usage profiles)，然后逐步的优化每个方法，有时候会主动的优化应用的行为。其中一些优化技术，例如积极的分支预测(Optimistic Branch Prediction),如果不事先分析应用就无法有效的使用。另一方面，JIT只会对那些重要的频繁调用的方法编译成本地代码，比如这些方法构成了整个应用某种程度上的热点。而那些调用很少（甚至只调用一次）的方法仍然在解释模式下执行，从而降低了编译和优化的的开销。</p>
+<p>注意混合模式参数<code>-Xmixed</code>,最新版本的Hotspot默认采用混合模式，因此无须特别指定。下面是一个基准测试，向一个HashMap中插入对象并检索然后取平均时间。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -showversion Benchmark</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Server VM (build 19.1-b02, mixed mode)</div><div class="line"> </div><div class="line">Average time: 0.856449 seconds</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -showversion -Xint Benchmark</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Server VM (build 19.1-b02, interpreted mode)</div><div class="line"> </div><div class="line">Average time: 7.622285 seconds</div></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -showversion -Xcomp Benchmark</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Server VM (build 19.1-b02, compiled mode)</div><div class="line"> </div><div class="line">Average time: 0.950892 seconds</div></pre></td></tr></table></figure>
+<p>当然也有例子证明<code>-Xcomp</code>是最好的，特别是那些运行时间久的应用。笔者强烈建议采用Hotspot的默认配置，让JIT编译器能充分发挥潜力。毕竟JIT编译是JVM上设计最高级的组件之一，事实上也是因为JVM在这一领域的进步使得Java已经不再被认为是很慢的语言了。</p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/08/07/spring security/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/08/07/spring security/" itemprop="url">
+                  Spring Security笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-08-07T00:00:00+08:00">
+                2016-08-07
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/08/07/spring security/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/08/07/spring security/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h4 id="authentication-和-authroization"><a href="#authentication-和-authroization" class="headerlink" title="authentication 和 authroization"></a>authentication 和 authroization</h4><p><strong>authentication: 身份认证</strong> 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。</p>
+<p><strong>authroization: 授权</strong> 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某个角色，才能执行相应的操作。</p>
+<p>spring security就是为了提供这两种功能而实际的一套框架。它基于spring的依赖注入规范，支持多种身份验证实现。spring security的基本思想并不局限于某种具体需要权限认证的服务，但基于servlet规范的web application也提供了更好的支持，对web application 支持三个维度的授权实现：</p>
+<ul>
+<li>请求层级，对具体的请求根据url过滤；</li>
+<li>对具体Bean上方法，也是通常所说的服务层；</li>
+<li>对特定的domain object;</li>
+</ul>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/03/05/jvm-gc-flags/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/05/jvm-gc-flags/" itemprop="url">
+                  JVM实践 - 堆调优
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-03-05T00:00:00+08:00">
+                2016-03-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/03/05/jvm-gc-flags/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/05/jvm-gc-flags/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="打印GC日志"><a href="#打印GC日志" class="headerlink" title="打印GC日志"></a>打印GC日志</h2><p>使用下面三个参数可以打印Oracle Hotspot JVM每次的GC日志。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">-verbose:gc : 打印GC日志</div><div class="line">-XX:+PrintGCDateStamps ：添加时间戳</div><div class="line">-XX:+PrintGCDetails ：打印GC详细</div></pre></td></tr></table></figure>
+<p>同时将GC日志重定向到单独的log文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-Xloggc:&lt;file-path&gt; ： 保存GC日志到单独文件，方便分析</div></pre></td></tr></table></figure>
+<p>GC的日志可以使用以下工具分析：</p>
+<ol>
+<li>IBM GCMV (Garbage Collection and Memory Visualizer)<br>这款工具可以作为eclipse插件安装并切换到GCMV视图。GCMV同时支持Oracle Hotspot JVM 和 IBM， HP等JVM实现。</li>
+</ol>
+<h2 id="Heap-Dump文件"><a href="#Heap-Dump文件" class="headerlink" title="Heap Dump文件"></a>Heap Dump文件</h2><h3 id="生成hprof文件"><a href="#生成hprof文件" class="headerlink" title="生成hprof文件"></a>生成hprof文件</h3><p>Heap dump文件在分析JVM性能，优化应用程序，检查内存泄漏时十分重要，尤其是在发生内存溢出（OutOfMemoryError）时更加必要。通常可以设置JVM参数在OOM时候触发生成Heap Dump文件。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:+HeapDumpOnOutofMemoryError</div></pre></td></tr></table></figure>
+<p>或者添加触发命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:OnOutOfMemoryError=&quot;jmap -F -dump:format=b,file=java_pid%p.hprof %p; chmod +r java_pid%p.hprof; kill -9 %p&quot;</div></pre></td></tr></table></figure>
+<p>对于本地的JVM进程，可以使用JDk自带的GUI Debug工具如JVisualVM来生成.hprof文件。</p>
+<p>有一类比较复杂的情况是，在生产环境的某台机器上出现了JVM异常，但是使用jmap命令十分耗时，这会影响应用程序的执行，造成很大的暂停，甚至jmap执行可能失败。这时候可以借助Linux/Unix的gdb工具生成core文件，再使用jmap从core文件中生成hpprof文件。生成core文件非常快，通常只需要几秒钟。以下是详细步骤：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"># 1. install gdb</div><div class="line">$sudo apt-get install gdb – for Debian/Ubuntu systems.</div><div class="line">$sudo yum install gdb – for RedHat/CentOS systems.</div><div class="line"># 2. get the Process ID of JVM</div><div class="line">$ps -ef|egrep &quot;PID|[keyword]&quot;</div><div class="line"># 3. get the core files</div><div class="line">$gdb --pid=[pid]</div><div class="line">...bunch of info...</div><div class="line">$(gdb) gcore /tmp/jvm.core</div><div class="line">Saved corefile /tmp/jvm.core</div><div class="line">$(gdb) detach</div><div class="line">$(gdb) quit</div><div class="line"># 4. get the hprof binary dump for core file using jmap</div><div class="line">$jmap -dump:format=b,file=jvm.hprof /usr/bin/java /tmp/jvm.core</div></pre></td></tr></table></figure>
+<p><a href="http://blogs.atlassian.com/2013/03/so-you-want-your-jvms-heap/" title="use core file to generate heap dump" target="_blank" rel="external">[SEE ALSO]use core file to generate heap dump</a></p>
+<h3 id="分析heap-dump"><a href="#分析heap-dump" class="headerlink" title="分析heap dump"></a>分析heap dump</h3><p>hprof文件可以使用JVisualVM或者MAT(Eclipse Memory Analyzer)来装载并分析。MAT工具的使用介绍。MAT会首先解析hprof文件并生成一系列的index文件，这个过程比较耗时，但是下一次加载时会载入上一次分析好的index文件。</p>
+<p><a href="http://eclipsesource.com/blogs/2013/01/21/10-tips-for-using-the-eclipse-memory-analyzer/" target="_blank" rel="external">[SEE ALSO]MAT工具的使用介绍</a></p>
+<p>因为Heap Dump是当前内存的一份快照，因此在线上机器生成的heap dump会很大，无法用MAT GUI工具装载。可以在线下某台拥有和线上同等配置的机器上使用MAT自带的ParseHeapDump.sh文件来生成索引文件，并生成一系列的report。这样就可以方便的在开发机器上用MAT GUI加载这些生成好的report文件了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./ParseHeapDump.sh ../today_heap_dump/jvm.hprof org.eclipse.mat.api:suspects</div></pre></td></tr></table></figure>
+<p>其他可用的report参数有：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">org.eclipse.mat.api:suspects </div><div class="line">org.eclipse.mat.api:overview</div><div class="line">org.eclipse.mat.api:top_components</div></pre></td></tr></table></figure>
+<p>另外一个工具为bheapsampler, 这个工具对heap dump文件进行抽象，生成 一份更简洁的heap dump文件，虽然有点不太准确但是在MAT失败的情况下总比没有好。</p>
+<p><a href="http://javaforu.blogspot.com/2013/11/analyzing-large-java-heap-dumps-when.html" target="_blank" rel="external">[SEE ALSO]Analyzing Large Java Heap when MAT UI fails</a></p>
+<h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><h3 id="XX-UseGCOverheadLimit"><a href="#XX-UseGCOverheadLimit" class="headerlink" title="-XX:-UseGCOverheadLimit"></a>-XX:-UseGCOverheadLimit</h3><p>JVM的Parallel GC如果占用应用程序大部分的执行时间。将会抛出OutOfMemoryError：如果98%的时间都浪费在垃圾回收上，而且只有不到2%的堆内存被回收的话，JVM将会抛出OutOfMemoryError。这个设计的作用是防止应用程序因为堆大小不足导致浪费时间在GC上并且毫无进展。但是可以使用参数<br><em>-XX:-UseGCOverheadLimit</em>来禁用该功能。<br>JVM的CMS GC也有相同的功能，不过只有造成应用程序暂停的GC时间才会被计算到98%这个指标中，这一类GC通常是因为在CMS GC发生Concurrent Mode Failure或者显式的GC调用时发生（System.gc()）。</p>
+<p><a href="http://www.oracle.com/technetwork/java/javase/gc-tuning-6-140523.html" title="Java SE 6 HotSpot[tm] Virtual Machine Garbage Collection Tuning" target="_blank" rel="external">[SEE ALSO]Java SE 6 HotSpot[tm] Virtual Machine Garbage Collection Tuning</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
   </nav>
 
 
@@ -1841,14 +2092,28 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">24</span>
-                <span class="site-state-item-name">Artikel</span>
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">posts</span>
               </a>
             </div>
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">categories</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -1856,6 +2121,26 @@
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/jiangyongfd" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/JoshuaJiangFD" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -1894,13 +2179,13 @@
 
 
 <div class="powered-by">
-  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
 </div>
 
 <div class="theme-info">
   Theme -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -1967,6 +2252,13 @@
 
   
   
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
 
   
 

@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="">
+<html class="theme-next pisces use-motion" lang="en">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -71,7 +71,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="JVM," />
 
 
 
@@ -92,19 +92,19 @@
 从纯粹的功能角度，JVM只需要一块堆空间，不需要区分新生代。引入新生代首要原因是为了提高垃圾回收的性能。具体的说，将堆空间区分成新生代和年老代有两点好处：一是简化了新对象的内存分配（因为新对象只会在新生代分">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM参数 - Part 5( 新生代垃圾回收 )">
-<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-2-12-jvmflags-5/index.html">
+<meta property="og:url" content="http://blog.joshuajiang.com/2017/02/14/2016-2-12-jvmflags-5/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="Useful JVM Flags – Part 5
 这部分内容主要关注堆内存的主要几个部分之一，“新生代”。首先笔者会阐述新生代的配置对于Java应用的性能的重要性，然后再介绍与之相关的配置。
 从纯粹的功能角度，JVM只需要一块堆空间，不需要区分新生代。引入新生代首要原因是为了提高垃圾回收的性能。具体的说，将堆空间区分成新生代和年老代有两点好处：一是简化了新对象的内存分配（因为新对象只会在新生代分">
-<meta property="og:image" content="http://yoursite.com/!--￼3-->/images/young_gc.png">
-<meta property="og:updated_time" content="2016-04-21T11:57:56.410Z">
+<meta property="og:image" content="http://blog.joshuajiang.com/!--￼3-->/images/young_gc.png">
+<meta property="og:updated_time" content="2017-02-14T08:18:05.091Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 5( 新生代垃圾回收 )">
 <meta name="twitter:description" content="Useful JVM Flags – Part 5
 这部分内容主要关注堆内存的主要几个部分之一，“新生代”。首先笔者会阐述新生代的配置对于Java应用的性能的重要性，然后再介绍与之相关的配置。
 从纯粹的功能角度，JVM只需要一块堆空间，不需要区分新生代。引入新生代首要原因是为了提高垃圾回收的性能。具体的说，将堆空间区分成新生代和年老代有两点好处：一是简化了新对象的内存分配（因为新对象只会在新生代分">
-<meta name="twitter:image" content="http://yoursite.com/!--￼3-->/images/young_gc.png">
+<meta name="twitter:image" content="http://blog.joshuajiang.com/!--￼3-->/images/young_gc.png">
 
 
 
@@ -112,7 +112,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -132,7 +132,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-2-12-jvmflags-5/"/>
+  <link rel="canonical" href="http://blog.joshuajiang.com/2017/02/14/2016-2-12-jvmflags-5/"/>
 
 
 
@@ -141,7 +141,7 @@
   <title> JVM参数 - Part 5( 新生代垃圾回收 ) | Joshua's Blog </title>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="">
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
 
   
 
@@ -211,7 +211,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
             
-            Startseite
+            Home
           </a>
         </li>
       
@@ -221,7 +221,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
             
-            Archiv
+            Archives
           </a>
         </li>
       
@@ -232,6 +232,26 @@
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
             
             Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
           </a>
         </li>
       
@@ -264,7 +284,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-12-jvmflags-5/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-12-jvmflags-5/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -301,7 +321,7 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -313,6 +333,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -410,6 +452,12 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+        </div>
+      
 
       
         
@@ -458,7 +506,7 @@
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2017/02/14/2016-2-12-jvmflags-5/"
-           data-title="JVM参数 - Part 5( 新生代垃圾回收 )" data-url="http://yoursite.com/2017/02/14/2016-2-12-jvmflags-5/">
+           data-title="JVM参数 - Part 5( 新生代垃圾回收 )" data-url="http://blog.joshuajiang.com/2017/02/14/2016-2-12-jvmflags-5/">
       </div>
     
   </div>
@@ -496,14 +544,28 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">24</span>
-                <span class="site-state-item-name">Artikel</span>
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">posts</span>
               </a>
             </div>
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">categories</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -511,6 +573,26 @@
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/jiangyongfd" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/JoshuaJiangFD" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -549,13 +631,13 @@
 
 
 <div class="powered-by">
-  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
 </div>
 
 <div class="theme-info">
   Theme -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -622,6 +704,13 @@
 
   
   
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
 
   
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>

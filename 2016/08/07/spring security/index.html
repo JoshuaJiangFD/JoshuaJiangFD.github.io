@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="">
+<html class="theme-next pisces use-motion" lang="en">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -71,7 +71,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="SpringSecurity,CAS," />
 
 
 
@@ -87,16 +87,19 @@
 
 
 
-<meta name="description" content="功力必不唐捐">
+<meta name="description" content="authentication 和 authroizationauthentication: 身份认证 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。
+authroization: 授权 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Joshua's Blog">
-<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-3-23-akka-blockingio/index.html">
+<meta property="og:title" content="Spring Security笔记">
+<meta property="og:url" content="http://blog.joshuajiang.com/2016/08/07/spring security/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
-<meta property="og:description" content="功力必不唐捐">
-<meta property="og:updated_time" content="2016-05-02T05:09:09.042Z">
+<meta property="og:description" content="authentication 和 authroizationauthentication: 身份认证 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。
+authroization: 授权 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某">
+<meta property="og:updated_time" content="2017-02-14T08:23:50.886Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Joshua's Blog">
-<meta name="twitter:description" content="功力必不唐捐">
+<meta name="twitter:title" content="Spring Security笔记">
+<meta name="twitter:description" content="authentication 和 authroizationauthentication: 身份认证 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。
+authroization: 授权 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某">
 
 
 
@@ -104,7 +107,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -124,16 +127,16 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-3-23-akka-blockingio/"/>
+  <link rel="canonical" href="http://blog.joshuajiang.com/2016/08/07/spring security/"/>
 
 
 
 
 
-  <title>  | Joshua's Blog </title>
+  <title> Spring Security笔记 | Joshua's Blog </title>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="">
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
 
   
 
@@ -203,7 +206,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
             
-            Startseite
+            Home
           </a>
         </li>
       
@@ -213,7 +216,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
             
-            Archiv
+            Archives
           </a>
         </li>
       
@@ -224,6 +227,26 @@
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
             
             Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
           </a>
         </li>
       
@@ -256,7 +279,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-3-23-akka-blockingio/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/08/07/spring security/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -280,7 +303,7 @@
             
             
               
-                
+                Spring Security笔记
               
             
           </h1>
@@ -293,10 +316,10 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
-                2017-02-14
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-08-07T00:00:00+08:00">
+                2016-08-07
               </time>
             
 
@@ -306,6 +329,28 @@
           </span>
 
           
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring/" itemprop="url" rel="index">
+                    <span itemprop="name">Spring</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
 
           
             
@@ -314,8 +359,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2017/02/14/2016-3-23-akka-blockingio/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-3-23-akka-blockingio/" itemprop="commentCount"></span>
+                <a href="/2016/08/07/spring security/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/08/07/spring security/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -341,7 +386,15 @@
       
 
       
-        
+        <h4 id="authentication-和-authroization"><a href="#authentication-和-authroization" class="headerlink" title="authentication 和 authroization"></a>authentication 和 authroization</h4><p><strong>authentication: 身份认证</strong> 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。</p>
+<p><strong>authroization: 授权</strong> 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某个角色，才能执行相应的操作。</p>
+<p>spring security就是为了提供这两种功能而实际的一套框架。它基于spring的依赖注入规范，支持多种身份验证实现。spring security的基本思想并不局限于某种具体需要权限认证的服务，但基于servlet规范的web application也提供了更好的支持，对web application 支持三个维度的授权实现：</p>
+<ul>
+<li>请求层级，对具体的请求根据url过滤；</li>
+<li>对具体Bean上方法，也是通常所说的服务层；</li>
+<li>对特定的domain object;</li>
+</ul>
+
       
     </div>
 
@@ -362,6 +415,14 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/SpringSecurity/" rel="tag"># SpringSecurity</a>
+          
+            <a href="/tags/CAS/" rel="tag"># CAS</a>
+          
+        </div>
+      
 
       
         
@@ -371,8 +432,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/02/14/2016-3-23-akka-1/" rel="next" title="Akka Actor - Part 1(Actor生命周期)">
-                <i class="fa fa-chevron-left"></i> Akka Actor - Part 1(Actor生命周期)
+              <a href="/2016/03/05/jvm-gc-flags/" rel="next" title="JVM实践 - 堆调优">
+                <i class="fa fa-chevron-left"></i> JVM实践 - 堆调优
               </a>
             
           </div>
@@ -381,8 +442,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2017/02/14/2016-3-23-git-1/" rel="prev" title="git 小命令">
-                git 小命令 <i class="fa fa-chevron-right"></i>
+              <a href="/2017/02/14/2016-2-10-jvmflags-1/" rel="prev" title="JVM参数 - Part 1( JVM类型和编译器模式 )">
+                JVM参数 - Part 1( JVM类型和编译器模式 ) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -409,8 +470,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2017/02/14/2016-3-23-akka-blockingio/"
-           data-title="" data-url="http://yoursite.com/2017/02/14/2016-3-23-akka-blockingio/">
+      <div class="ds-thread" data-thread-key="2016/08/07/spring security/"
+           data-title="Spring Security笔记" data-url="http://blog.joshuajiang.com/2016/08/07/spring security/">
       </div>
     
   </div>
@@ -434,8 +495,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
 
-      <section class="site-overview sidebar-panel sidebar-panel-active">
+      <section class="site-overview sidebar-panel">
         <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
           <img class="site-author-image" itemprop="image"
                src="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf"
@@ -448,14 +518,28 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">24</span>
-                <span class="site-state-item-name">Artikel</span>
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">posts</span>
               </a>
             </div>
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">categories</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -463,6 +547,26 @@
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/jiangyongfd" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/JoshuaJiangFD" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -477,6 +581,22 @@
 
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#authentication-和-authroization"><span class="nav-number">1.</span> <span class="nav-text">authentication 和 authroization</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
     </div>
@@ -501,13 +621,13 @@
 
 
 <div class="powered-by">
-  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
 </div>
 
 <div class="theme-info">
   Theme -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -574,6 +694,13 @@
 
   
   
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
 
   
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>

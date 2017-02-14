@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="">
+<html class="theme-next pisces use-motion" lang="en">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -71,7 +71,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="JVM," />
 
 
 
@@ -93,13 +93,13 @@ JVM 参数类别
 Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行java命令就可以列出所有">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
-<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-2-10-jvmflags-2/index.html">
+<meta property="og:url" content="http://blog.joshuajiang.com/2017/02/14/2016-2-10-jvmflags-2/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="Useful JVM Flags – Part 2
 在这个系列博客的第二部分，笔者将介绍Hotspot虚拟机提供的不同类别的参数。另外还将介绍一些关于JIT编译器诊断的讨论。
 JVM 参数类别
 Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行java命令就可以列出所有">
-<meta property="og:updated_time" content="2016-04-21T11:57:56.409Z">
+<meta property="og:updated_time" content="2017-02-14T08:17:41.050Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
 <meta name="twitter:description" content="Useful JVM Flags – Part 2
@@ -113,7 +113,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -133,7 +133,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-2-10-jvmflags-2/"/>
+  <link rel="canonical" href="http://blog.joshuajiang.com/2017/02/14/2016-2-10-jvmflags-2/"/>
 
 
 
@@ -142,7 +142,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
   <title> JVM参数 - Part 2( 参数归类和JIT编译诊断 ) | Joshua's Blog </title>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="">
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
 
   
 
@@ -212,7 +212,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
             
-            Startseite
+            Home
           </a>
         </li>
       
@@ -222,7 +222,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
             
-            Archiv
+            Archives
           </a>
         </li>
       
@@ -233,6 +233,26 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
             
             Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
           </a>
         </li>
       
@@ -265,7 +285,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-10-jvmflags-2/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-2-10-jvmflags-2/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -302,7 +322,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -314,6 +334,28 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -353,7 +395,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
         <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-2-flag-categories-and-jit-compiler-diagnostics/" target="_blank" rel="external"> Useful JVM Flags – Part 2</a></p>
 <p>在这个系列博客的第二部分，笔者将介绍Hotspot虚拟机提供的不同类别的参数。另外还将介绍一些关于JIT编译器诊断的讨论。</p>
 <p><strong>JVM 参数类别</strong></p>
-<p>Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行<code>java</code>命令就可以列出所有的标准参数（或者 <code>java -help</code>，这正好是一个标准参数命令）。博客的<a href="http://blog.joshuajiang.com/JVMFlags-1/" target="_blank" rel="external">第一部分</a>已经提及了一些标准参数，如<code>-server</code>参数。</p>
+<p>Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行<code>java</code>命令就可以列出所有的标准参数（或者 <code>java -help</code>，这正好是一个标准参数命令）。博客的<a href="http://blog.joshuajiang.com/JVMFlags-1/">第一部分</a>已经提及了一些标准参数，如<code>-server</code>参数。</p>
 <p>第二类为X参数，这些为非标准参数，其行为和可用性在后续版本中未知。<code>java  -X</code>命令可以列出以<code>-X</code>开头的参数，这个列表并不完全，例如并不包括<code>-Xcomp</code>参数。</p>
 <p>第三类也是目前数目最多的一类是XX参数，这些参数也是非标准参数，后面会讲到如何列出这些参数。从使用角度，X参数和XX参数并无不同。<em>X参数</em>更稳定一点，而XX参数实验性更强（且通常只会由开发者用于诊断和JVM调优用途）。<a href="http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="external">这篇文档</a>对于了解XX参数值得一读，其中明确提出应该谨慎使用XX参数。这种说法笔者认为同样适用于X参数和有些标准参数。总之无论何种参数，在使用前都值得花时间理解其行为和可能的副作用。</p>
 <p>简单的说，所有的XX参数都以<code>-XX:</code>开头，但是具体参数有所不同：</p>
@@ -403,6 +445,12 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+        </div>
+      
 
       
         
@@ -451,7 +499,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2017/02/14/2016-2-10-jvmflags-2/"
-           data-title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )" data-url="http://yoursite.com/2017/02/14/2016-2-10-jvmflags-2/">
+           data-title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )" data-url="http://blog.joshuajiang.com/2017/02/14/2016-2-10-jvmflags-2/">
       </div>
     
   </div>
@@ -489,14 +537,28 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">24</span>
-                <span class="site-state-item-name">Artikel</span>
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">posts</span>
               </a>
             </div>
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">categories</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -504,6 +566,26 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/jiangyongfd" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/JoshuaJiangFD" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -542,13 +624,13 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 
 
 <div class="powered-by">
-  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
 </div>
 
 <div class="theme-info">
   Theme -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -615,6 +697,13 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 
   
   
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
 
   
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>

@@ -5,7 +5,7 @@
   
 
 
-<html class="theme-next mist use-motion" lang="">
+<html class="theme-next pisces use-motion" lang="en">
 <head>
   <meta charset="UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -71,7 +71,7 @@
 <link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="MySQL," />
 
 
 
@@ -92,12 +92,12 @@
 2. 查看一个表的所有字段how-to-">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MySQL 命令笔记">
-<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-4-14-mysql-notes/index.html">
+<meta property="og:url" content="http://blog.joshuajiang.com/2017/02/14/2016-4-14-mysql-notes/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="以下是对工作中常用的SQL命令的总结。
 1. 查询某个表中所有非空字段名123456SELECT `COLUMN_NAME`FROM `information_schema`.`COLUMNS`WHERE`IS_NULLABLE` = &apos;No&apos;AND `TABLE_NAME` = &apos;feed&apos;AND `TABLE_SCHEMA` = &apos;prodb_mgmt
 2. 查看一个表的所有字段how-to-">
-<meta property="og:updated_time" content="2017-02-14T06:02:47.738Z">
+<meta property="og:updated_time" content="2017-02-14T08:22:26.625Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MySQL 命令笔记">
 <meta name="twitter:description" content="以下是对工作中常用的SQL命令的总结。
@@ -110,7 +110,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     root: '/',
-    scheme: 'Mist',
+    scheme: 'Pisces',
     sidebar: {"position":"left","display":"post"},
     fancybox: true,
     motion: true,
@@ -130,7 +130,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-4-14-mysql-notes/"/>
+  <link rel="canonical" href="http://blog.joshuajiang.com/2017/02/14/2016-4-14-mysql-notes/"/>
 
 
 
@@ -139,7 +139,7 @@
   <title> MySQL 命令笔记 | Joshua's Blog </title>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="">
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
 
   
 
@@ -209,7 +209,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
             
-            Startseite
+            Home
           </a>
         </li>
       
@@ -219,7 +219,7 @@
             
               <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
             
-            Archiv
+            Archives
           </a>
         </li>
       
@@ -230,6 +230,26 @@
               <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
             
             Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
           </a>
         </li>
       
@@ -262,7 +282,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-4-14-mysql-notes/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2017/02/14/2016-4-14-mysql-notes/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -299,7 +319,7 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               
-                <span class="post-meta-item-text">Veröffentlicht am</span>
+                <span class="post-meta-item-text">Posted on</span>
               
               <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
                 2017-02-14
@@ -311,6 +331,28 @@
             
           </span>
 
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SQL/" itemprop="url" rel="index">
+                    <span itemprop="name">SQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -401,6 +443,12 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          
+        </div>
+      
 
       
         
@@ -410,8 +458,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2017/02/14/2016-3-23-git-1/" rel="next" title="git 小命令">
-                <i class="fa fa-chevron-left"></i> git 小命令
+              <a href="/2017/02/14/2016-3-23-akka-1/" rel="next" title="Akka Actor - Part 1(Actor生命周期)">
+                <i class="fa fa-chevron-left"></i> Akka Actor - Part 1(Actor生命周期)
               </a>
             
           </div>
@@ -420,8 +468,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2017/02/14/2016-4-14-nio/" rel="prev" title="基于nio构建高扩展服务">
-                基于nio构建高扩展服务 <i class="fa fa-chevron-right"></i>
+              <a href="/2017/02/14/2016-3-23-git-1/" rel="prev" title="git 小命令">
+                git 小命令 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -449,7 +497,7 @@
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2017/02/14/2016-4-14-mysql-notes/"
-           data-title="MySQL 命令笔记" data-url="http://yoursite.com/2017/02/14/2016-4-14-mysql-notes/">
+           data-title="MySQL 命令笔记" data-url="http://blog.joshuajiang.com/2017/02/14/2016-4-14-mysql-notes/">
       </div>
     
   </div>
@@ -475,10 +523,10 @@
       
         <ul class="sidebar-nav motion-element">
           <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
-            Inhaltsverzeichnis
+            Table of Contents
           </li>
           <li class="sidebar-nav-overview" data-target="site-overview">
-            Übersicht
+            Overview
           </li>
         </ul>
       
@@ -496,14 +544,28 @@
           
             <div class="site-state-item site-state-posts">
               <a href="/archives">
-                <span class="site-state-item-count">24</span>
-                <span class="site-state-item-name">Artikel</span>
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">posts</span>
               </a>
             </div>
           
 
           
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">categories</span>
+              </a>
+            </div>
+          
 
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
           
 
         </nav>
@@ -511,6 +573,26 @@
         
 
         <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/jiangyongfd" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/JoshuaJiangFD" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
           
         </div>
 
@@ -565,13 +647,13 @@
 
 
 <div class="powered-by">
-  Erstellt mit  <a class="theme-link" href="https://hexo.io">Hexo</a>
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
 </div>
 
 <div class="theme-info">
   Theme -
   <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Mist
+    NexT.Pisces
   </a>
 </div>
 
@@ -638,6 +720,13 @@
 
   
   
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
 
   
   <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
