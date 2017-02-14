@@ -1144,155 +1144,6 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/03/23/akka-1/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/03/23/akka-1/" itemprop="url">
-                  Akka Actor - Part 1(Actor生命周期)
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-03-23T00:00:00+08:00">
-                2016-03-23
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2016/03/23/akka-1/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/23/akka-1/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-             <span id="/2016/03/23/akka-1/" class="leancloud_visitors" data-flag-title="Akka Actor - Part 1(Actor生命周期)">
-               <span class="post-meta-divider">|</span>
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               
-                 <span class="post-meta-item-text">Visitors </span>
-               
-                 <span class="leancloud-visitors-count"></span>
-             </span>
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>akka中对应每一个actor有三个概念，path, Actor Ref(Actor Incarnation)和UID。在Actor System中每一个path代表一个可能存在actor的位置。当调用<code>actorOf()</code>方法创建一个actor的时候，会根据<code>Props</code>变量中的类型创建一个Actor以及Actor Incarnation，Actor In4carnation是对actor的封装，path和UID唯一代表一个 Actor Incarnation。一些对应关系如下：</p>
-<ol>
-<li>Actor重启只会置换掉Props中制定的Actor类型的对象，但是Actor Incarnation和UID不变；</li>
-<li>Actor停止时Actor Incarnation生命周期结束，这时候watching actor会收到terminated消息；</li>
-<li>Actor Incarnation结束后path会回收，这时候可以用来创建与之前同名的actor，但是UID仍然是唯一生成的,所以旧的Actor Ref无法指向新的Actor，尽管新旧Actor是同名的, 但是UID不同；</li>
-<li>Actor可能会自身终止，或者被其他actor终止，或者由actor system终止；</li>
-</ol>
-<p><img src="/images/actorlifecycle.png" alt="actor lifecycle"></p>
-<h3 id="Stopping-Actors"><a href="#Stopping-Actors" class="headerlink" title="Stopping Actors"></a>Stopping Actors</h3>
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
   <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/03/23/git-1/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1421,6 +1272,155 @@
 <p><a href="http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-instead-of-git-commit" target="_blank" rel="external">http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-instead-of-git-commit</a></p>
 <h4 id="启动ssh-agent避免重复输入密码"><a href="#启动ssh-agent避免重复输入密码" class="headerlink" title="启动ssh agent避免重复输入密码"></a>启动ssh agent避免重复输入密码</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 1. start the ssh-agent in the background</span></div><div class="line"><span class="variable">$eval</span> <span class="string">"<span class="variable">$(ssh-agent -s)</span>"</span></div><div class="line">Agent pid 59566</div><div class="line"></div><div class="line"><span class="comment"># 2. add your SSH key to the ssh-agent.</span></div><div class="line"><span class="variable">$ssh</span>-add ~/.ssh/id_rsa</div></pre></td></tr></table></figure>
 
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/03/23/akka-1/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/03/23/akka-1/" itemprop="url">
+                  Akka Actor - Part 1(Actor生命周期)
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-03-23T00:00:00+08:00">
+                2016-03-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/03/23/akka-1/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/03/23/akka-1/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2016/03/23/akka-1/" class="leancloud_visitors" data-flag-title="Akka Actor - Part 1(Actor生命周期)">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">Visitors </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>akka中对应每一个actor有三个概念，path, Actor Ref(Actor Incarnation)和UID。在Actor System中每一个path代表一个可能存在actor的位置。当调用<code>actorOf()</code>方法创建一个actor的时候，会根据<code>Props</code>变量中的类型创建一个Actor以及Actor Incarnation，Actor In4carnation是对actor的封装，path和UID唯一代表一个 Actor Incarnation。一些对应关系如下：</p>
+<ol>
+<li>Actor重启只会置换掉Props中制定的Actor类型的对象，但是Actor Incarnation和UID不变；</li>
+<li>Actor停止时Actor Incarnation生命周期结束，这时候watching actor会收到terminated消息；</li>
+<li>Actor Incarnation结束后path会回收，这时候可以用来创建与之前同名的actor，但是UID仍然是唯一生成的,所以旧的Actor Ref无法指向新的Actor，尽管新旧Actor是同名的, 但是UID不同；</li>
+<li>Actor可能会自身终止，或者被其他actor终止，或者由actor system终止；</li>
+</ol>
+<p><img src="/images/actorlifecycle.png" alt="actor lifecycle"></p>
+<h3 id="Stopping-Actors"><a href="#Stopping-Actors" class="headerlink" title="Stopping Actors"></a>Stopping Actors</h3>
           
         
       
