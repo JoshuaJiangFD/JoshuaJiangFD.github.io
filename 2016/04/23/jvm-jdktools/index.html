@@ -1,0 +1,857 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="en">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="JVM," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
+jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM实践 - JDK调试工具">
+<meta property="og:url" content="http://blog.joshuajiang.com/2016/04/23/jvm-jdktools/index.html">
+<meta property="og:site_name" content="Joshua's Blog">
+<meta property="og:description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
+jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P">
+<meta property="og:updated_time" content="2017-02-14T08:23:11.221Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM实践 - JDK调试工具">
+<meta name="twitter:description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
+jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.joshuajiang.com/2016/04/23/jvm-jdktools/"/>
+
+
+
+
+
+  <title> JVM实践 - JDK调试工具 | Joshua's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="en">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-91945916-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Joshua's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle"></p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            About
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/04/23/jvm-jdktools/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                JVM实践 - JDK调试工具
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-23T00:00:00+08:00">
+                2016-04-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/04/23/jvm-jdktools/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/23/jvm-jdktools/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。</p>
+<h3 id="jinfo"><a href="#jinfo" class="headerlink" title="jinfo"></a>jinfo</h3><p>jinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用<code>java -XX:+PrintFlagsFinal</code>获得JVM所有的参数名，然后找到你想要的参数,使用<code>jinfo -flag</code>打印出该参数的值。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">Usage:                                                                                           </div><div class="line">    jinfo [option] &lt;pid&gt;                                                                             </div><div class="line">        (to connect to running process)                                                                   </div><div class="line">    jinfo [option] &lt;executable &lt;core&gt;                                                                     </div><div class="line">        (to connect to a core file)                                                                     </div><div class="line">    jinfo [option] [server_id@]&lt;remote server IP or hostname&gt;                                                      </div><div class="line">        (to connect to remote debug server)                                                               </div><div class="line">where &lt;option&gt; is one of:                                                                             </div><div class="line">    -flag &lt;name&gt;         to print the value of the named VM flag                                                 </div><div class="line">    -flag [+|-]&lt;name&gt;    to enable or disable the named VM flag                                                   </div><div class="line">    -flag &lt;name&gt;=&lt;value&gt; to set the named VM flag to the given value                                                 </div><div class="line">    -flags               to print VM flags                                                              </div><div class="line">    -sysprops            to print Java system properties                                                     </div><div class="line">    &lt;no option&gt;          to print both of the above                                                         </div><div class="line">    -h | -help           to print this help message</div></pre></td></tr></table></figure>
+<h3 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h3><p>jstat主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。主要通过采样的方式以一定时间间隔打印JVM的信息，对于在线分析JVM的性能十分有帮助。使用jstat还可以直接修改运行中的JVM的参数，主要是一些打印GC日志之类的参数。</p>
+<p><a href="http://blog.csdn.net/zhaozheng7758/article/details/8623549" target="_blank" rel="external">jstat命令详解</a></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">Usage: jstat -help|-options</div><div class="line">       jstat -&lt;option&gt; [-t] [-h&lt;lines&gt;] &lt;vmid&gt; [&lt;interval&gt; [&lt;count&gt;]] </div><div class="line">Definitions:                                                                                                                                              </div><div class="line">  &lt;option&gt;      An option reported by the -options option                                                                                                 </div><div class="line">  &lt;vmid&gt;        Virtual Machine Identifier. A vmid takes the following form:                                                                              </div><div class="line">                     &lt;lvmid&gt;[@&lt;hostname&gt;[:&lt;port&gt;]]                                                                                                        </div><div class="line">                Where &lt;lvmid&gt; is the local vm identifier for the target                                                                                   </div><div class="line">                Java virtual machine, typically a process id; &lt;hostname&gt; is                                                                               </div><div class="line">                the name of the host running the target Java virtual machine;                                                                             </div><div class="line">                and &lt;port&gt; is the port number for the rmiregistry on the                                                                                  </div><div class="line">                target host. See the jvmstat documentation for a more complete                                                                            </div><div class="line">                description of the Virtual Machine Identifier.                                                                                            </div><div class="line">  &lt;lines&gt;       Number of samples between header lines.                                                                                                   </div><div class="line">  &lt;interval&gt;    Sampling interval. The following forms are allowed:                                                                                       </div><div class="line">                    &lt;n&gt;[&quot;ms&quot;|&quot;s&quot;]                                                                                                                         </div><div class="line">                Where &lt;n&gt; is an integer and the suffix specifies the units as                                                                             </div><div class="line">                milliseconds(&quot;ms&quot;) or seconds(&quot;s&quot;). The default units are &quot;ms&quot;.                                                                           </div><div class="line">  &lt;count&gt;       Number of samples to take before terminating.                                                                                             </div><div class="line">  -J&lt;flag&gt;      Pass &lt;flag&gt; directly to the runtime system.</div></pre></td></tr></table></figure>
+<p>jstat使用一组options控制输出的内容，如下所示:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">[work@44224014 ~]$ jstat -options                                            </div><div class="line">-class                 #类加载器                              </div><div class="line">-compiler               #JIT Compiler                                </div><div class="line">-gc                   #GC堆状态                                 </div><div class="line">-gccapacity              #各区大小                                     </div><div class="line">-gccause                #最后一次GC统计和原因                                  </div><div class="line">-gcnew                 #新区统计                                 </div><div class="line">-gcnewcapacity            #新区大小                                      </div><div class="line">-gcold                 #旧区统计                                  </div><div class="line">-gcoldcapacity            #旧区大小                                      </div><div class="line">-gcpermcapacity           #永久去大小                                   </div><div class="line">-gcutil                 #GC统计汇总                                   </div><div class="line">-printcompilation          #Hotspot编译统计</div></pre></td></tr></table></figure>
+<ol>
+<li><code>stat –class&lt;pid&gt;</code> : 显示加载class的数量，及所占空间等信息</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>显示列名</th>
+<th style="text-align:center">具体描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Loaded</td>
+<td style="text-align:center">装载的类的数量</td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td style="text-align:center">装载类所占用的字节数</td>
+</tr>
+<tr>
+<td>Unloaded</td>
+<td style="text-align:center">卸载类的数量</td>
+</tr>
+<tr>
+<td>Bytes</td>
+<td style="text-align:center">卸载类的字节数</td>
+</tr>
+<tr>
+<td>Time</td>
+<td style="text-align:center">装载和卸载类所花费的时间</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><code>jstat -gcutil &lt;pid&gt;</code> : 统计gc信息，以百分比方式</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>显示列名</th>
+<th style="text-align:center">具体描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0</td>
+<td style="text-align:center">年轻代中第一个survivor（幸存区）已使用的占当前容量百分比</td>
+</tr>
+<tr>
+<td>S1</td>
+<td style="text-align:center">年轻代中第二个survivor（幸存区）已使用的占当前容量百分比, 用于拷贝存活对象</td>
+</tr>
+<tr>
+<td>E</td>
+<td style="text-align:center">年轻代中Eden Space已使用的占当前容量百分比</td>
+</tr>
+<tr>
+<td>O</td>
+<td style="text-align:center">Old代已使用的占当前容量百分比</td>
+</tr>
+<tr>
+<td>P</td>
+<td style="text-align:center">Perm代已使用的占当前容量百分比</td>
+</tr>
+<tr>
+<td>YGC</td>
+<td style="text-align:center">从程序启动到采样时年轻代gc次数</td>
+</tr>
+<tr>
+<td>YGCT</td>
+<td style="text-align:center">从应用程序启动到采样时年轻代中gc所用时间(s)</td>
+</tr>
+<tr>
+<td>FGC</td>
+<td style="text-align:center">从程序启动到采样时Full GC gc次数</td>
+</tr>
+<tr>
+<td>FGCT</td>
+<td style="text-align:center">从应用程序启动到采样时Full GC所用时间(s)</td>
+</tr>
+<tr>
+<td>GCT</td>
+<td style="text-align:center">从应用程序启动到采样时GC所用时间(s)</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li><code>jstat -gc &lt;pid&gt;</code> : 统计GC信息， 以具体大小方式</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">-gc Option</div><div class="line">Garbage-collected heap statistics </div><div class="line">Column  Description</div><div class="line">S0C     Current survivor space 0 capacity (KB).</div><div class="line">S1C     Current survivor space 1 capacity (KB).</div><div class="line">S0U     Survivor space 0 utilization (KB).</div><div class="line">S1U     Survivor space 1 utilization (KB).</div><div class="line">EC      Current eden space capacity (KB).</div><div class="line">EU      Eden space utilization (KB).</div><div class="line">OC      Current old space capacity (KB).</div><div class="line">OU      Old space utilization (KB).</div><div class="line">PC      Current permanent space capacity (KB).</div><div class="line">PU      Permanent space utilization (KB).</div><div class="line">YGC     Number of young generation GC Events.</div><div class="line">YGCT    Young generation garbage collection time.</div><div class="line">FGC     Number of full GC events.</div><div class="line">FGCT    Full garbage collection time.</div><div class="line">GCT     Total garbage collection time.</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/JVM/" rel="tag"># JVM</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/14/nio/" rel="next" title="基于nio构建高扩展服务">
+                <i class="fa fa-chevron-left"></i> 基于nio构建高扩展服务
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/08/07/spring security/" rel="prev" title="Spring Security笔记">
+                Spring Security笔记 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2016/04/23/jvm-jdktools/"
+           data-title="JVM实践 - JDK调试工具" data-url="http://blog.joshuajiang.com/2016/04/23/jvm-jdktools/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf"
+               alt="Joshua Jiang" />
+          <p class="site-author-name" itemprop="name">Joshua Jiang</p>
+          <p class="site-description motion-element" itemprop="description">功力必不唐捐</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">20</span>
+                <span class="site-state-item-name">posts</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-categories">
+              <a href="/categories">
+                <span class="site-state-item-count">5</span>
+                <span class="site-state-item-name">categories</span>
+              </a>
+            </div>
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">7</span>
+                <span class="site-state-item-name">tags</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="https://www.facebook.com/jiangyongfd" target="_blank" title="Facebook">
+                  
+                    <i class="fa fa-fw fa-globe"></i>
+                  
+                  Facebook
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/JoshuaJiangFD" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#jinfo"><span class="nav-number">1.</span> <span class="nav-text">jinfo</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#jstat"><span class="nav-number">2.</span> <span class="nav-text">jstat</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Joshua Jiang</span>
+</div>
+
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Theme -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"joshuablog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
