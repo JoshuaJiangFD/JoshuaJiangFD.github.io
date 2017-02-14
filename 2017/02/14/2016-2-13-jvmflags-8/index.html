@@ -1,0 +1,681 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="Useful JVM Flags – Part 8
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
+-XX:PrintGC
+-XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM参数 - Part 8( GC日志 )">
+<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-8/index.html">
+<meta property="og:site_name" content="Joshua's Blog">
+<meta property="og:description" content="Useful JVM Flags – Part 8
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
+-XX:PrintGC
+-XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12">
+<meta property="og:updated_time" content="2016-04-21T11:57:56.411Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM参数 - Part 8( GC日志 )">
+<meta name="twitter:description" content="Useful JVM Flags – Part 8
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
+-XX:PrintGC
+-XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-8/"/>
+
+
+
+
+
+  <title> JVM参数 - Part 8( GC日志 ) | Joshua's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-91945916-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Joshua's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle"></p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Accueil
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-8/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                JVM参数 - Part 8( GC日志 )
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posté le</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-2-13-jvmflags-8/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-13-jvmflags-8/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a href="https://blog.codecentric.de/en/2014/01/useful-jvm-flags-part-8-gc-logging/" target="_blank" rel="external">Useful JVM Flags – Part 8</a></p>
+<p>这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。</p>
+<p><strong>-XX:PrintGC</strong></p>
+<p><code>-XX:PrintGC</code>（或者<code>-verbose:gc</code>）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[GC 246656K-&gt;243120K(376320K), 0,0929090 secs]</div><div class="line">[Full GC 243120K-&gt;241951K(629760K), 1,5589690 secs]</div></pre></td></tr></table></figure></p>
+<p>每一行开始是GC的类型，后面是堆上GC前后的占用情况，括号内是当前堆的总大小，最后是每次GC的用时。例如第一行的日志标识GC使得堆上的对象从246656K降低到243120K，当前总大小为376320K，总耗时为0.093s。<br>简单的GC日志没有体现具体的GC算法差异，例如多少对象从新生代转移到了年老代。所以需要更详细的GC日志。</p>
+<p><strong>-XX:+PrintGCDetails</strong></p>
+<p><code>-XX:+PrintGCDetails</code>参数会打印更详细的日志，下面是一个吞吐量优先的回收器上一次GC的日志输出，这里为了更可读，加了一些分行和缩进，实际输出只是一行。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[GC</div><div class="line">    [PSYoungGen: 142816K-&gt;10752K(142848K)] 246648K-&gt;243136K(375296K),</div><div class="line">    0,0935090 secs</div><div class="line">]</div><div class="line">[Times: user=0,55 sys=0,10, real=0,09 secs]</div></pre></td></tr></table></figure>
+<p>从输出可以看出，一次新生代上的GC将堆上已用空间从246648K降低到243136K，耗时0.0.935秒。另外可以看出新生代上大小为142848K，使用的回收器为<code>PSYoungGen</code>。另外从新生代GC的结果来看触发GC的原因是因为已经没有足够的内存给新创建的对象。另外通过对比发现，虽然新生代上可用空间增大（142816K-&gt;10752K），但是总体堆内从占用没有减少（246648K-&gt;243136K），有大量的对象从新生代拷贝到了年老代。</p>
+<p><code>Times</code>行显示了GC占用的CPU时间，分为用户态(User)和核心态（Sys）。另外实际运行时间为0.0.9秒。这里用户态的时间远远大于实际运行时间，可见GC是多线程运行的。CPU时间统计的是所有核上的时间之和。相除可以得知，大概有8个线程并发执行GC。</p>
+<p>下面是一个Full GC的输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[Full GC</div><div class="line">    [PSYoungGen: 10752K-&gt;9707K(142848K)]</div><div class="line">    [ParOldGen: 232384K-&gt;232244K(485888K)] 243136K-&gt;241951K(628736K)</div><div class="line">    [PSPermGen: 3162K-&gt;3161K(21504K)],</div><div class="line">    1,5265450 secs</div><div class="line">]</div><div class="line">[Times: user=10,96 sys=0,06, real=1,53 secs]</div></pre></td></tr></table></figure>
+<p>Full GC打印出了年老代和永久代的GC信息。从日志可以看到三个内存区域使用的不同GC算法以及GC时的空间大小。例子中628736K为堆空间的总容量，142848K属于新生代，485888K属于年老代。Full GC耗时1.53秒，占用CPU时间为10.96秒（用户态），可见GC是并发执行的。（同上使用了8个线程）</p>
+<p>详细日志可以让我们推理是哪一块内存区域触发了GC。如果某一块区域在GC发生时的占用空间几乎等于总空间，则可以判断是这块区域触发了GC。但是在上面这个例子中三个区域都没有快占满，那么是什么原因呢？<br>在使用吞吐量优先的回收器时，如果JVM可以在需要的时候主动触发一次GC，而不需要等待某一块区域空间被耗尽。</p>
+<p>应用可以调用JDK API主动请求Sysmtem GC，这时在GC日志中会打印”Full GC(System)”开头，而不是”Full GC”。</p>
+<p>串行回收器的详细日志和吞吐量优先的回收器相似，除了日志开头打印的具体GC方法名不同，例如串行GC称年老代为”Tenured”而不是”ParOldGen”。使用具体GC方法名有一个好处，是让我们从日志直接了解JVM设置的具体细节。</p>
+<p>使用CMS回收器时，新生代上的回收日志和吞吐量优先的回收器大致相同。但是在年老代上有所不同，CMS回收器在年老代上的GC过程大部分和应用会并发进行，打印的日志并不连续，可能会混杂新生代的GC日志中间。但是如果理解了日志的输出方式，理解起来并不困难。唯一需要注意的是，CMS回收的日志时间跨度可能比较大，这是正常的。</p>
+<p>另外前面提到过，如果CMS回收器没能及时回收空间，JVM还是可能会触发Full GC。这种情况下Full GC的日志会打印出原因，即前面提到过的“并发模式故障”(“Concurrent Mode Failure”)。</p>
+<p>由于篇幅所限，这里不再展开解释CMS回收器的详细日志，但是强烈推荐这个算法的作者的<a href="https://blogs.oracle.com/jonthecollector/entry/the_unspoken_cms_and_printgcdetails" target="_blank" rel="external">一篇文章</a>。</p>
+<p><strong>-XX:+PrintGCTimeStamps 和 -XX:+PrintGCDateStamps</strong></p>
+<p>可以为GC日志添加具体时间戳，<code>-XX:+PrintGCTimeStamps</code>为每次GC打印相对从JVM启动以来的时间增量。例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">0,185: [GC 66048K-&gt;53077K(251392K), 0,0977580 secs]</div><div class="line">0,323: [GC 119125K-&gt;114661K(317440K), 0,1448850 secs]</div><div class="line">0,603: [GC 246757K-&gt;243133K(375296K), 0,2860800 secs]</div></pre></td></tr></table></figure>
+<p><code>-XX:+PrintGCDateStamps</code>打印绝对值时间，例如：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2014-01-03T12:08:38.102-0100: [GC 66048K-&gt;53077K(251392K), 0,0959470 secs]</div><div class="line">2014-01-03T12:08:38.239-0100: [GC 119125K-&gt;114661K(317440K), 0,1421720 secs]</div><div class="line">2014-01-03T12:08:38.513-0100: [GC 246757K-&gt;243133K(375296K), 0,2761000 secs]</div></pre></td></tr></table></figure>
+<p>推荐同时设置这两个参数<code>-XX:+PrintGCTimeStamps</code> 和 <code>-XX:+PrintGCDateStamps</code>，这样在分析的时候可以通过时间戳方便的关联其他信息。</p>
+<p><strong>-Xloggc</strong></p>
+<p>GC日志默认输出到标准输出，可以通过设置<code>-Xloggc:&lt;file&gt;</code>将日志打印到单独的文件。注意使用这个参数将隐式的启用<code>-XX:+PrintGC</code>参数和<code>-XX:+PrintGCTimeStamps</code>参数。但是为了防止以后的JVM做出调整，还是建议显式的加上这两个参数。</p>
+<p><strong>“Manageable” Flags</strong></p>
+<p>关于打印GC日志是否会带来额外开销这个问题经常被讨论。其实这个开销很小，因此笔者强烈建议加上这个参数。另外，其实不一定要在JVM启动前设置好这个参数，可以在运行时管理参数。</p>
+<p>Hotspot JVM 有一小类参数成为”Manageable Flags”, 这些参数可以在运行时设置。所以这里讨论的参数，以及以”PrintGC”开头的参数都属于这一类。使用这一功能需要借助于JDK自带的<code>jinfo</code>工具，或者使用JMX客户端，调用名为<code>&quot;HotSpotDiagnostic&quot;</code>的MBean对象上的<code>&quot;setVMOption&quot;</code>方法。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/14/2016-2-13-jvmflags-7/" rel="next" title="JVM参数 - Part 7( CMS回收器 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 7( CMS回收器 )
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/14/2016-2-13-linux-bash-widgets/" rel="prev" title="Linux Bash 小工具">
+                Linux Bash 小工具 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/02/14/2016-2-13-jvmflags-8/"
+           data-title="JVM参数 - Part 8( GC日志 )" data-url="http://yoursite.com/2017/02/14/2016-2-13-jvmflags-8/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf"
+               alt="Joshua Jiang" />
+          <p class="site-author-name" itemprop="name">Joshua Jiang</p>
+          <p class="site-description motion-element" itemprop="description">功力必不唐捐</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">articles</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Joshua Jiang</span>
+</div>
+
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Thème -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"joshuablog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

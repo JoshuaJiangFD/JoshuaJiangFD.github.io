@@ -1,0 +1,711 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
+###线程架构 Thr">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于nio构建高扩展服务">
+<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-4-14-nio/index.html">
+<meta property="og:site_name" content="Joshua's Blog">
+<meta property="og:description" content="如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
+###线程架构 Thr">
+<meta property="og:image" content="http://yoursite.com/!--￼7-->/images/reactor.png">
+<meta property="og:image" content="http://yoursite.com/!--￼8-->/images/server.png">
+<meta property="og:updated_time" content="2016-05-02T05:09:09.042Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于nio构建高扩展服务">
+<meta name="twitter:description" content="如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
+###线程架构 Thr">
+<meta name="twitter:image" content="http://yoursite.com/!--￼7-->/images/reactor.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-4-14-nio/"/>
+
+
+
+
+
+  <title> 基于nio构建高扩展服务 | Joshua's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-91945916-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Joshua's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle"></p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Accueil
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-4-14-nio/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于nio构建高扩展服务
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posté le</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-4-14-nio/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-4-14-nio/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。</p>
+<p>###线程架构 Threading Architecture</p>
+<p>实现一个多线程的server，第一个最容易想到的线程架构就是thread-per-connection模式。这是java 1.4 之前最传统的模式，因为那时候java还不支持非阻塞式IO(non-blocking I/O)。thread-per-connection模式为每个connection分配一个专一的线程。在一个处理循环里，一个工作线程等待新的数据到达，处理请求，然后返回结果，最后调用socket的read方法， 并一直阻塞直到新的数据到达。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * server based on thread-per-connection pattern </div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Server</span> </span>&#123;</div><div class="line">  <span class="keyword">private</span> ExecutorService executors = Executors.newFixedThreadPool(<span class="number">10</span>);</div><div class="line">  <span class="keyword">private</span> <span class="keyword">boolean</span> isRunning = <span class="keyword">true</span>;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String... args)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">new</span> Server().launch(Integer.parseInt(args[<span class="number">0</span>]));</div><div class="line">  &#125; </div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">launch</span><span class="params">(<span class="keyword">int</span> port)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    ServerSocket sso = <span class="keyword">new</span> ServerSocket(port);</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      Socket s = sso.accept();</div><div class="line">      executors.execute(<span class="keyword">new</span> Worker(s));</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Worker</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> LineNumberReader in = <span class="keyword">null</span>;</div><div class="line">    ...</div><div class="line"></div><div class="line">    Worker(Socket s) <span class="keyword">throws</span> ... &#123;</div><div class="line">      in = <span class="keyword">new</span> LineNumberReader(<span class="keyword">new</span> InputStreamReader(...));</div><div class="line">      out = ...</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">      <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">          <span class="comment">// blocking read of a request (line) </span></div><div class="line">          String request = in.readLine();</div><div class="line"></div><div class="line">          <span class="comment">// processing the request</span></div><div class="line">          ...</div><div class="line">          String response = ...</div><div class="line"></div><div class="line">          <span class="comment">// return the response</span></div><div class="line">          out.write(resonse);</div><div class="line">          out.flush();</div><div class="line">        &#125; <span class="keyword">catch</span> (Exception e ) &#123; </div><div class="line">          ... </div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">      in.close();</div><div class="line">      ...</div><div class="line">    &#125; </div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在这种模式下，所有的并发连接和所有的并发工作线程总是一一对应的。正因为每个连接都对应服务器端的一个线程，单个已经建立的连接的的响应会很迅速。但是高负载下就需要更多并发的工作线程，这限制了可扩展性。并且如果存在大量的long-living connection,例如HTTP长连接，将会导致大量的并发线程，而每个线程的利用率很低，因为有大量时间浪费在等待客户端新的应用层请求（例如HTTP请求，这些HTTP请求复用了未释放的连接）。同样大量并发的线程也浪费内存空间：例如在Solaris JVM上每个线程默认的栈空间大小为512KB。</p>
+<p>如果服务器需要的是能并发处理大量的请求，并能接受对单个请求的响应时间被延长，这就需要一种新的更有效率线程架构，例如thread-on-event方式。这种方式下工作线程独立于connection而只被用来处理特定的事件。例如，如果新的数据到达，一个工作线程会被调度去处理应用服务相关的解码和执行具体的应用层任务(或者只是构建一个任务丢到另一个线程池中运行)。一旦调度任务完成，这个工作线程会返回线程池。这种处理方式需要非阻塞的执行socket的I/O操作，即socket上的read和write可以非阻塞式调用，并且需要一个额外的event system,用来通知事件的发生。总之这种方式去除了线程和connection之间的1：1对应关系。这种event-driven的I/O系统称为<strong>Reactor模式</strong>。</p>
+<h3 id="Reactor-模式-Reactor-Pattern"><a href="#Reactor-模式-Reactor-Pattern" class="headerlink" title="Reactor 模式 Reactor Pattern"></a>Reactor 模式 Reactor Pattern</h3><p>Reactor模式（如图1）， 使得事件的监听(如Socker读就绪或写就绪事件)和该事件的处理相分离。例如如果一个读就绪事件被侦听到后，该事件会有一个事先注册好的处理句柄会被调用，但是这个调用可能会发生在另一个可用的分配好的工作线程上。</p>
+<p><img src="!--￼7--&gt;/images/reactor.png" alt="reactor model"></p>
+<ul>
+<li>为了接入事件架构，连接的Channel需要注册到Selector上，这一步通过调用<code>SelectorChannel.register()</code>方法，该方法的Selector参数会反过来注册SelectorChannel到自身内部。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">SocketChannel channel = serverChannel.accept();</div><div class="line"><span class="comment">// configure it as non blocking way, required!</span></div><div class="line">channel.configureBlocking(<span class="keyword">false</span>);</div><div class="line"><span class="comment">// register the connection</span></div><div class="line">SelectionKey sk = channel.register(selector, SelectionKey.OP_READ);</div></pre></td></tr></table></figure>
+<ul>
+<li><p>为了检测新的事件，Selector 类提供了<code>select()</code>方法，收集已经注册的Channel上所有就绪的事件，该方法阻塞直到出现就绪事件。上面的例子里，select()方法会返回所有I/O就绪的connection数目，所有被选择的connection可以通过<code>selector.selectedKeys()</code> 得到SelectionKey的集合。每个SelecttionKey上有当前connection上IO事件的状态和对应的Channel引用。</p>
+</li>
+<li><p>Selector引用被Dispatcher持有，Dispatcher是由一个单独的线程循环调用Selector上的<code>select()</code>方法侦听IO事件并负责分发事件到对应的EventHandler中。<code>Selector.select()</code>方法阻塞等待新的事件，一旦有事件发生，例如对于读就绪事件或者写就绪事件，<code>select()</code>方法返回，这时候可以通过调用<code>selector.selectKeys()</code>方法获得就绪的channel和对应的IO事件类型。</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//Diapatcher's diapatching logic</span></div><div class="line">...</div><div class="line"><span class="keyword">while</span> (isRunning) &#123;</div><div class="line">  <span class="comment">// blocking call, to wait for new readiness events</span></div><div class="line">  <span class="keyword">int</span> eventCount = selector.select(); </div><div class="line"></div><div class="line">  <span class="comment">// get the events</span></div><div class="line">  Iterator&lt;SelectionKey&gt; it = selector.selectedKeys().iterator();</div><div class="line">  <span class="keyword">while</span> (it.hasNext()) &#123;</div><div class="line">    SelectionKey key = it.next();</div><div class="line">    it.remove();</div><div class="line"></div><div class="line">    <span class="comment">// readable event?</span></div><div class="line">    <span class="keyword">if</span> (key.isValid() &amp;&amp; key.isReadable()) &#123;</div><div class="line">      eventHandler.onReadableEvent(key.channel());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// writable event? </span></div><div class="line">    <span class="keyword">if</span> (key.isValid() &amp;&amp; key.isWritable()) &#123;</div><div class="line">      key.interestOps(SelectionKey.OP_READ); <span class="comment">// reset to read only</span></div><div class="line">      eventHandler.onWriteableEvent(key.channel());</div><div class="line">    &#125;</div><div class="line">    ...</div><div class="line">  &#125;</div><div class="line">  ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>EventHandler对于不同的IO事件有不同的处理逻辑，一般包括解码请求，处理请求，编码返回值。因为处理Event handler的工作线程并没有等待连接建立和就绪的过程，系统的瓶颈理论上就只取决于硬件资源如CPU和内存，或者文件句柄数目。这保证了系统的吞吐量，尽管在单个请求的处理时间上可能没有thread-per-connection的快，并且线程切换和同步有一定的额外开销。<br>所以对于Event-Driven的方法来说，挑战在于如何最小化线程管理的开销，如同步和切换，使得这部分开销可以忽略不计。</li>
+</ul>
+<h3 id="组件架构-Component-Architecture"><a href="#组件架构-Component-Architecture" class="headerlink" title="组件架构 Component Architecture"></a>组件架构 Component Architecture</h3><p>大部分的高扩展Java服务都基于<strong>Reactor Pattern</strong>, 但是需要做出一些改进，以便支持服务的连接管理，缓存管理和负载均衡。服务的入口称为<strong>Acceptor</strong>，如下图所示:</p>
+<p><img src="!--￼8--&gt;/images/server.png" alt="reactor server"></p>
+<h4 id="Acceptor"><a href="#Acceptor" class="headerlink" title="Acceptor"></a>Acceptor</h4><p><strong>Acceptor</strong>和服务的端口绑定，负责接收所有的客户端请求，它运行在一个专门的线程上。因为它仅仅负责接收请求，这个过程并不耗时，所以可以使用Blocking IO实现，<strong>Acceptor</strong>通过调用<code>ServerSockerChannel</code>的<code>accept</code>方法建立新的连接，这是一个阻塞调用，新的连接将被注册到<code>Dispatcher</code>上。这样这个连接上的IO事件就可以被监听和处理了。</p>
+<p>单个到<code>Dispatcher</code>的扩展性有限，所以通常需要维护一个小的<code>Dispatcher Pool</code>。原因之一是因为大部分操作系统上的<code>selector</code>实现是将<code>SockerChannel</code>和文件句柄(File Discriptor)一一映射的。所以不同的操作系统上对于单个<code>selector</code>上的可用连接数是有不同限制的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Acceptor</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">  ...</div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</div><div class="line">    ServerSocketChannel serverChannel = ServerSocketChannel.open();</div><div class="line">    serverChannel.configureBlocking(<span class="keyword">true</span>);</div><div class="line">    serverChannel.socket().bind(<span class="keyword">new</span> InetSocketAddress(serverPort));</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      <span class="keyword">try</span> &#123;</div><div class="line">        SocketChannel channel = serverChannel.accept(); </div><div class="line">        <span class="comment">/*</span></div><div class="line">         * a Connection object holds the SocketChannel and an Application-Level event handler</div><div class="line">         */</div><div class="line">        Connection con = <span class="keyword">new</span> Connection(channel, appHandler);</div><div class="line">        dispatcherPool.nextDispatcher().register(con);  </div><div class="line">      &#125; <span class="keyword">catch</span> (...) &#123;</div><div class="line">        ...</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Dispatcher"><a href="#Dispatcher" class="headerlink" title="Dispatcher"></a>Dispatcher</h4><p>在上面的Acceptor处理逻辑中会调用Dispatcher注册新连接，<code>Dispacther.Register()</code>会调用内部的<code>Selector</code>来注册该<code>SocketChannel</code>。此处有一问题, <code>Selector</code>内部通过<code>key sets</code> 管理已注册的Channels, 注册新的<code>channel</code>时，需要创建一个<code>SelectionKey</code>并添加到<code>key sets</code>中，而在并发操作下，同一个<code>Dispatcher</code>同样会通过<code>Selector.select()</code>方法读取<code>key sets</code>。因为<code>key sets</code>本身不是thread-safe,因此需要实现额外的线程同步。对于该问题有一个范式: <code>selector guard object idiom</code>通过暂停<code>Dispatcher</code>线程避免了可能的死锁和Race Condition问题。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Dispatcher</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">  <span class="keyword">private</span> Object guard = <span class="keyword">new</span> Object();</div><div class="line">  ...</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">register</span><span class="params">(Connection con)</span> </span>&#123;</div><div class="line">    <span class="comment">// retrieve the guard lock and wake up the dispatcher thread</span></div><div class="line">    <span class="comment">// to register the connection's channel</span></div><div class="line">    <span class="keyword">synchronized</span> (guard) &#123;</div><div class="line">      selector.wakeup();  </div><div class="line">      con.getChannel().register(selector, SelectionKey.OP_READ, con);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// notify the application EventHandler about the new connection </span></div><div class="line">    ...</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">announceWriteNeed</span><span class="params">(Connection con)</span> </span>&#123;</div><div class="line">    SelectionKey key = con.getChannel().keyFor(selector);</div><div class="line">    <span class="keyword">synchronized</span> (guard) &#123;</div><div class="line">      selector.wakeup();</div><div class="line">      key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      <span class="keyword">synchronized</span> (guard) &#123;</div><div class="line">        <span class="comment">// suspend the dispatcher thead if guard is locked </span></div><div class="line">      &#125;</div><div class="line">      <span class="keyword">int</span> eventCount = selector.select();</div><div class="line"></div><div class="line">      Iterator&lt;SelectionKey&gt; it = selector.selectedKeys().iterator();</div><div class="line">      <span class="keyword">while</span> (it.hasNext()) &#123;</div><div class="line">        SelectionKey key = it.next(); </div><div class="line">        it.remove();</div><div class="line"></div><div class="line">        <span class="comment">// read event?</span></div><div class="line">        <span class="keyword">if</span> (key.isValid() &amp;&amp; key.isReadable()) &#123;</div><div class="line">          Connection con = (Connection) key.attachment();</div><div class="line">          disptacherEventHandler.onReadableEvent(con);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// write event?</span></div><div class="line">        ...</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>一旦connection注册完成，Selector会监听connection上的IO事件，事件发生后，Dispatcher上对应的处理函数会调用，同时向处理函数传入对应的connection。</p>
+<h4 id="Dispatcher-Level-EventHandler"><a href="#Dispatcher-Level-EventHandler" class="headerlink" title="Dispatcher-Level EventHandler"></a>Dispatcher-Level EventHandler</h4><p>当读就绪事件发生时，首先将执行<code>Channel</code>上的<code>read</code>方法， 和流式的读取方式不同的是，<code>Channel</code>上的<code>read</code>方法需要传入一块缓冲区，通常情况下这里会使用直接缓冲区(Direct Buffer)，直接缓冲区是直接在进程内存空间上分配的一块区域，绕开了Java的堆空间。使用直接缓冲区，Socket上的IO操作不再需要创建中间缓冲区。<br>通常情况下，read方法执行时间很快。不同的操作系统具体会有所不同，通常情况下核心态下读操作只是将接收到的数据从kernel spacce拷贝一份到用户进程内存的一块读缓冲中。然后接收到的数据会被追加到连接对应的一个线程安全的读队列中等待后续处理。在Dispatcher完成Channel上的IO操作后，将交由对应的应用层任务处理，这会调用相应的Application-Level EventHander，并一般会交给一个分配的工作线程去执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">DispatcherEventHandler</span> </span>&#123;</div><div class="line">  ...</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">onReadableEvent</span><span class="params">(<span class="keyword">final</span> Connection con)</span> </span>&#123;</div><div class="line">    <span class="comment">// get the received data </span></div><div class="line">    ByteBuffer readBuffer = allocateMemory();</div><div class="line">    con.getChannel().read(readBuffer);</div><div class="line">    ByteBuffer data = extractReadAndRecycleRenaming(readBuffer);</div><div class="line"></div><div class="line">    <span class="comment">// append it to read queue</span></div><div class="line">    con.getReadQueue().add(data); </div><div class="line">    ...</div><div class="line"></div><div class="line">    <span class="comment">// perform further operations (encode, process, decode) </span></div><div class="line">    <span class="comment">// by a worker thread</span></div><div class="line">    <span class="keyword">if</span> (con.getReadQueue().getSize() &amp;gt; <span class="number">0</span>) &#123;</div><div class="line">      workerPool.execute(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">          <span class="keyword">synchronized</span> (con) &#123;</div><div class="line">            con.getAppHandler().onData(con);</div><div class="line">          &#125;</div><div class="line">        &#125;</div><div class="line">      &#125;); </div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">onWriteableEvent</span><span class="params">(Connection con)</span> </span>&#123;</div><div class="line">    ByteBuffer[] data = con.getWriteQueue().drain();</div><div class="line">    con.getChannel().write(data); <span class="comment">// write the data</span></div><div class="line">    ...</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (con.getWriteQueue().isEmpty()) &#123;</div><div class="line">      <span class="keyword">if</span> (con.isClosed()) &#123;</div><div class="line">        dispatcher.deregister(con);</div><div class="line">      &#125;</div><div class="line"></div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">       <span class="comment">// there is remaining data to write</span></div><div class="line">       dispatcher.announceWriteNeed(con); </div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Application-Level-EventHandler"><a href="#Application-Level-EventHandler" class="headerlink" title="Application-Level EventHandler"></a>Application-Level EventHandler</h4><p><code>Dispatcher</code>主要用来监听和处理SockerChannel上IO事件，而Application-Level EventHandler处理的是已经抽象过的面向连接的事件，如连接建立，连接断开。注意这里的连接应该指代应用层面对的连接如HTTP连接，FTP连接。不同的应用层框架对的EventHandler有不同的定义，如SEDA, MINA, EmberIO等。这些NIO框架通常定义了多层的事件处理链。这样就可以定义例如SSLHandler或者DelayedWriteHandler对请求和结果进行拦截。下面是一个xSocket框架的Application-Level EventHandler示例。<code>xSocket</code>框架支持不同的处理接口，这些接口定义的回调方法可以实现不同的应用层逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">POP3ProtocolHandler</span> <span class="keyword">implements</span> <span class="title">IConnectHandler</span>, <span class="title">IDataHandler</span>, ... </span>&#123;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DELIMITER = ...</div><div class="line">  <span class="keyword">private</span> Mailbox mailbox = ...</div><div class="line"></div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String... args)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">new</span> MultithreadedServer(<span class="number">110</span>, <span class="keyword">new</span> POP3ProtocolHandler()).run();</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onConnect</span><span class="params">(INonBlockingConnection con)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">if</span> (gatekeeper.isSuspiciousAddress(con.getRemoteAddress())) &#123;</div><div class="line">      con.setWriteTransferRate(<span class="number">5</span>);  <span class="comment">// reduce transfer: 5byte/sec</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    con.write(<span class="string">"+OK My POP3-Server"</span> + DELIMITER);</div><div class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onData</span><span class="params">(INonBlockingConnection con)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    String request = con.readStringByDelimiter(DELIMITER);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (request.startsWith(<span class="string">"QUIT"</span>)) &#123;</div><div class="line">      mailbox.close();</div><div class="line">      con.write(<span class="string">"+OK POP3 server signing off"</span> + DELIMITER);</div><div class="line">      con.close();</div><div class="line"></div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (request.startsWith(<span class="string">"USER"</span>)) &#123;</div><div class="line">      <span class="keyword">this</span>.user = request.substring(<span class="number">4</span>, request.length());</div><div class="line">      con.write(<span class="string">"+OK enter password"</span> + DELIMITER);</div><div class="line"></div><div class="line"></div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (request.startsWith(<span class="string">"PASS"</span>)) &#123;</div><div class="line">      String pwd = request.substring(<span class="number">4</span>, request.length());</div><div class="line">      <span class="keyword">boolean</span> isAuthenticated = authenticator.check(user, pwd);</div><div class="line">      <span class="keyword">if</span> (isAuthenticated) &#123;</div><div class="line">        mailbox = MailBox.openAndLock(user);</div><div class="line">        con.write(<span class="string">"+OK mailbox locked and ready"</span> + DELIMITER);</div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">        ...</div><div class="line">      &#125;  </div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (...) &#123;</div><div class="line">      ...</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Dispatcher会将读取好的数据放在连接对应的Read队列中，为了方便应用层读取队列中的数据，<code>Connection</code>对象提供了若干read/write方法支持以stream或者channel的方式操作数据，对写队列也是一样。</p>
+<p>通常关闭连接时，NIO框架底层实现会flush掉Connection对象的write对流里面的数据，所有数据写完之后，连接会被关闭。除了正常的连接关闭之外，其他例如硬件错误也会关闭一个TCP-based的连接。这种情况只有在往socket写数据或者读数据时或者idle timeout时才会被发现。大部分基于NIO的框架大多实现了对连接异常断开的处理。</p>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>事件驱动的非阻塞架构是实现高效可扩展可依赖服务的基础层。困难在于如何最小化线程同步和切换的开销，并最优化连接和缓存的管理。这些重要的工作已经不需要重复实现，一些服务框架如xSocket, emberIO, SEDA和MINA都对底层的事件处理和线程管理进行了抽象，使得开发人员可以专注在应用层逻辑上。大部分这些框架还支持了UDP和SSL协议。 这些都未在本文展开了。</p>
+<h4 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h4><p><a href="https://community.oracle.com/docs/DOC-983601" target="_blank" rel="external">原文链接Architecture of a highly scalable NIO-based server</a></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/14/2016-3-23-git-1/" rel="next" title="git 小命令">
+                <i class="fa fa-chevron-left"></i> git 小命令
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/14/2016-4-23-jvm-jdktools/" rel="prev" title="JVM实践 - JDK调试工具">
+                JVM实践 - JDK调试工具 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/02/14/2016-4-14-nio/"
+           data-title="基于nio构建高扩展服务" data-url="http://yoursite.com/2017/02/14/2016-4-14-nio/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            Table Des Matières
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            Ensemble
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf"
+               alt="Joshua Jiang" />
+          <p class="site-author-name" itemprop="name">Joshua Jiang</p>
+          <p class="site-description motion-element" itemprop="description">功力必不唐捐</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">articles</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reactor-模式-Reactor-Pattern"><span class="nav-number">1.</span> <span class="nav-text">Reactor 模式 Reactor Pattern</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组件架构-Component-Architecture"><span class="nav-number">2.</span> <span class="nav-text">组件架构 Component Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Acceptor"><span class="nav-number">2.1.</span> <span class="nav-text">Acceptor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher"><span class="nav-number">2.2.</span> <span class="nav-text">Dispatcher</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher-Level-EventHandler"><span class="nav-number">2.3.</span> <span class="nav-text">Dispatcher-Level EventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Application-Level-EventHandler"><span class="nav-number">2.4.</span> <span class="nav-text">Application-Level EventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">2.5.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference"><span class="nav-number">2.6.</span> <span class="nav-text">Reference</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Joshua Jiang</span>
+</div>
+
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Thème -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"joshuablog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

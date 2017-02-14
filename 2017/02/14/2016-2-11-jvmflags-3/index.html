@@ -1,0 +1,669 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="Useful JVM Flags – Part 3
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
+-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
+在ClientVM上使用-XX:+PrintFlags">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM参数 - Part 3( 打印XX参数列表 )">
+<meta property="og:url" content="http://yoursite.com/2017/02/14/2016-2-11-jvmflags-3/index.html">
+<meta property="og:site_name" content="Joshua's Blog">
+<meta property="og:description" content="Useful JVM Flags – Part 3
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
+-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
+在ClientVM上使用-XX:+PrintFlags">
+<meta property="og:updated_time" content="2016-05-02T05:09:09.042Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM参数 - Part 3( 打印XX参数列表 )">
+<meta name="twitter:description" content="Useful JVM Flags – Part 3
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
+-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
+在ClientVM上使用-XX:+PrintFlags">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2017/02/14/2016-2-11-jvmflags-3/"/>
+
+
+
+
+
+  <title> JVM参数 - Part 3( 打印XX参数列表 ) | Joshua's Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="">
+
+  
+
+
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-91945916-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Joshua's Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle"></p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Accueil
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/02/14/2016-2-11-jvmflags-3/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                JVM参数 - Part 3( 打印XX参数列表 )
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posté le</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-02-14T14:09:35+08:00">
+                2017-02-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2017/02/14/2016-2-11-jvmflags-3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2017/02/14/2016-2-11-jvmflags-3/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-3-printing-all-xx-flags-and-their-values/" target="_blank" rel="external"> Useful JVM Flags – Part 3</a></p>
+<p>Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。</p>
+<p><strong>-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial</strong></p>
+<p>在ClientVM上使用<code>-XX:+PrintFlagsFinal</code>参数可以打印出所有按照字母排序的XX参数（不同的JVM版本数目有所不同, 这个版本有590个之多）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ java -client -XX:+PrintFlagsFinal Benchmark</div><div class="line">[Global flags]</div><div class="line">uintx AdaptivePermSizeWeight               = 20               &#123;product&#125;</div><div class="line">uintx AdaptiveSizeDecrementScaleFactor     = 4                &#123;product&#125;</div><div class="line">uintx AdaptiveSizeMajorGCDecayTimeScale    = 10               &#123;product&#125;</div><div class="line">uintx AdaptiveSizePausePolicy              = 0                &#123;product&#125;</div><div class="line">[...]</div><div class="line">uintx YoungGenerationSizeSupplementDecay   = 8                &#123;product&#125;</div><div class="line">uintx YoungPLABSize                        = 4096             &#123;product&#125;</div><div class="line"> bool ZeroTLAB                             = false            &#123;product&#125;</div><div class="line"> intx hashCode                             = 0                &#123;product&#125;</div></pre></td></tr></table></figure>
+<p>输出的每一行的XX参数都有5列，第一列表示参数类型，第二列为参数名称，第四列是值，第五列为参数类别。第三列如果为”=”表示是默认值，为”:=”表示为非默认值（由用户或者JVM添加）。</p>
+<p>在Server VM 上需要添加<code>-XX:+UnlockExperimentalVMOptions</code>和<code>-XX:+UnlockDiagnosticVMOptions</code>来解锁所有的附加隐藏的参数。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark</div></pre></td></tr></table></figure>
+<p>结果产生的数目众多，有724个参数。下面可以着重看下非默认值得参数，用<code>:=</code>条件过滤一下。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark | grep &quot;:&quot;</div><div class="line">uintx InitialHeapSize                     := 57505088         &#123;product&#125;</div><div class="line">uintx MaxHeapSize                         := 920649728        &#123;product&#125;</div><div class="line">uintx ParallelGCThreads                   := 4                &#123;product&#125;</div><div class="line"> bool PrintFlagsFinal                     := true             &#123;product&#125;</div><div class="line"> bool UseParallelGC                       := true             &#123;product&#125;</div></pre></td></tr></table></figure>
+<p>这其中只有<code>-XX:+PrintFlagsFinal</code>参数是我们添加的，其余的是ServerVM添加的用来选取合适的堆空间以及垃圾回收选项。</p>
+<p><code>-XX:+PrintFlagsInitial</code>参数可以只显示那些默认值的参数。这个参数的输出是第三列为”=”的参数。但是这个列表以<code>-XX:+PrintFlagsFinal</code>的过滤结果要少，因为有些是动态参数的缘故。</p>
+<p>通过这些参数可以很直观的比较Server VM和Client VM的不同，而且哪些参数会影响另外的参数的赋值。<a href="http://q-redux.blogspot.com/2011/01/inspecting-hotspot-jvm-options.html" target="_blank" rel="external">这篇博客</a>值得深入研究，并且这篇文章提到了第五列的参数类别的含义。</p>
+<p><strong>-XX:PrintCommandLineFlags</strong></p>
+<p>作为本文的结束，让我们认识一下另一个存在已久的参数<code>-XX:PrintCommandLineFlags</code>。这个参数可以让JVM显式的打印出所有由用户指定或者JVM自身启动时优化设置的参数。<br>换句话说，它会列举出<code>-XX:+PrintFlagsFinal</code>参数输出的结果中所有第三列为”:=”的参数，这个可以作为一个获取修改的参数的快捷方式。例子如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+PrintCommandLineFlags Benchmark</div><div class="line">-XX:InitialHeapSize=57505088 -XX:MaxHeapSize=920081408 -XX:ParallelGCThreads=4 -XX:+PrintCommandLineFlags -XX:+UseParallelGC</div></pre></td></tr></table></figure>
+<p>如果我们每次启动JVM时能设置<code>-XX:PrintCommandLineFlags</code>则可以从日志中直观的记录下参数设定对每次性能的影响。所以同<code>-showversion</code>参数一样，笔者建议<code>-XX:PrintCommandLineFlags</code>参数应该总是被启用，这个参数并不复杂，单提供的信息有时候可能非常需要。</p>
+<p>有个奇怪的地方，是这里的参数<code>-XX:PrintCommandLineFlags</code>打印出来的堆空间的最大值比参数<code>-XX:+PrintFlagsFinal</code>的值略小，如果谁知道原因，请告诉我。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2017/02/14/2016-2-10-jvmflags-2/" rel="next" title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 2( 参数归类和JIT编译诊断 )
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2017/02/14/2016-2-11-jvmflags-4/" rel="prev" title="JVM参数 - Part 4（堆调优）">
+                JVM参数 - Part 4（堆调优） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="2017/02/14/2016-2-11-jvmflags-3/"
+           data-title="JVM参数 - Part 3( 打印XX参数列表 )" data-url="http://yoursite.com/2017/02/14/2016-2-11-jvmflags-3/">
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf"
+               alt="Joshua Jiang" />
+          <p class="site-author-name" itemprop="name">Joshua Jiang</p>
+          <p class="site-description motion-element" itemprop="description">功力必不唐捐</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">24</span>
+                <span class="site-state-item-name">articles</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Joshua Jiang</span>
+</div>
+
+
+<div class="powered-by">
+  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
+</div>
+
+<div class="theme-info">
+  Thème -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+  
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"joshuablog"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+  
+    
+    
+    <script src="/lib/ua-parser-js/dist/ua-parser.min.js?v=0.7.9"></script>
+    <script src="/js/src/hook-duoshuo.js"></script>
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
