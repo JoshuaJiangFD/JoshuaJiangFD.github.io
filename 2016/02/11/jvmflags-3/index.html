@@ -258,9 +258,47 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
       
 
       
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            Search
+          </a>
+        </li>
+      
     </ul>
   
 
+  
+    <div class="site-search">
+      
+  
+  <div class="algolia-popup popup">
+    <div class="algolia-search">
+      <div class="algolia-search-input-icon">
+        <i class="fa fa-search"></i>
+      </div>
+      <div class="algolia-search-input" id="algolia-search-input"></div>
+    </div>
+
+    <div class="algolia-results">
+      <div id="algolia-stats"></div>
+      <div id="algolia-hits"></div>
+      <div id="algolia-pagination" class="algolia-pagination"></div>
+    </div>
+
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+  </div>
+
+
+
+
+    </div>
   
 </nav>
 
@@ -457,8 +495,8 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/11/jvmflags-4/" rel="next" title="JVM参数 - Part 4（堆调优）">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 4（堆调优）
+              <a href="/2016/02/10/jvmflags-2/" rel="next" title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 2( 参数归类和JIT编译诊断 )
               </a>
             
           </div>
@@ -467,8 +505,8 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/12/jvmflags-5/" rel="prev" title="JVM参数 - Part 5( 新生代垃圾回收 )">
-                JVM参数 - Part 5( 新生代垃圾回收 ) <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/11/jvmflags-4/" rel="prev" title="JVM参数 - Part 4（堆调优）">
+                JVM参数 - Part 4（堆调优） <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -870,6 +908,19 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
   
 
   
+
+  
+  
+  
+  <link rel="stylesheet" href="/lib/algolia-instant-search/instantsearch.min.css">
+
+  
+  
+  <script src="/lib/algolia-instant-search/instantsearch.min.js"></script>
+  
+
+  <script src="/js/src/algolia-search.js?v=5.1.0"></script>
+
 
 
 </body>
