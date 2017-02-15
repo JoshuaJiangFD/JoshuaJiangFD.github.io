@@ -180,7 +180,7 @@ th {
   padding: 0;
 }
 ::selection {
-  background: #262a30;
+  background: #39f;
   color: #fff;
 }
 body {
@@ -1707,7 +1707,7 @@ pre .javascript .function {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #ffe9a6;
+  background: #a379ff;
 }
 .links-of-blogroll {
   font-size: 13px;
@@ -2214,7 +2214,7 @@ a.search-result {
 .busuanzi-count:before {
   content: " ";
   float: left;
-  width: 260px;
+/*width: 260px;*/
   min-height: 25px;
 }
 @media (min-width: 768px) and (max-width: 991px) {

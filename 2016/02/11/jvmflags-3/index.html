@@ -88,24 +88,18 @@
 
 
 <meta name="description" content="Useful JVM Flags – Part 3
-Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
--XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
-在ClientVM上使用-XX:+PrintFlags">
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM参数 - Part 3( 打印XX参数列表 )">
 <meta property="og:url" content="http://blog.joshuajiang.com/2016/02/11/jvmflags-3/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="Useful JVM Flags – Part 3
-Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
--XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
-在ClientVM上使用-XX:+PrintFlags">
-<meta property="og:updated_time" content="2017-02-14T08:17:47.667Z">
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。">
+<meta property="og:updated_time" content="2017-02-15T05:53:11.754Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 3( 打印XX参数列表 )">
 <meta name="twitter:description" content="Useful JVM Flags – Part 3
-Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
--XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
-在ClientVM上使用-XX:+PrintFlags">
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。">
 
 
 
@@ -447,8 +441,7 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
 
       
         <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-3-printing-all-xx-flags-and-their-values/" target="_blank" rel="external"> Useful JVM Flags – Part 3</a></p>
-<p>Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。</p>
-<p><strong>-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial</strong></p>
+<p>Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。<br><a id="more"></a><br><strong>-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial</strong></p>
 <p>在ClientVM上使用<code>-XX:+PrintFlagsFinal</code>参数可以打印出所有按照字母排序的XX参数（不同的JVM版本数目有所不同, 这个版本有590个之多）：</p>
 <figure class="highlight maxima"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ java -client -XX:+PrintFlagsFinal Benchmark</div><div class="line">[Global flags]</div><div class="line">uintx AdaptivePermSizeWeight               = <span class="number">20</span>               &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx AdaptiveSizeDecrementScaleFactor     = <span class="number">4</span>                &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx AdaptiveSizeMajorGCDecayTimeScale    = <span class="number">10</span>               &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx AdaptiveSizePausePolicy              = <span class="number">0</span>                &#123;<span class="built_in">product</span>&#125;</div><div class="line">[...]</div><div class="line">uintx YoungGenerationSizeSupplementDecay   = <span class="number">8</span>                &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx YoungPLABSize                        = <span class="number">4096</span>             &#123;<span class="built_in">product</span>&#125;</div><div class="line"> bool ZeroTLAB                             = <span class="literal">false</span>            &#123;<span class="built_in">product</span>&#125;</div><div class="line"> intx hashCode                             = <span class="number">0</span>                &#123;<span class="built_in">product</span>&#125;</div></pre></td></tr></table></figure>
 <p>输出的每一行的XX参数都有5列，第一列表示参数类型，第二列为参数名称，第四列是值，第五列为参数类别。第三列如果为”=”表示是默认值，为”:=”表示为非默认值（由用户或者JVM添加）。</p>
@@ -500,8 +493,8 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/10/jvmflags-1/" rel="next" title="JVM参数 - Part 1( JVM类型和编译器模式 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 1( JVM类型和编译器模式 )
+              <a href="/2016/02/10/jvmflags-2/" rel="next" title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 2( 参数归类和JIT编译诊断 )
               </a>
             
           </div>

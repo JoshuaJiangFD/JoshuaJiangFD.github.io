@@ -97,7 +97,7 @@
 <meta property="og:description" content="Useful JVM Flags – Part 4
 理想情况下，JVM的默认配置就可以让Java程序运行的很好，也就没有必要手工干预任何参数。但是一旦出现性能问题（很不幸的是，这些问题还经常出现），一些与之相关的JVM参数的知识会是解决问题的好帮手。这篇文章将介绍一些与内存管理相关的JVM参数。知道和理解这些参数将会极大帮助开发和运维相关的人员。
 所有现有的Hotspot内存管理和垃圾回收算法都基">
-<meta property="og:updated_time" content="2017-02-14T08:17:55.938Z">
+<meta property="og:updated_time" content="2017-02-15T05:53:26.673Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 4（堆调优）">
 <meta name="twitter:description" content="Useful JVM Flags – Part 4
@@ -445,8 +445,7 @@
       
         <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-4-heap-tuning/" target="_blank" rel="external">Useful JVM Flags – Part 4</a></p>
 <p>理想情况下，JVM的默认配置就可以让Java程序运行的很好，也就没有必要手工干预任何参数。但是一旦出现性能问题（很不幸的是，这些问题还经常出现），一些与之相关的JVM参数的知识会是解决问题的好帮手。这篇文章将介绍一些与内存管理相关的JVM参数。知道和理解这些参数将会极大帮助开发和运维相关的人员。</p>
-<p>所有现有的Hotspot内存管理和垃圾回收算法都基于对堆内存的同一种划分，即包含新创建的对象和存活期短的对象的新生代，和包含存活期超过一定时长的对象的年老代。另外永久代包括那些存活期伴随整个程序的对象，如类加载相关的对象以及内联的字符串常量池。以下的讨论都基于这种堆空间的传统划分。不过注意到其他可能的划分也很有前景，其中如G1垃圾回收算法对新生代和年老代的区分较为模糊。另外Hotspot JVM的未来版本有计划将不再区分年老代和永久代（译者注：Java 8取消了永久代划分，新增的MetaSpace不再属于堆空间）。</p>
-<p><strong>-Xms 和 -Xmx ( -XX:InitialHeapSize 和 -XX:MaxHeapSize)</strong></p>
+<p>所有现有的Hotspot内存管理和垃圾回收算法都基于对堆内存的同一种划分，即包含新创建的对象和存活期短的对象的新生代，和包含存活期超过一定时长的对象的年老代。另外永久代包括那些存活期伴随整个程序的对象，如类加载相关的对象以及内联的字符串常量池。以下的讨论都基于这种堆空间的传统划分。不过注意到其他可能的划分也很有前景，其中如G1垃圾回收算法对新生代和年老代的区分较为模糊。另外Hotspot JVM的未来版本有计划将不再区分年老代和永久代（译者注：Java 8取消了永久代划分，新增的MetaSpace不再属于堆空间）。<br><a id="more"></a><br><strong>-Xms 和 -Xmx ( -XX:InitialHeapSize 和 -XX:MaxHeapSize)</strong></p>
 <p><code>-Xms</code>和<code>-Xmx</code>可以说是最流行的JVM参数，用来分别设置JVM堆空间的起始值和最大值。这两个参数均支持字节为单位的值，或者”k”,”K”, “m”,”M”以及”g”,”G”。例如下面的例子的初始内存为128M，最大内存2G。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -Xms128m -Xmx2g MyApp</div></pre></td></tr></table></figure>
 <p>注意在实际工作中，起始堆空间值通常也是最小堆空间值。虽然JVM确实会动态的调整堆的大小，理论上有些应用的堆大小可能低于起始值设定。不过笔者在实际工作中没有遇到这种情况，即使程序占用的内存很小。这一点对开发和人员人员还是很方便的，如果有必要的话，可以将<code>-Xms</code>和<code>-Xmx</code>设定为同一值，这样堆空间的大小将始终保持不变。</p>

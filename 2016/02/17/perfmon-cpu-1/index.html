@@ -88,25 +88,19 @@
 
 
 <meta name="description" content="在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。
-在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&amp;gt;内核&amp;gt;用户进程。关于CPU资源有以下三个重要的概念：
-
-上下文切换 Context Switching">
+在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&amp;gt;内核&amp;gt;用户进程。关于CPU资源有以下三个重要的概念：">
 <meta property="og:type" content="article">
 <meta property="og:title" content="性能调优 - Part 1( CPU监控 )">
 <meta property="og:url" content="http://blog.joshuajiang.com/2016/02/17/perfmon-cpu-1/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。
-在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&amp;gt;内核&amp;gt;用户进程。关于CPU资源有以下三个重要的概念：
-
-上下文切换 Context Switching">
+在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&amp;gt;内核&amp;gt;用户进程。关于CPU资源有以下三个重要的概念：">
 <meta property="og:image" content="http://blog.joshuajiang.com/images/top.png">
-<meta property="og:updated_time" content="2017-02-14T10:45:19.642Z">
+<meta property="og:updated_time" content="2017-02-15T05:54:22.172Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="性能调优 - Part 1( CPU监控 )">
 <meta name="twitter:description" content="在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。
-在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&amp;gt;内核&amp;gt;用户进程。关于CPU资源有以下三个重要的概念：
-
-上下文切换 Context Switching">
+在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&amp;gt;内核&amp;gt;用户进程。关于CPU资源有以下三个重要的概念：">
 <meta name="twitter:image" content="http://blog.joshuajiang.com/images/top.png">
 
 
@@ -449,7 +443,7 @@
 
       
         <p>在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。</p>
-<p>在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为<strong>中断&gt;内核&gt;用户进程</strong>。关于CPU资源有以下三个重要的概念：</p>
+<p>在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为<strong>中断&gt;内核&gt;用户进程</strong>。关于CPU资源有以下三个重要的概念：<br><a id="more"></a></p>
 <ul>
 <li><p>上下文切换 Context Switching</p>
 <p>  Linux是采取的抢占式调度执行任务，每个CPU统一时刻只能执行一个线程（有些CPU可以通过超线程技术同时执行多个线程）。当到达执行是相见，线程中有IO阻塞或者高优先级的线程要执行时，Linux就会切换执行的线程，这个过程需要保存当前线程的执行状态，并恢复要执行的线程的状态，这个过程叫做上下文切换。</p>
@@ -536,8 +530,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/13/jvmflags-8/" rel="next" title="JVM参数 - Part 8( GC日志 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 8( GC日志 )
+              <a href="/2016/02/13/jvmflags-7/" rel="next" title="JVM参数 - Part 7( CMS回收器 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 7( CMS回收器 )
               </a>
             
           </div>

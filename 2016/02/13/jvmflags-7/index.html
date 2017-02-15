@@ -97,7 +97,7 @@ CMS(暂停时间优先)收集器和Par">
 <meta property="og:description" content="Useful JVM Flags – Part 7
 Hotspot JVM的并发标记-清除回收器（Concurrent Mark-Sweep Collector, CMS collector）的首要目标就是减少应用程序暂停时间。这个指标对于大部分交互类型的应用如Web应用是至关重要的。在介绍相关JVM参数时先简单了解一下CMS回收器的基本操作和使用时候的挑战。
 CMS(暂停时间优先)收集器和Par">
-<meta property="og:updated_time" content="2017-02-14T08:18:25.068Z">
+<meta property="og:updated_time" content="2017-02-15T05:53:59.967Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 7( CMS回收器 )">
 <meta name="twitter:description" content="Useful JVM Flags – Part 7
@@ -445,8 +445,7 @@ CMS(暂停时间优先)收集器和Par">
       
         <p><a href="https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="external">Useful JVM Flags – Part 7</a></p>
 <p>Hotspot JVM的并发标记-清除回收器（Concurrent Mark-Sweep Collector, CMS collector）的首要目标就是减少应用程序暂停时间。这个指标对于大部分交互类型的应用如Web应用是至关重要的。在介绍相关JVM参数时先简单了解一下CMS回收器的基本操作和使用时候的挑战。</p>
-<p>CMS(暂停时间优先)收集器和Parallel GC(吞吐量优先)的回收器（<a href="http://blog.joshuajiang.com/jvmflags-6/">第六部分</a>）一样都是用来处理年老代中的对象回收，但是实现上更为复杂。吞吐量优先的回收器都会暂停应用程序相当一段时间，这样至少避免了可能的并发问题。而CMS回收器被设计成大部分阶段和应用程序并发执行，只在少数阶段会暂停应用。并发执行的缺点在于需要处理同步和数据不一致的问题。为了并发的线程安全性，CMS回收器的GC过程被划分成若干连续的子阶段。</p>
-<p><strong>CMS回收器的步骤</strong></p>
+<p>CMS(暂停时间优先)收集器和Parallel GC(吞吐量优先)的回收器（<a href="http://blog.joshuajiang.com/jvmflags-6/">第六部分</a>）一样都是用来处理年老代中的对象回收，但是实现上更为复杂。吞吐量优先的回收器都会暂停应用程序相当一段时间，这样至少避免了可能的并发问题。而CMS回收器被设计成大部分阶段和应用程序并发执行，只在少数阶段会暂停应用。并发执行的缺点在于需要处理同步和数据不一致的问题。为了并发的线程安全性，CMS回收器的GC过程被划分成若干连续的子阶段。<br><a id="more"></a><br><strong>CMS回收器的步骤</strong></p>
 <p>CMS回收器的一个完整GC过程包括六个阶段，其中有四个阶段与应用程序并发执行，另外两个需要暂停应用程序。</p>
 <ol>
 <li>首次标记：<strong>暂停应用程序</strong>并收集对象引用信息，结束后应用程序继续执行；</li>
@@ -527,8 +526,8 @@ CMS(暂停时间优先)收集器和Par">
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/13/jvmflags-6/" rel="next" title="JVM参数 - Part 6( Parallel GC回收器 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 6( Parallel GC回收器 )
+              <a href="/2016/02/13/linux-bash-widgets/" rel="next" title="Linux Bash 小工具">
+                <i class="fa fa-chevron-left"></i> Linux Bash 小工具
               </a>
             
           </div>
@@ -537,8 +536,8 @@ CMS(暂停时间优先)收集器和Par">
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/13/linux-bash-widgets/" rel="prev" title="Linux Bash 小工具">
-                Linux Bash 小工具 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/17/perfmon-cpu-1/" rel="prev" title="性能调优 - Part 1( CPU监控 )">
+                性能调优 - Part 1( CPU监控 ) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>

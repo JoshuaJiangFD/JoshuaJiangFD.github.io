@@ -95,7 +95,7 @@
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="Useful JVM flags - Part 1
 现在的JVM已经为Java和虚拟机上其他兼容语言(如Groovy, JRuby, Jython等)的应用程序出色的完成了大部分工作，并且性能高效且稳定。例如当下流行JVM提供了包括自适应的内存管理(Adaptive Memory Mangement)，垃圾回收(Garbage Collection),JIT编译，动态类加载(Dynamic cla">
-<meta property="og:updated_time" content="2017-02-14T07:40:29.662Z">
+<meta property="og:updated_time" content="2017-02-15T05:52:03.624Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 1( JVM类型和编译器模式 )">
 <meta name="twitter:description" content="Useful JVM flags - Part 1
@@ -443,6 +443,7 @@
         <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-1-jvm-types-and-compiler-modes/" title="Original Link Useful JVM flags - Part 1" target="_blank" rel="external">Useful JVM flags - Part 1</a></p>
 <p>现在的JVM已经为Java和虚拟机上其他兼容语言(如Groovy, JRuby, Jython等)的应用程序出色的完成了大部分工作，并且性能高效且稳定。例如当下流行JVM提供了包括自适应的内存管理(Adaptive Memory Mangement)，垃圾回收(Garbage Collection),JIT编译，动态类加载(Dynamic class Loading)，锁优化等一系列功能，这些还只是引用了其中一部分。更重要的是这些功能很少直接影响一般的Java开发者。总的来说，在运行时状态JVM会以一种持续评估和动态分析的方式来优化其对应用程序的处理。</p>
 <p>尽管JVM的自动化程序已经很高（甚至某些意见已经认为已经非常高了），JVM仍然提供了很多工具来方便进行外部监控和人工调优。以防万一出现错误或者性能低下时，人工干预会变得非常可能且必要。<br>值得一提的是，现代JVM的实现同样提供了很多人工优化的工具，其中特别被提及的就是JMV启动时的命令行参数。一些JVM的实现提供了几百个这样的启动参数，使得缺乏经验的开发者很容易不知所措。这个博客系列的目的就是着重介绍日常开发中最相关的参数，并解释其功能。这里的JVM特指Sun/Orcale HotSpot JVM的Java 6版本，不过大部分情况下其他流行的JVM实现也提供了类似的参数。</p>
+<a id="more"></a>
 <p><strong>-server 和 -client</strong></p>
 <p>“server”和”client”是两种类型的Hotspot JVM。server类型的JVM（以下简称 Server VM）默认使用更大的堆内存，并行的垃圾回收(parellel garbage collecor), 并且在运行时采用更积极的代码优化策略。client类型的JVM(以下简称 Client VM)更加保守，这会带来更短的启动时间，更少的内存占用。谢天谢地有这样一个名词叫”虚拟机工效学”(JVM ergonomics),旨在根据一定的标准例如可用的硬件和操作系统等来自动的选择合适的JVM类型。具体的标准可以参考<a href="http://docs.oracle.com/javase/6/docs/technotes/guides/vm/server-class.html" target="_blank" rel="external">这里</a>。从这个标准中可以看出，Client VM只在32位系统上可用。</p>
 <p>如果我们对预先选择的JVM类型不满意，可以使用参数<code>-server</code>和<code>-client</code>来规定相应的JVM类型。尽管Server VM最初是用于长时间执行的进程，但是如今在很多独立的进程场景中，Server VM也展现出更高的性能。因此我这里推荐使用<code>-server</code>参数，只要程序的首要性能指标是更快的执行时间。简单的记住：32位的系统上, Hotspot JDK要求能够以server方式启动JVM，而32位JRE只有client VM。</p>
@@ -494,18 +495,14 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/10/jvmflags-2/" rel="next" title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 2( 参数归类和JIT编译诊断 )
-              </a>
-            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/11/jvmflags-3/" rel="prev" title="JVM参数 - Part 3( 打印XX参数列表 )">
-                JVM参数 - Part 3( 打印XX参数列表 ) <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/10/jvmflags-2/" rel="prev" title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
+                JVM参数 - Part 2( 参数归类和JIT编译诊断 ) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>

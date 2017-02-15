@@ -88,24 +88,18 @@
 
 
 <meta name="description" content="Useful JVM Flags – Part 8
-这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
--XX:PrintGC
--XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12">
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM参数 - Part 8( GC日志 )">
 <meta property="og:url" content="http://blog.joshuajiang.com/2016/02/13/jvmflags-8/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="Useful JVM Flags – Part 8
-这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
--XX:PrintGC
--XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12">
-<meta property="og:updated_time" content="2017-02-14T08:18:29.523Z">
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。">
+<meta property="og:updated_time" content="2017-02-15T05:54:06.789Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 8( GC日志 )">
 <meta name="twitter:description" content="Useful JVM Flags – Part 8
-这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
--XX:PrintGC
--XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12">
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。">
 
 
 
@@ -447,8 +441,7 @@
 
       
         <p><a href="https://blog.codecentric.de/en/2014/01/useful-jvm-flags-part-8-gc-logging/" target="_blank" rel="external">Useful JVM Flags – Part 8</a></p>
-<p>这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。</p>
-<p><strong>-XX:PrintGC</strong></p>
+<p>这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。<br><a id="more"></a><br><strong>-XX:PrintGC</strong></p>
 <p><code>-XX:PrintGC</code>（或者<code>-verbose:gc</code>）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：<br><figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[GC <span class="number">246656</span>K-&gt;<span class="number">243120</span>K(<span class="number">376320</span>K), <span class="number">0</span>,<span class="number">0929090</span> secs]</div><div class="line">[Full GC <span class="number">243120</span>K-&gt;<span class="number">241951</span>K(<span class="number">629760</span>K), <span class="number">1</span>,<span class="number">5589690</span> secs]</div></pre></td></tr></table></figure></p>
 <p>每一行开始是GC的类型，后面是堆上GC前后的占用情况，括号内是当前堆的总大小，最后是每次GC的用时。例如第一行的日志标识GC使得堆上的对象从246656K降低到243120K，当前总大小为376320K，总耗时为0.093s。<br>简单的GC日志没有体现具体的GC算法差异，例如多少对象从新生代转移到了年老代。所以需要更详细的GC日志。</p>
 <p><strong>-XX:+PrintGCDetails</strong></p>
@@ -512,8 +505,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/13/linux-bash-widgets/" rel="next" title="Linux Bash 小工具">
-                <i class="fa fa-chevron-left"></i> Linux Bash 小工具
+              <a href="/2016/02/13/jvmflags-6/" rel="next" title="JVM参数 - Part 6( Parallel GC回收器 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 6( Parallel GC回收器 )
               </a>
             
           </div>
@@ -522,8 +515,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/17/perfmon-cpu-1/" rel="prev" title="性能调优 - Part 1( CPU监控 )">
-                性能调优 - Part 1( CPU监控 ) <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/13/linux-bash-widgets/" rel="prev" title="Linux Bash 小工具">
+                Linux Bash 小工具 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>

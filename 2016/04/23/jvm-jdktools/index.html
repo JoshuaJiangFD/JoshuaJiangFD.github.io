@@ -87,19 +87,16 @@
 
 
 
-<meta name="description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
-jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P">
+<meta name="description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="JVM实践 - JDK调试工具">
 <meta property="og:url" content="http://blog.joshuajiang.com/2016/04/23/jvm-jdktools/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
-<meta property="og:description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
-jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P">
-<meta property="og:updated_time" content="2017-02-14T08:23:11.221Z">
+<meta property="og:description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。">
+<meta property="og:updated_time" content="2017-02-15T05:54:41.471Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM实践 - JDK调试工具">
-<meta name="twitter:description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
-jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P">
+<meta name="twitter:description" content="JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。">
 
 
 
@@ -440,7 +437,7 @@ jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某
       
 
       
-        <p>JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。</p>
+        <p>JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。<br><a id="more"></a></p>
 <h3 id="jinfo"><a href="#jinfo" class="headerlink" title="jinfo"></a>jinfo</h3><p>jinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用<code>java -XX:+PrintFlagsFinal</code>获得JVM所有的参数名，然后找到你想要的参数,使用<code>jinfo -flag</code>打印出该参数的值。</p>
 <figure class="highlight vim"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line">Usage:                                                                                           </div><div class="line">    jinfo [option] <span class="symbol">&lt;pid&gt;</span>                                                                             </div><div class="line">        (<span class="keyword">to</span> connect <span class="keyword">to</span> running process)                                                                   </div><div class="line">    jinfo [option] &lt;<span class="built_in">executable</span> <span class="symbol">&lt;core&gt;</span>                                                                     </div><div class="line">        (<span class="keyword">to</span> connect <span class="keyword">to</span> <span class="keyword">a</span> core <span class="keyword">file</span>)                                                                     </div><div class="line">    jinfo [option] [server_id@]&lt;remote server IP <span class="built_in">or</span> <span class="built_in">hostname</span>&gt;                                                      </div><div class="line">        (<span class="keyword">to</span> connect <span class="keyword">to</span> remote <span class="keyword">debug</span> server)                                                               </div><div class="line">where <span class="symbol">&lt;option&gt;</span> <span class="keyword">is</span> one of:                                                                             </div><div class="line">    -flag <span class="symbol">&lt;name&gt;</span>         <span class="keyword">to</span> <span class="keyword">print</span> the value of the named VM flag                                                 </div><div class="line">    -flag [+|-]<span class="symbol">&lt;name&gt;</span>    <span class="keyword">to</span> enable <span class="built_in">or</span> disable the named VM flag                                                   </div><div class="line">    -flag <span class="symbol">&lt;name&gt;</span>=<span class="symbol">&lt;value&gt;</span> <span class="keyword">to</span> <span class="keyword">set</span> the named VM flag <span class="keyword">to</span> the given value                                                 </div><div class="line">    -flags               <span class="keyword">to</span> <span class="keyword">print</span> VM flags                                                              </div><div class="line">    -sysprops            <span class="keyword">to</span> <span class="keyword">print</span> Java <span class="built_in">system</span> properties                                                     </div><div class="line">    &lt;<span class="keyword">no</span> option&gt;          <span class="keyword">to</span> <span class="keyword">print</span> both of the above                                                         </div><div class="line">    -h | -<span class="keyword">help</span>           <span class="keyword">to</span> <span class="keyword">print</span> this <span class="keyword">help</span> message</div></pre></td></tr></table></figure>
 <h3 id="jstat"><a href="#jstat" class="headerlink" title="jstat"></a>jstat</h3><p>jstat主要利用JVM内建的指令对Java应用程序的资源和性能进行实时的命令行的监控，包括了对Heap size和垃圾回收状况的监控。主要通过采样的方式以一定时间间隔打印JVM的信息，对于在线分析JVM的性能十分有帮助。使用jstat还可以直接修改运行中的JVM的参数，主要是一些打印GC日志之类的参数。</p>
@@ -574,8 +571,8 @@ jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/04/14/mysql-notes/" rel="next" title="MySQL 命令笔记">
-                <i class="fa fa-chevron-left"></i> MySQL 命令笔记
+              <a href="/2016/04/14/nio/" rel="next" title="基于nio构建高扩展服务">
+                <i class="fa fa-chevron-left"></i> 基于nio构建高扩展服务
               </a>
             
           </div>

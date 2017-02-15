@@ -438,16 +438,16 @@
       
         
           
-          authentication 和 authroizationauthentication: 身份认证 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。
-authroization: 授权 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/08/07/spring security/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+            <h4 id="authentication-和-authroization"><a href="#authentication-和-authroization" class="headerlink" title="authentication 和 authroization"></a>authentication 和 authroization</h4><p><strong>authentication: 身份认证</strong> 用来获得request的身份，这需要用户登录提供用户名/密码，通过DB/LDAP/CAS等各种方式确认用户的合法性。</p>
+<p><strong>authroization: 授权</strong> 对于每个用户执行某种操作需要有相应的权限(GrantedAuthority)。通常通过给用户赋予一个或者多个的角色，或者用户组的概念。只有属于某个角色，才能执行相应的操作。</p>
+<p>spring security就是为了提供这两种功能而实际的一套框架。它基于spring的依赖注入规范，支持多种身份验证实现。spring security的基本思想并不局限于某种具体需要权限认证的服务，但基于servlet规范的web application也提供了更好的支持，对web application 支持三个维度的授权实现：</p>
+<ul>
+<li>请求层级，对具体的请求根据url过滤；</li>
+<li>对具体Bean上方法，也是通常所说的服务层；</li>
+<li>对特定的domain object;</li>
+</ul>
+
+          
         
       
     </div>
@@ -608,185 +608,10 @@ authroization: 授权 对于每个用户执行某种操作需要有相应的权�
 
       
         
-          
-          JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。
-jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某些特定参数可以使用jinfo修改值。一个小建议，对于不记得的参数可以先使用java -XX:+P
-          ...
+          <p>JDK自带的一些诊断工具可以方便的在线上机器快速获得一些信息，对定位线上内存和CPU异常问题有很大的帮助。这些工具包括命令行工具和用来调试本地JVM的图形界面工具。命令行工具在Linux机器上使用比较方便。<br>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2016/04/23/jvm-jdktools/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/04/14/mysql-notes/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/04/14/mysql-notes/" itemprop="url">
-                  MySQL 命令笔记
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T00:00:00+08:00">
-                2016-04-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/SQL/" itemprop="url" rel="index">
-                    <span itemprop="name">SQL</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2016/04/14/mysql-notes/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/14/mysql-notes/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-             <span id="/2016/04/14/mysql-notes/" class="leancloud_visitors" data-flag-title="MySQL 命令笔记">
-               <span class="post-meta-divider">|</span>
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               
-                 <span class="post-meta-item-text">Visitors </span>
-               
-                 <span class="leancloud-visitors-count"></span>
-             </span>
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-          以下是对工作中常用的SQL命令的总结。
-1. 查询某个表中所有非空字段名123456SELECT `COLUMN_NAME`FROM `information_schema`.`COLUMNS`WHERE`IS_NULLABLE` = 'No'AND `TABLE_NAME` = 'feed'AND `TABLE_SCHEMA` = 'prodb_mgmt
-2. 查看一个表的所有字段how-to-
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/04/14/mysql-notes/#more" rel="contents">
               Read more &raquo;
             </a>
           </div>
@@ -952,16 +777,241 @@ jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某
       
         
           
-          如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
-线程架构 Thread
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/04/14/nio/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+            <p>如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。</p>
+<h3 id="线程架构-Threading-Architecture"><a href="#线程架构-Threading-Architecture" class="headerlink" title="线程架构 Threading Architecture"></a>线程架构 Threading Architecture</h3><p>实现一个多线程的server，第一个最容易想到的线程架构就是thread-per-connection模式。这是java 1.4 之前最传统的模式，因为那时候java还不支持非阻塞式IO(non-blocking I/O)。thread-per-connection模式为每个connection分配一个专一的线程。在一个处理循环里，一个工作线程等待新的数据到达，处理请求，然后返回结果，最后调用socket的read方法， 并一直阻塞直到新的数据到达。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * server based on thread-per-connection pattern </div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Server</span> </span>&#123;</div><div class="line">  <span class="keyword">private</span> ExecutorService executors = Executors.newFixedThreadPool(<span class="number">10</span>);</div><div class="line">  <span class="keyword">private</span> <span class="keyword">boolean</span> isRunning = <span class="keyword">true</span>;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String... args)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">new</span> Server().launch(Integer.parseInt(args[<span class="number">0</span>]));</div><div class="line">  &#125; </div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">launch</span><span class="params">(<span class="keyword">int</span> port)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    ServerSocket sso = <span class="keyword">new</span> ServerSocket(port);</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      Socket s = sso.accept();</div><div class="line">      executors.execute(<span class="keyword">new</span> Worker(s));</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Worker</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> LineNumberReader in = <span class="keyword">null</span>;</div><div class="line">    ...</div><div class="line"></div><div class="line">    Worker(Socket s) <span class="keyword">throws</span> ... &#123;</div><div class="line">      in = <span class="keyword">new</span> LineNumberReader(<span class="keyword">new</span> InputStreamReader(...));</div><div class="line">      out = ...</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">      <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">          <span class="comment">// blocking read of a request (line) </span></div><div class="line">          String request = in.readLine();</div><div class="line"></div><div class="line">          <span class="comment">// processing the request</span></div><div class="line">          ...</div><div class="line">          String response = ...</div><div class="line"></div><div class="line">          <span class="comment">// return the response</span></div><div class="line">          out.write(resonse);</div><div class="line">          out.flush();</div><div class="line">        &#125; <span class="keyword">catch</span> (Exception e ) &#123; </div><div class="line">          ... </div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">      in.close();</div><div class="line">      ...</div><div class="line">    &#125; </div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在这种模式下，所有的并发连接和所有的并发工作线程总是一一对应的。正因为每个连接都对应服务器端的一个线程，单个已经建立的连接的的响应会很迅速。但是高负载下就需要更多并发的工作线程，这限制了可扩展性。并且如果存在大量的long-living connection,例如HTTP长连接，将会导致大量的并发线程，而每个线程的利用率很低，因为有大量时间浪费在等待客户端新的应用层请求（例如HTTP请求，这些HTTP请求复用了未释放的连接）。同样大量并发的线程也浪费内存空间：例如在Solaris JVM上每个线程默认的栈空间大小为512KB。</p>
+<p>如果服务器需要的是能并发处理大量的请求，并能接受对单个请求的响应时间被延长，这就需要一种新的更有效率线程架构，例如thread-on-event方式。这种方式下工作线程独立于connection而只被用来处理特定的事件。例如，如果新的数据到达，一个工作线程会被调度去处理应用服务相关的解码和执行具体的应用层任务(或者只是构建一个任务丢到另一个线程池中运行)。一旦调度任务完成，这个工作线程会返回线程池。这种处理方式需要非阻塞的执行socket的I/O操作，即socket上的read和write可以非阻塞式调用，并且需要一个额外的event system,用来通知事件的发生。总之这种方式去除了线程和connection之间的1：1对应关系。这种event-driven的I/O系统称为<strong>Reactor模式</strong>。</p>
+<h3 id="Reactor-模式-Reactor-Pattern"><a href="#Reactor-模式-Reactor-Pattern" class="headerlink" title="Reactor 模式 Reactor Pattern"></a>Reactor 模式 Reactor Pattern</h3><p>Reactor模式（如图1）， 使得事件的监听(如Socker读就绪或写就绪事件)和该事件的处理相分离。例如如果一个读就绪事件被侦听到后，该事件会有一个事先注册好的处理句柄会被调用，但是这个调用可能会发生在另一个可用的分配好的工作线程上。</p>
+<p><img src="/images/reactor.png" alt="reactor model"></p>
+<ul>
+<li>为了接入事件架构，连接的Channel需要注册到Selector上，这一步通过调用<code>SelectorChannel.register()</code>方法，该方法的Selector参数会反过来注册SelectorChannel到自身内部。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">SocketChannel channel = serverChannel.accept();</div><div class="line"><span class="comment">// configure it as non blocking way, required!</span></div><div class="line">channel.configureBlocking(<span class="keyword">false</span>);</div><div class="line"><span class="comment">// register the connection</span></div><div class="line">SelectionKey sk = channel.register(selector, SelectionKey.OP_READ);</div></pre></td></tr></table></figure>
+<ul>
+<li><p>为了检测新的事件，Selector 类提供了<code>select()</code>方法，收集已经注册的Channel上所有就绪的事件，该方法阻塞直到出现就绪事件。上面的例子里，select()方法会返回所有I/O就绪的connection数目，所有被选择的connection可以通过<code>selector.selectedKeys()</code> 得到SelectionKey的集合。每个SelecttionKey上有当前connection上IO事件的状态和对应的Channel引用。</p>
+</li>
+<li><p>Selector引用被Dispatcher持有，Dispatcher是由一个单独的线程循环调用Selector上的<code>select()</code>方法侦听IO事件并负责分发事件到对应的EventHandler中。<code>Selector.select()</code>方法阻塞等待新的事件，一旦有事件发生，例如对于读就绪事件或者写就绪事件，<code>select()</code>方法返回，这时候可以通过调用<code>selector.selectKeys()</code>方法获得就绪的channel和对应的IO事件类型。</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//Diapatcher's diapatching logic</span></div><div class="line">...</div><div class="line"><span class="keyword">while</span> (isRunning) &#123;</div><div class="line">  <span class="comment">// blocking call, to wait for new readiness events</span></div><div class="line">  <span class="keyword">int</span> eventCount = selector.select(); </div><div class="line"></div><div class="line">  <span class="comment">// get the events</span></div><div class="line">  Iterator&lt;SelectionKey&gt; it = selector.selectedKeys().iterator();</div><div class="line">  <span class="keyword">while</span> (it.hasNext()) &#123;</div><div class="line">    SelectionKey key = it.next();</div><div class="line">    it.remove();</div><div class="line"></div><div class="line">    <span class="comment">// readable event?</span></div><div class="line">    <span class="keyword">if</span> (key.isValid() &amp;&amp; key.isReadable()) &#123;</div><div class="line">      eventHandler.onReadableEvent(key.channel());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// writable event? </span></div><div class="line">    <span class="keyword">if</span> (key.isValid() &amp;&amp; key.isWritable()) &#123;</div><div class="line">      key.interestOps(SelectionKey.OP_READ); <span class="comment">// reset to read only</span></div><div class="line">      eventHandler.onWriteableEvent(key.channel());</div><div class="line">    &#125;</div><div class="line">    ...</div><div class="line">  &#125;</div><div class="line">  ...</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<ul>
+<li>EventHandler对于不同的IO事件有不同的处理逻辑，一般包括解码请求，处理请求，编码返回值。因为处理Event handler的工作线程并没有等待连接建立和就绪的过程，系统的瓶颈理论上就只取决于硬件资源如CPU和内存，或者文件句柄数目。这保证了系统的吞吐量，尽管在单个请求的处理时间上可能没有thread-per-connection的快，并且线程切换和同步有一定的额外开销。<br>所以对于Event-Driven的方法来说，挑战在于如何最小化线程管理的开销，如同步和切换，使得这部分开销可以忽略不计。</li>
+</ul>
+<h3 id="组件架构-Component-Architecture"><a href="#组件架构-Component-Architecture" class="headerlink" title="组件架构 Component Architecture"></a>组件架构 Component Architecture</h3><p>大部分的高扩展Java服务都基于<strong>Reactor Pattern</strong>, 但是需要做出一些改进，以便支持服务的连接管理，缓存管理和负载均衡。服务的入口称为<strong>Acceptor</strong>，如下图所示:</p>
+<p><img src="/images/server.png" alt="reactor server"></p>
+<h4 id="Acceptor"><a href="#Acceptor" class="headerlink" title="Acceptor"></a>Acceptor</h4><p><strong>Acceptor</strong>和服务的端口绑定，负责接收所有的客户端请求，它运行在一个专门的线程上。因为它仅仅负责接收请求，这个过程并不耗时，所以可以使用Blocking IO实现，<strong>Acceptor</strong>通过调用<code>ServerSockerChannel</code>的<code>accept</code>方法建立新的连接，这是一个阻塞调用，新的连接将被注册到<code>Dispatcher</code>上。这样这个连接上的IO事件就可以被监听和处理了。</p>
+<p>单个到<code>Dispatcher</code>的扩展性有限，所以通常需要维护一个小的<code>Dispatcher Pool</code>。原因之一是因为大部分操作系统上的<code>selector</code>实现是将<code>SockerChannel</code>和文件句柄(File Discriptor)一一映射的。所以不同的操作系统上对于单个<code>selector</code>上的可用连接数是有不同限制的。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Acceptor</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">  ...</div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</div><div class="line">    ServerSocketChannel serverChannel = ServerSocketChannel.open();</div><div class="line">    serverChannel.configureBlocking(<span class="keyword">true</span>);</div><div class="line">    serverChannel.socket().bind(<span class="keyword">new</span> InetSocketAddress(serverPort));</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      <span class="keyword">try</span> &#123;</div><div class="line">        SocketChannel channel = serverChannel.accept(); </div><div class="line">        <span class="comment">/*</span></div><div class="line">         * a Connection object holds the SocketChannel and an Application-Level event handler</div><div class="line">         */</div><div class="line">        Connection con = <span class="keyword">new</span> Connection(channel, appHandler);</div><div class="line">        dispatcherPool.nextDispatcher().register(con);  </div><div class="line">      &#125; <span class="keyword">catch</span> (...) &#123;</div><div class="line">        ...</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Dispatcher"><a href="#Dispatcher" class="headerlink" title="Dispatcher"></a>Dispatcher</h4><p>在上面的Acceptor处理逻辑中会调用Dispatcher注册新连接，<code>Dispacther.Register()</code>会调用内部的<code>Selector</code>来注册该<code>SocketChannel</code>。此处有一问题, <code>Selector</code>内部通过<code>key sets</code> 管理已注册的Channels, 注册新的<code>channel</code>时，需要创建一个<code>SelectionKey</code>并添加到<code>key sets</code>中，而在并发操作下，同一个<code>Dispatcher</code>同样会通过<code>Selector.select()</code>方法读取<code>key sets</code>。因为<code>key sets</code>本身不是thread-safe,因此需要实现额外的线程同步。对于该问题有一个范式: <code>selector guard object idiom</code>通过暂停<code>Dispatcher</code>线程避免了可能的死锁和Race Condition问题。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Dispatcher</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">  <span class="keyword">private</span> Object guard = <span class="keyword">new</span> Object();</div><div class="line">  ...</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">register</span><span class="params">(Connection con)</span> </span>&#123;</div><div class="line">    <span class="comment">// retrieve the guard lock and wake up the dispatcher thread</span></div><div class="line">    <span class="comment">// to register the connection's channel</span></div><div class="line">    <span class="keyword">synchronized</span> (guard) &#123;</div><div class="line">      selector.wakeup();  </div><div class="line">      con.getChannel().register(selector, SelectionKey.OP_READ, con);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// notify the application EventHandler about the new connection </span></div><div class="line">    ...</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">announceWriteNeed</span><span class="params">(Connection con)</span> </span>&#123;</div><div class="line">    SelectionKey key = con.getChannel().keyFor(selector);</div><div class="line">    <span class="keyword">synchronized</span> (guard) &#123;</div><div class="line">      selector.wakeup();</div><div class="line">      key.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      <span class="keyword">synchronized</span> (guard) &#123;</div><div class="line">        <span class="comment">// suspend the dispatcher thead if guard is locked </span></div><div class="line">      &#125;</div><div class="line">      <span class="keyword">int</span> eventCount = selector.select();</div><div class="line"></div><div class="line">      Iterator&lt;SelectionKey&gt; it = selector.selectedKeys().iterator();</div><div class="line">      <span class="keyword">while</span> (it.hasNext()) &#123;</div><div class="line">        SelectionKey key = it.next(); </div><div class="line">        it.remove();</div><div class="line"></div><div class="line">        <span class="comment">// read event?</span></div><div class="line">        <span class="keyword">if</span> (key.isValid() &amp;&amp; key.isReadable()) &#123;</div><div class="line">          Connection con = (Connection) key.attachment();</div><div class="line">          disptacherEventHandler.onReadableEvent(con);</div><div class="line">        &#125;</div><div class="line">        <span class="comment">// write event?</span></div><div class="line">        ...</div><div class="line">      &#125;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>一旦connection注册完成，Selector会监听connection上的IO事件，事件发生后，Dispatcher上对应的处理函数会调用，同时向处理函数传入对应的connection。</p>
+<h4 id="Dispatcher-Level-EventHandler"><a href="#Dispatcher-Level-EventHandler" class="headerlink" title="Dispatcher-Level EventHandler"></a>Dispatcher-Level EventHandler</h4><p>当读就绪事件发生时，首先将执行<code>Channel</code>上的<code>read</code>方法， 和流式的读取方式不同的是，<code>Channel</code>上的<code>read</code>方法需要传入一块缓冲区，通常情况下这里会使用直接缓冲区(Direct Buffer)，直接缓冲区是直接在进程内存空间上分配的一块区域，绕开了Java的堆空间。使用直接缓冲区，Socket上的IO操作不再需要创建中间缓冲区。<br>通常情况下，read方法执行时间很快。不同的操作系统具体会有所不同，通常情况下核心态下读操作只是将接收到的数据从kernel spacce拷贝一份到用户进程内存的一块读缓冲中。然后接收到的数据会被追加到连接对应的一个线程安全的读队列中等待后续处理。在Dispatcher完成Channel上的IO操作后，将交由对应的应用层任务处理，这会调用相应的Application-Level EventHander，并一般会交给一个分配的工作线程去执行。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">DispatcherEventHandler</span> </span>&#123;</div><div class="line">  ...</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">onReadableEvent</span><span class="params">(<span class="keyword">final</span> Connection con)</span> </span>&#123;</div><div class="line">    <span class="comment">// get the received data </span></div><div class="line">    ByteBuffer readBuffer = allocateMemory();</div><div class="line">    con.getChannel().read(readBuffer);</div><div class="line">    ByteBuffer data = extractReadAndRecycleRenaming(readBuffer);</div><div class="line"></div><div class="line">    <span class="comment">// append it to read queue</span></div><div class="line">    con.getReadQueue().add(data); </div><div class="line">    ...</div><div class="line"></div><div class="line">    <span class="comment">// perform further operations (encode, process, decode) </span></div><div class="line">    <span class="comment">// by a worker thread</span></div><div class="line">    <span class="keyword">if</span> (con.getReadQueue().getSize() &amp;gt; <span class="number">0</span>) &#123;</div><div class="line">      workerPool.execute(<span class="keyword">new</span> Runnable() &#123;</div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">          <span class="keyword">synchronized</span> (con) &#123;</div><div class="line">            con.getAppHandler().onData(con);</div><div class="line">          &#125;</div><div class="line">        &#125;</div><div class="line">      &#125;); </div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">void</span> <span class="title">onWriteableEvent</span><span class="params">(Connection con)</span> </span>&#123;</div><div class="line">    ByteBuffer[] data = con.getWriteQueue().drain();</div><div class="line">    con.getChannel().write(data); <span class="comment">// write the data</span></div><div class="line">    ...</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (con.getWriteQueue().isEmpty()) &#123;</div><div class="line">      <span class="keyword">if</span> (con.isClosed()) &#123;</div><div class="line">        dispatcher.deregister(con);</div><div class="line">      &#125;</div><div class="line"></div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">       <span class="comment">// there is remaining data to write</span></div><div class="line">       dispatcher.announceWriteNeed(con); </div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="Application-Level-EventHandler"><a href="#Application-Level-EventHandler" class="headerlink" title="Application-Level EventHandler"></a>Application-Level EventHandler</h4><p><code>Dispatcher</code>主要用来监听和处理SockerChannel上IO事件，而Application-Level EventHandler处理的是已经抽象过的面向连接的事件，如连接建立，连接断开。注意这里的连接应该指代应用层面对的连接如HTTP连接，FTP连接。不同的应用层框架对的EventHandler有不同的定义，如SEDA, MINA, EmberIO等。这些NIO框架通常定义了多层的事件处理链。这样就可以定义例如SSLHandler或者DelayedWriteHandler对请求和结果进行拦截。下面是一个xSocket框架的Application-Level EventHandler示例。<code>xSocket</code>框架支持不同的处理接口，这些接口定义的回调方法可以实现不同的应用层逻辑。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">POP3ProtocolHandler</span> <span class="keyword">implements</span> <span class="title">IConnectHandler</span>, <span class="title">IDataHandler</span>, ... </span>&#123;</div><div class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DELIMITER = ...</div><div class="line">  <span class="keyword">private</span> Mailbox mailbox = ...</div><div class="line"></div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String... args)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">new</span> MultithreadedServer(<span class="number">110</span>, <span class="keyword">new</span> POP3ProtocolHandler()).run();</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onConnect</span><span class="params">(INonBlockingConnection con)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">if</span> (gatekeeper.isSuspiciousAddress(con.getRemoteAddress())) &#123;</div><div class="line">      con.setWriteTransferRate(<span class="number">5</span>);  <span class="comment">// reduce transfer: 5byte/sec</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    con.write(<span class="string">"+OK My POP3-Server"</span> + DELIMITER);</div><div class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onData</span><span class="params">(INonBlockingConnection con)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    String request = con.readStringByDelimiter(DELIMITER);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (request.startsWith(<span class="string">"QUIT"</span>)) &#123;</div><div class="line">      mailbox.close();</div><div class="line">      con.write(<span class="string">"+OK POP3 server signing off"</span> + DELIMITER);</div><div class="line">      con.close();</div><div class="line"></div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (request.startsWith(<span class="string">"USER"</span>)) &#123;</div><div class="line">      <span class="keyword">this</span>.user = request.substring(<span class="number">4</span>, request.length());</div><div class="line">      con.write(<span class="string">"+OK enter password"</span> + DELIMITER);</div><div class="line"></div><div class="line"></div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (request.startsWith(<span class="string">"PASS"</span>)) &#123;</div><div class="line">      String pwd = request.substring(<span class="number">4</span>, request.length());</div><div class="line">      <span class="keyword">boolean</span> isAuthenticated = authenticator.check(user, pwd);</div><div class="line">      <span class="keyword">if</span> (isAuthenticated) &#123;</div><div class="line">        mailbox = MailBox.openAndLock(user);</div><div class="line">        con.write(<span class="string">"+OK mailbox locked and ready"</span> + DELIMITER);</div><div class="line">      &#125; <span class="keyword">else</span> &#123;</div><div class="line">        ...</div><div class="line">      &#125;  </div><div class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (...) &#123;</div><div class="line">      ...</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Dispatcher会将读取好的数据放在连接对应的Read队列中，为了方便应用层读取队列中的数据，<code>Connection</code>对象提供了若干read/write方法支持以stream或者channel的方式操作数据，对写队列也是一样。</p>
+<p>通常关闭连接时，NIO框架底层实现会flush掉Connection对象的write对流里面的数据，所有数据写完之后，连接会被关闭。除了正常的连接关闭之外，其他例如硬件错误也会关闭一个TCP-based的连接。这种情况只有在往socket写数据或者读数据时或者idle timeout时才会被发现。大部分基于NIO的框架大多实现了对连接异常断开的处理。</p>
+<h4 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h4><p>事件驱动的非阻塞架构是实现高效可扩展可依赖服务的基础层。困难在于如何最小化线程同步和切换的开销，并最优化连接和缓存的管理。这些重要的工作已经不需要重复实现，一些服务框架如xSocket, emberIO, SEDA和MINA都对底层的事件处理和线程管理进行了抽象，使得开发人员可以专注在应用层逻辑上。大部分这些框架还支持了UDP和SSL协议。 这些都未在本文展开了。</p>
+<h4 id="Reference"><a href="#Reference" class="headerlink" title="Reference"></a>Reference</h4><p><a href="https://community.oracle.com/docs/DOC-983601" target="_blank" rel="external">原文链接Architecture of a highly scalable NIO-based server</a></p>
+
+          
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/04/14/mysql-notes/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/04/14/mysql-notes/" itemprop="url">
+                  MySQL 命令笔记
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-04-14T00:00:00+08:00">
+                2016-04-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/SQL/" itemprop="url" rel="index">
+                    <span itemprop="name">SQL</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/04/14/mysql-notes/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/04/14/mysql-notes/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2016/04/14/mysql-notes/" class="leancloud_visitors" data-flag-title="MySQL 命令笔记">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">Visitors </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>以下是对工作中常用的SQL命令的总结。</p>
+<h3 id="1-查询某个表中所有非空字段名"><a href="#1-查询某个表中所有非空字段名" class="headerlink" title="1. 查询某个表中所有非空字段名"></a>1. 查询某个表中所有非空字段名</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span> <span class="string">`COLUMN_NAME`</span></div><div class="line"><span class="keyword">FROM</span> <span class="string">`information_schema`</span>.<span class="string">`COLUMNS`</span></div><div class="line"><span class="keyword">WHERE</span></div><div class="line"><span class="string">`IS_NULLABLE`</span> = <span class="string">'No'</span></div><div class="line"><span class="keyword">AND</span> <span class="string">`TABLE_NAME`</span> = <span class="string">'feed'</span></div><div class="line"><span class="keyword">AND</span> <span class="string">`TABLE_SCHEMA`</span> = <span class="string">'prodb_mgmt</span></div></pre></td></tr></table></figure>
+<h3 id="2-查看一个表的所有字段"><a href="#2-查看一个表的所有字段" class="headerlink" title="2. 查看一个表的所有字段"></a>2. 查看一个表的所有字段</h3><p><a href="http://stackoverflow.com/questions/9620198/how-to-get-the-sizes-of-the-tables-of-a-mysql-database" target="_blank" rel="external">how-to-get-the-sizes-of-the-tables-of-a-mysql-database</a></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">SELECT</span></div><div class="line">    table_name <span class="keyword">AS</span> <span class="string">`Table`</span>,</div><div class="line">    <span class="keyword">round</span>(((data_length + index_length) / <span class="number">1024</span> / <span class="number">1024</span>), <span class="number">2</span>) <span class="string">`Size in MB`</span></div><div class="line"><span class="keyword">FROM</span> information_schema.TABLES</div><div class="line"><span class="keyword">WHERE</span> table_schema = <span class="string">"$DB_NAME"</span></div><div class="line">    <span class="keyword">AND</span> table_name = <span class="string">"$TABLE_NAME"</span>;</div></pre></td></tr></table></figure>
+<h3 id="3-显示表的建表语句"><a href="#3-显示表的建表语句" class="headerlink" title="3. 显示表的建表语句"></a>3. 显示表的建表语句</h3><p><a href="http://dev.mysql.com/doc/refman/5.7/en/show-create-table.html" target="_blank" rel="external">show-create-table</a></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">mysql&gt; show create table serverStatusInfo \G;</div><div class="line">*************************** 1. row ***************************</div><div class="line">       Table: serverStatusInfo</div><div class="line">Create Table: CREATE TABLE `serverStatusInfo` (</div><div class="line">  `date` date NOT NULL,</div><div class="line">  `server` varchar(45) NOT NULL,</div><div class="line">  `requestsActiveMax` int(10) unsigned default '0',</div><div class="line">  `requestTimeMax` int(10) unsigned default '0',</div><div class="line">  `requestTimeMean` float default '0',</div><div class="line">  `requestTimeStdDev` float default '0',</div><div class="line">  PRIMARY KEY  (`date`,`server`)</div><div class="line">) ENGINE=InnoDB DEFAULT CHARSET=gbk</div><div class="line">row in set (0.00 sec)</div></pre></td></tr></table></figure>
+<h3 id="4-删除表中所有数据"><a href="#4-删除表中所有数据" class="headerlink" title="4. 删除表中所有数据"></a>4. 删除表中所有数据</h3><p><a href="http://dev.mysql.com/doc/refman/5.0/en/delete.html" target="_blank" rel="external">Delete Doc</a><br><a href="http://dev.mysql.com/doc/refman/5.0/en/truncate-table.html" target="_blank" rel="external">truncate-table doc</a></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">delete from tableName;</div><div class="line"># Delete: will delete all rows from your table. Next insert will take next auto increment id.</div><div class="line"> </div><div class="line">truncate tableName;</div><div class="line"># Truncate: will also delete the rows from your table but it will start from new row with 1.</div></pre></td></tr></table></figure>
+<h3 id="5-LIKE查询中嵌套变量，对字段取子串并强制装换"><a href="#5-LIKE查询中嵌套变量，对字段取子串并强制装换" class="headerlink" title="5. LIKE查询中嵌套变量，对字段取子串并强制装换"></a>5. LIKE查询中嵌套变量，对字段取子串并强制装换</h3><ol>
+<li><p>连接字符串 </p>
+<p> <em><a href="http://dev.mysql.com/doc/refman/5.7/en/string-functions.html#function_concat" target="_blank" rel="external">CONCAT(str1,str2,…)</a></em></p>
+</li>
+<li><p>强制装换 </p>
+<p> <em><a href="http://dev.mysql.com/doc/refman/5.7/en/cast-functions.html" target="_blank" rel="external">CAST(expr AS type)</a></em></p>
+</li>
+<li><p>字符串截断 </p>
+<p> <em><a href="http://dev.mysql.com/doc/refman/5.7/en/string-functions.html#function_substring" target="_blank" rel="external">SUBSTRING(str,pos), SUBSTRING(str FROM pos), SUBSTRING(str,pos,len), SUBSTRING(str FROM pos FOR len)</a></em></p>
+</li>
+<li><p>字符串截断从开头到delimer的第count位置为止 </p>
+<p> <em><a href="http://dev.mysql.com/doc/refman/5.7/en/string-functions.html#function_substring-index" target="_blank" rel="external"> SUBSTRING_INDEX(str,delim,count)</a></em></p>
+</li>
+</ol>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">select</span> <span class="keyword">CAST</span>(SUBSTRING_INDEX(<span class="keyword">SUBSTRING</span>(feed_url,<span class="number">110</span>),<span class="string">"."</span>,<span class="number">1</span>) <span class="keyword">AS</span> <span class="keyword">UNSIGNED</span> <span class="built_in">INTEGER</span> ) <span class="keyword">as</span> casted, feed_url,<span class="keyword">id</span>,user_id  <span class="keyword">from</span> feed <span class="keyword">where</span> feed_name  <span class="keyword">like</span> <span class="string">"%自动无线导航%"</span> <span class="keyword">and</span> add_time&gt; <span class="string">"2016-04-13"</span> <span class="keyword">and</span> feed_name <span class="keyword">not</span> <span class="keyword">like</span> <span class="keyword">CONCAT</span>(<span class="string">'%'</span>,user_id,<span class="string">'%'</span>);</div></pre></td></tr></table></figure>
+<h3 id="6-对子查询做Join"><a href="#6-对子查询做Join" class="headerlink" title="6. 对子查询做Join"></a>6. 对子查询做Join</h3><p>这个例子是在feed表上对同一个user_id出现了两次feed的所有情况，删除feedid较大的feed。</p>
+<ol>
+<li>第一步是子查询查出所有满足条件的user_id,子查询的结果别名为userids</li>
+<li>第二步是对userids表做join，查出所有这种情况的feedids，同时在这种情况下再对结果按照user_id做分组，对每一组取MAX(feedid);</li>
+<li>第三步是删除得到的feed ids，注意mysql不准许更新的表同时出现在where条件里，因此这里需要再包装一层，建一个临时表，这样就可以删除了。</li>
+</ol>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"># 操作feed表，每个feed有一个id和user_id,找出同一个user下创建了两个feed的user，并删除id较大的feed</div><div class="line">update feed </div><div class="line">set is_deleted = 0 </div><div class="line">where id in ( select * from (</div><div class="line">		select MAX(feed.id) </div><div class="line">      from feed, (select user_id as uid from feed group by user_id having count(*) &gt; 2) as  e )</div><div class="line">      where feed.user_id = e.uid </div><div class="line">      group by feed.user_id</div><div class="line">	as temp);</div></pre></td></tr></table></figure>
+<h3 id="7-查询表中数据和索引的大小"><a href="#7-查询表中数据和索引的大小" class="headerlink" title="7. 查询表中数据和索引的大小"></a>7. 查询表中数据和索引的大小</h3><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"># 方法1:切换到 information_schema 数据库</div><div class="line">mysql&gt; use information_schema;</div><div class="line"># 查询当前数据库中所有的表的数据和</div><div class="line">mysql&gt; select concat(round(data_length/1024/1024,2),'MB') as data_length_MB,concat(round(index_length/1024/1024,2),'MB') as index_length_MB, table_name from tables;</div><div class="line"># 方法2： show table status命令, 查询prodb_mgmt数据库的所有表情况</div><div class="line">mysql&gt; show table status from prodb_mgmt;</div></pre></td></tr></table></figure>
+<h3 id="8-导出查询到csv文件"><a href="#8-导出查询到csv文件" class="headerlink" title="8. 导出查询到csv文件"></a>8. 导出查询到csv文件</h3><p>mysql指定host,port,password,user, databasename, -e选项内填写具体的sql语句，多条语句使用<code>;</code>分隔。最后使用重定向符号<code>&gt;</code>输出到外部csv文件。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mysql -hdbbk-prodbpicweb.xdb.all.serv -P6003 -ulufei -pNu99Z2MB6h -Dprodb_mgmt -e '<span class="keyword">set</span> character_set_client=utf8;<span class="keyword">set</span> character_set_results=utf8;<span class="keyword">select</span> <span class="keyword">id</span> <span class="keyword">from</span> feed <span class="keyword">where</span> feed_name <span class="keyword">like</span> <span class="string">"%【闪投抓取】bianlian%"</span><span class="string">' &gt; zhidong-1.csv</span></div></pre></td></tr></table></figure>
+
+          
         
       
     </div>
@@ -1123,18 +1173,12 @@ jinfojinfo可以用来获取JVM的启动参数以及System Properties, 对于某
       
         
           
-          对git的日常使用做一些简单的笔记，方便温故。
-撤销commit –amend的结果1$git reset --soft HEAD@&#123;1&#125;
-http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-instead-of-git-commit
-启动ssh agent避免重复输入密码12
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/03/23/git-1/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+            <p>对git的日常使用做一些简单的笔记，方便温故。</p>
+<h4 id="撤销commit-–amend的结果"><a href="#撤销commit-–amend的结果" class="headerlink" title="撤销commit –amend的结果"></a>撤销commit –amend的结果</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="variable">$git</span> reset --soft HEAD@&#123;1&#125;</div></pre></td></tr></table></figure>
+<p><a href="http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-instead-of-git-commit" target="_blank" rel="external">http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-instead-of-git-commit</a></p>
+<h4 id="启动ssh-agent避免重复输入密码"><a href="#启动ssh-agent避免重复输入密码" class="headerlink" title="启动ssh agent避免重复输入密码"></a>启动ssh agent避免重复输入密码</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 1. start the ssh-agent in the background</span></div><div class="line"><span class="variable">$eval</span> <span class="string">"<span class="variable">$(ssh-agent -s)</span>"</span></div><div class="line">Agent pid 59566</div><div class="line"></div><div class="line"><span class="comment"># 2. add your SSH key to the ssh-agent.</span></div><div class="line"><span class="variable">$ssh</span>-add ~/.ssh/id_rsa</div></pre></td></tr></table></figure>
+
+          
         
       
     </div>
@@ -1274,15 +1318,16 @@ http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-ins
       
         
           
-          akka中对应每一个actor有三个概念，path, Actor Ref(Actor Incarnation)和UID。在Actor System中每一个path代表一个可能存在actor的位置。当调用actorOf()方法创建一个actor的时候，会根据Props变量中的类型创建一个Actor以及Actor Incarnation，Actor In4carnation是对actor的封装，pat
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/03/23/akka-1/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+            <p>akka中对应每一个actor有三个概念，path, Actor Ref(Actor Incarnation)和UID。在Actor System中每一个path代表一个可能存在actor的位置。当调用<code>actorOf()</code>方法创建一个actor的时候，会根据<code>Props</code>变量中的类型创建一个Actor以及Actor Incarnation，Actor In4carnation是对actor的封装，path和UID唯一代表一个 Actor Incarnation。一些对应关系如下：</p>
+<ol>
+<li>Actor重启只会置换掉Props中制定的Actor类型的对象，但是Actor Incarnation和UID不变；</li>
+<li>Actor停止时Actor Incarnation生命周期结束，这时候watching actor会收到terminated消息；</li>
+<li>Actor Incarnation结束后path会回收，这时候可以用来创建与之前同名的actor，但是UID仍然是唯一生成的,所以旧的Actor Ref无法指向新的Actor，尽管新旧Actor是同名的, 但是UID不同；</li>
+<li>Actor可能会自身终止，或者被其他actor终止，或者由actor system终止；</li>
+</ol>
+<p><img src="/images/actorlifecycle.png" alt="actor lifecycle"></p>
+<h3 id="Stopping-Actors"><a href="#Stopping-Actors" class="headerlink" title="Stopping Actors"></a>Stopping Actors</h3>
+          
         
       
     </div>
@@ -1444,19 +1489,13 @@ http://stackoverflow.com/questions/1459150/how-to-undo-git-commit-amend-done-ins
       
         
           
-          ###理解mysql client客户端乱码问题
-10分钟学会理解和解决MySQL乱码问题
-mysql中文乱码的一点理解
-设置linux shell的编码
-1234567891011121314151617mysql&gt; show variables like 'character_set%';+--------------------------+----------------------
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/03/21/mysql-troubleshooting/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+            <p>###理解mysql client客户端乱码问题</p>
+<p><a href="http://cenalulu.github.io/mysql/mysql-mojibake/" target="_blank" rel="external">10分钟学会理解和解决MySQL乱码问题</a></p>
+<p><a href="http://www.ahlinux.com/mysql/21694.html" target="_blank" rel="external">mysql中文乱码的一点理解</a></p>
+<p><a href="http://perlgeek.de/en/article/set-up-a-clean-utf8-environment" target="_blank" rel="external">设置linux shell的编码</a></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">mysql&gt; show variables like 'character_set%';</div><div class="line">+--------------------------+-----------------------------------------------------------+</div><div class="line">| Variable_name            | Value                                                     |</div><div class="line">+--------------------------+-----------------------------------------------------------+</div><div class="line">| character_set_client     | gbk                                                       |</div><div class="line">| character_set_connection | gbk                                                       |</div><div class="line">| character_set_database   | utf8                                                      |</div><div class="line">| character_set_filesystem | binary                                                    |</div><div class="line">| character_set_results    | gbk                                                       |</div><div class="line">| character_set_server     | utf8                                                      |</div><div class="line">| character_set_system     | utf8                                                      |</div><div class="line">| character_sets_dir       | /home/mysql/mysql_prodbpicweb_46901/share/mysql/charsets/ |</div><div class="line">+--------------------------+-----------------------------------------------------------+</div><div class="line">8 rows in set (0.00 sec)</div><div class="line"></div><div class="line">mysql&gt; set character_set_results='utf8'; </div><div class="line">Query OK, 0 rows affected (0.01 sec)</div></pre></td></tr></table></figure>
+
+          
         
       
     </div>
@@ -1596,19 +1635,34 @@ mysql中文乱码的一点理解
       
         
           
-          打印GC日志使用下面三个参数可以打印Oracle Hotspot JVM每次的GC日志。
-123-verbose:gc : 打印GC日志-XX:+PrintGCDateStamps ：添加时间戳-XX:+PrintGCDetails ：打印GC详细
-同时将GC日志重定向到单独的log文件
-1-Xloggc:&lt;file-path&gt; ： 保存GC日志到单独文件，方便分析
-GC的日志可以使用
-          ...
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/03/05/jvm-gc-flags/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
+            <h2 id="打印GC日志"><a href="#打印GC日志" class="headerlink" title="打印GC日志"></a>打印GC日志</h2><p>使用下面三个参数可以打印Oracle Hotspot JVM每次的GC日志。</p>
+<figure class="highlight haml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">-<span class="ruby"><span class="symbol">verbose:</span>gc : 打印GC日志</span></div><div class="line">-<span class="ruby"><span class="symbol">XX:</span>+PrintGCDateStamps ：添加时间戳</span></div><div class="line">-<span class="ruby"><span class="symbol">XX:</span>+PrintGCDetails ：打印GC详细</span></div></pre></td></tr></table></figure>
+<p>同时将GC日志重定向到单独的log文件</p>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-Xloggc:&lt;<span class="built_in">file</span>-path&gt; ： 保存GC日志到单独文件，方便分析</div></pre></td></tr></table></figure>
+<p>GC的日志可以使用以下工具分析：</p>
+<ol>
+<li>IBM GCMV (Garbage Collection and Memory Visualizer)<br>这款工具可以作为eclipse插件安装并切换到GCMV视图。GCMV同时支持Oracle Hotspot JVM 和 IBM， HP等JVM实现。</li>
+</ol>
+<h2 id="Heap-Dump文件"><a href="#Heap-Dump文件" class="headerlink" title="Heap Dump文件"></a>Heap Dump文件</h2><h3 id="生成hprof文件"><a href="#生成hprof文件" class="headerlink" title="生成hprof文件"></a>生成hprof文件</h3><p>Heap dump文件在分析JVM性能，优化应用程序，检查内存泄漏时十分重要，尤其是在发生内存溢出（OutOfMemoryError）时更加必要。通常可以设置JVM参数在OOM时候触发生成Heap Dump文件。</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">-XX</span><span class="selector-pseudo">:+HeapDumpOnOutofMemoryError</span></div></pre></td></tr></table></figure>
+<p>或者添加触发命令：</p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:OnOutOfMemoryError=<span class="string">"jmap -F -dump:format=b,file=java_pid%p.hprof %p; chmod +r java_pid%p.hprof; kill -9 %p"</span></div></pre></td></tr></table></figure>
+<p>对于本地的JVM进程，可以使用JDk自带的GUI Debug工具如JVisualVM来生成.hprof文件。</p>
+<p>有一类比较复杂的情况是，在生产环境的某台机器上出现了JVM异常，但是使用jmap命令十分耗时，这会影响应用程序的执行，造成很大的暂停，甚至jmap执行可能失败。这时候可以借助Linux/Unix的gdb工具生成core文件，再使用jmap从core文件中生成hpprof文件。生成core文件非常快，通常只需要几秒钟。以下是详细步骤：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"># 1. install gdb</div><div class="line">$sudo apt-get install gdb – for Debian/Ubuntu systems.</div><div class="line">$sudo yum install gdb – for RedHat/CentOS systems.</div><div class="line"># 2. get the Process ID of JVM</div><div class="line">$ps -ef|egrep &quot;PID|[keyword]&quot;</div><div class="line"># 3. get the core files</div><div class="line">$gdb --pid=[pid]</div><div class="line">...bunch of info...</div><div class="line">$(gdb) gcore /tmp/jvm.core</div><div class="line">Saved corefile /tmp/jvm.core</div><div class="line">$(gdb) detach</div><div class="line">$(gdb) quit</div><div class="line"># 4. get the hprof binary dump for core file using jmap</div><div class="line">$jmap -dump:format=b,file=jvm.hprof /usr/bin/java /tmp/jvm.core</div></pre></td></tr></table></figure>
+<p><a href="http://blogs.atlassian.com/2013/03/so-you-want-your-jvms-heap/" title="use core file to generate heap dump" target="_blank" rel="external">[SEE ALSO]use core file to generate heap dump</a></p>
+<h3 id="分析heap-dump"><a href="#分析heap-dump" class="headerlink" title="分析heap dump"></a>分析heap dump</h3><p>hprof文件可以使用JVisualVM或者MAT(Eclipse Memory Analyzer)来装载并分析。MAT工具的使用介绍。MAT会首先解析hprof文件并生成一系列的index文件，这个过程比较耗时，但是下一次加载时会载入上一次分析好的index文件。</p>
+<p><a href="http://eclipsesource.com/blogs/2013/01/21/10-tips-for-using-the-eclipse-memory-analyzer/" target="_blank" rel="external">[SEE ALSO]MAT工具的使用介绍</a></p>
+<p>因为Heap Dump是当前内存的一份快照，因此在线上机器生成的heap dump会很大，无法用MAT GUI工具装载。可以在线下某台拥有和线上同等配置的机器上使用MAT自带的ParseHeapDump.sh文件来生成索引文件，并生成一系列的report。这样就可以方便的在开发机器上用MAT GUI加载这些生成好的report文件了。</p>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./ParseHeapDump<span class="selector-class">.sh</span> ../today_heap_dump/jvm<span class="selector-class">.hprof</span> org<span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span>:suspects</div></pre></td></tr></table></figure>
+<p>其他可用的report参数有：</p>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">org</span><span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span><span class="selector-pseudo">:suspects</span> </div><div class="line"><span class="selector-tag">org</span><span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span><span class="selector-pseudo">:overview</span></div><div class="line"><span class="selector-tag">org</span><span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span><span class="selector-pseudo">:top_components</span></div></pre></td></tr></table></figure>
+<p>另外一个工具为bheapsampler, 这个工具对heap dump文件进行抽象，生成 一份更简洁的heap dump文件，虽然有点不太准确但是在MAT失败的情况下总比没有好。</p>
+<p><a href="http://javaforu.blogspot.com/2013/11/analyzing-large-java-heap-dumps-when.html" target="_blank" rel="external">[SEE ALSO]Analyzing Large Java Heap when MAT UI fails</a></p>
+<h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><h3 id="XX-UseGCOverheadLimit"><a href="#XX-UseGCOverheadLimit" class="headerlink" title="-XX:-UseGCOverheadLimit"></a>-XX:-UseGCOverheadLimit</h3><p>JVM的Parallel GC如果占用应用程序大部分的执行时间。将会抛出OutOfMemoryError：如果98%的时间都浪费在垃圾回收上，而且只有不到2%的堆内存被回收的话，JVM将会抛出OutOfMemoryError。这个设计的作用是防止应用程序因为堆大小不足导致浪费时间在GC上并且毫无进展。但是可以使用参数<br><em>-XX:-UseGCOverheadLimit</em>来禁用该功能。<br>JVM的CMS GC也有相同的功能，不过只有造成应用程序暂停的GC时间才会被计算到98%这个指标中，这一类GC通常是因为在CMS GC发生Concurrent Mode Failure或者显式的GC调用时发生（System.gc()）。</p>
+<p><a href="http://www.oracle.com/technetwork/java/javase/gc-tuning-6-140523.html" title="Java SE 6 HotSpot[tm] Virtual Machine Garbage Collection Tuning" target="_blank" rel="external">[SEE ALSO]Java SE 6 HotSpot[tm] Virtual Machine Garbage Collection Tuning</a></p>
+
+          
         
       
     </div>
@@ -1770,20 +1824,13 @@ GC的日志可以使用
       
         
           
-          linux screen 命令详解-cnblogs
-rename screen session - stackoverflow
-config .screenrc - stackexchange
-10 Screen Command Examples to Manage Linux Terminals
-protect a screen session with a password
+            <p><a href="http://www.cnblogs.com/mchina/archive/2013/01/30/2880680.html" target="_blank" rel="external">linux screen 命令详解-cnblogs</a></p>
+<p><a href="http://superuser.com/questions/370510/rename-screen-session" target="_blank" rel="external">rename screen session - stackoverflow</a></p>
+<p><a href="http://unix.stackexchange.com/questions/26248/tabs-when-using-screen" target="_blank" rel="external">config .screenrc - stackexchange</a></p>
+<p><a href="http://www.tecmint.com/screen-command-examples-to-manage-linux-terminals/" target="_blank" rel="external">10 Screen Command Examples to Manage Linux Terminals</a></p>
+<p><a href="http://damien.krotkine.com/2011/09/01/protect-a-screen-session-with-a-password.html" target="_blank" rel="external">protect a screen session with a password</a></p>
 
           
-          <!--noindex-->
-          <div class="post-button text-center">
-            <a class="btn" href="/2016/02/19/linux-screen/#more" rel="contents">
-              Read more &raquo;
-            </a>
-          </div>
-          <!--/noindex-->
         
       
     </div>
@@ -1922,11 +1969,8 @@ protect a screen session with a password
 
       
         
-          
-          引言
-在线上环境中，遇到一个定时任务无法退出的问题。观察日志发现Spring的Bean已经完成销毁，但是通过ps aux |grep &lt;keyword&gt; 观察发现进程仍然执行。 通过jstack &lt;pid&gt;工具查看所有的线程栈，线程堆栈输出如下：
-1234567891011121314151617181920212223242526272829303132333435363
-          ...
+          <p><strong>引言</strong></p>
+<p>在线上环境中，遇到一个定时任务无法退出的问题。观察日志发现Spring的Bean已经完成销毁，但是通过<code>ps aux |grep &lt;keyword&gt;</code> 观察发现进程仍然执行。 通过<code>jstack &lt;pid&gt;</code>工具查看所有的线程栈，线程堆栈输出如下：<br>
           <!--noindex-->
           <div class="post-button text-center">
             <a class="btn" href="/2016/02/18/jvm-shutdown/#more" rel="contents">
