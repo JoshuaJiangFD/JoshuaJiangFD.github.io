@@ -88,20 +88,20 @@
 
 
 <meta name="description" content="如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
-###线程架构 Thr">
+线程架构 Thread">
 <meta property="og:type" content="article">
 <meta property="og:title" content="基于nio构建高扩展服务">
 <meta property="og:url" content="http://blog.joshuajiang.com/2016/04/14/nio/index.html">
 <meta property="og:site_name" content="Joshua's Blog">
 <meta property="og:description" content="如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
-###线程架构 Thr">
+线程架构 Thread">
 <meta property="og:image" content="http://blog.joshuajiang.com/images/reactor.png">
 <meta property="og:image" content="http://blog.joshuajiang.com/images/server.png">
-<meta property="og:updated_time" content="2017-02-14T10:01:41.782Z">
+<meta property="og:updated_time" content="2017-02-15T03:04:51.754Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于nio构建高扩展服务">
 <meta name="twitter:description" content="如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。
-###线程架构 Thr">
+线程架构 Thread">
 <meta name="twitter:image" content="http://blog.joshuajiang.com/images/reactor.png">
 
 
@@ -422,6 +422,11 @@
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -439,8 +444,7 @@
 
       
         <p>如果你需要使用java实现一个高扩展服务，很快Java的nio包将很快进入你的视野。为了让你的server能最终跑起来，你可能会花大量的时间阅读各种博客和指南来理解NIO Selector中需要解决的线程同步问题，或者踩到其他的坑。这篇文章目标是为你描述如何架构一个面向连接的nio-based server，文章将介绍了一个更优化的线程模型，并分析该server的基本组件。</p>
-<p>###线程架构 Threading Architecture</p>
-<p>实现一个多线程的server，第一个最容易想到的线程架构就是thread-per-connection模式。这是java 1.4 之前最传统的模式，因为那时候java还不支持非阻塞式IO(non-blocking I/O)。thread-per-connection模式为每个connection分配一个专一的线程。在一个处理循环里，一个工作线程等待新的数据到达，处理请求，然后返回结果，最后调用socket的read方法， 并一直阻塞直到新的数据到达。</p>
+<h3 id="线程架构-Threading-Architecture"><a href="#线程架构-Threading-Architecture" class="headerlink" title="线程架构 Threading Architecture"></a>线程架构 Threading Architecture</h3><p>实现一个多线程的server，第一个最容易想到的线程架构就是thread-per-connection模式。这是java 1.4 之前最传统的模式，因为那时候java还不支持非阻塞式IO(non-blocking I/O)。thread-per-connection模式为每个connection分配一个专一的线程。在一个处理循环里，一个工作线程等待新的数据到达，处理请求，然后返回结果，最后调用socket的read方法， 并一直阻塞直到新的数据到达。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/*</span></div><div class="line"> * server based on thread-per-connection pattern </div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Server</span> </span>&#123;</div><div class="line">  <span class="keyword">private</span> ExecutorService executors = Executors.newFixedThreadPool(<span class="number">10</span>);</div><div class="line">  <span class="keyword">private</span> <span class="keyword">boolean</span> isRunning = <span class="keyword">true</span>;</div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String... args)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    <span class="keyword">new</span> Server().launch(Integer.parseInt(args[<span class="number">0</span>]));</div><div class="line">  &#125; </div><div class="line"></div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">launch</span><span class="params">(<span class="keyword">int</span> port)</span> <span class="keyword">throws</span> ... </span>&#123;</div><div class="line">    ServerSocket sso = <span class="keyword">new</span> ServerSocket(port);</div><div class="line">    <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">      Socket s = sso.accept();</div><div class="line">      executors.execute(<span class="keyword">new</span> Worker(s));</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line"></div><div class="line">  <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Worker</span> <span class="keyword">implements</span> <span class="title">Runnable</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> LineNumberReader in = <span class="keyword">null</span>;</div><div class="line">    ...</div><div class="line"></div><div class="line">    Worker(Socket s) <span class="keyword">throws</span> ... &#123;</div><div class="line">      in = <span class="keyword">new</span> LineNumberReader(<span class="keyword">new</span> InputStreamReader(...));</div><div class="line">      out = ...</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">      <span class="keyword">while</span> (isRunning) &#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">          <span class="comment">// blocking read of a request (line) </span></div><div class="line">          String request = in.readLine();</div><div class="line"></div><div class="line">          <span class="comment">// processing the request</span></div><div class="line">          ...</div><div class="line">          String response = ...</div><div class="line"></div><div class="line">          <span class="comment">// return the response</span></div><div class="line">          out.write(resonse);</div><div class="line">          out.flush();</div><div class="line">        &#125; <span class="keyword">catch</span> (Exception e ) &#123; </div><div class="line">          ... </div><div class="line">        &#125;</div><div class="line">      &#125;</div><div class="line">      in.close();</div><div class="line">      ...</div><div class="line">    &#125; </div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>在这种模式下，所有的并发连接和所有的并发工作线程总是一一对应的。正因为每个连接都对应服务器端的一个线程，单个已经建立的连接的的响应会很迅速。但是高负载下就需要更多并发的工作线程，这限制了可扩展性。并且如果存在大量的long-living connection,例如HTTP长连接，将会导致大量的并发线程，而每个线程的利用率很低，因为有大量时间浪费在等待客户端新的应用层请求（例如HTTP请求，这些HTTP请求复用了未释放的连接）。同样大量并发的线程也浪费内存空间：例如在Solaris JVM上每个线程默认的栈空间大小为512KB。</p>
 <p>如果服务器需要的是能并发处理大量的请求，并能接受对单个请求的响应时间被延长，这就需要一种新的更有效率线程架构，例如thread-on-event方式。这种方式下工作线程独立于connection而只被用来处理特定的事件。例如，如果新的数据到达，一个工作线程会被调度去处理应用服务相关的解码和执行具体的应用层任务(或者只是构建一个任务丢到另一个线程池中运行)。一旦调度任务完成，这个工作线程会返回线程池。这种处理方式需要非阻塞的执行socket的I/O操作，即socket上的read和write可以非阻塞式调用，并且需要一个额外的event system,用来通知事件的发生。总之这种方式去除了线程和connection之间的1：1对应关系。这种event-driven的I/O系统称为<strong>Reactor模式</strong>。</p>
@@ -512,8 +516,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/04/14/mysql-notes/" rel="next" title="MySQL 命令笔记">
-                <i class="fa fa-chevron-left"></i> MySQL 命令笔记
+              <a href="/2016/03/23/git-1/" rel="next" title="git 小命令">
+                <i class="fa fa-chevron-left"></i> git 小命令
               </a>
             
           </div>
@@ -522,8 +526,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/04/23/jvm-jdktools/" rel="prev" title="JVM实践 - JDK调试工具">
-                JVM实践 - JDK调试工具 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/04/14/mysql-notes/" rel="prev" title="MySQL 命令笔记">
+                MySQL 命令笔记 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -671,7 +675,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#Reactor-模式-Reactor-Pattern"><span class="nav-number">1.</span> <span class="nav-text">Reactor 模式 Reactor Pattern</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组件架构-Component-Architecture"><span class="nav-number">2.</span> <span class="nav-text">组件架构 Component Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Acceptor"><span class="nav-number">2.1.</span> <span class="nav-text">Acceptor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher"><span class="nav-number">2.2.</span> <span class="nav-text">Dispatcher</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher-Level-EventHandler"><span class="nav-number">2.3.</span> <span class="nav-text">Dispatcher-Level EventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Application-Level-EventHandler"><span class="nav-number">2.4.</span> <span class="nav-text">Application-Level EventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">2.5.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference"><span class="nav-number">2.6.</span> <span class="nav-text">Reference</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#线程架构-Threading-Architecture"><span class="nav-number">1.</span> <span class="nav-text">线程架构 Threading Architecture</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Reactor-模式-Reactor-Pattern"><span class="nav-number">2.</span> <span class="nav-text">Reactor 模式 Reactor Pattern</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#组件架构-Component-Architecture"><span class="nav-number">3.</span> <span class="nav-text">组件架构 Component Architecture</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Acceptor"><span class="nav-number">3.1.</span> <span class="nav-text">Acceptor</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher"><span class="nav-number">3.2.</span> <span class="nav-text">Dispatcher</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Dispatcher-Level-EventHandler"><span class="nav-number">3.3.</span> <span class="nav-text">Dispatcher-Level EventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Application-Level-EventHandler"><span class="nav-number">3.4.</span> <span class="nav-text">Application-Level EventHandler</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#结论"><span class="nav-number">3.5.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Reference"><span class="nav-number">3.6.</span> <span class="nav-text">Reference</span></a></li></ol></li></ol></div>
             
 
           </div>
@@ -691,7 +695,7 @@
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -700,19 +704,24 @@
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

@@ -438,225 +438,19 @@
       
         
           
-            <p>在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。</p>
-<p>在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为<strong>中断&gt;内核&gt;用户进程</strong>。关于CPU资源有以下三个重要的概念：</p>
-<ul>
-<li><p>上下文切换 Context Switching</p>
-<p>  Linux是采取的抢占式调度执行任务，每个CPU统一时刻只能执行一个线程（有些CPU可以通过超线程技术同时执行多个线程）。当到达执行是相见，线程中有IO阻塞或者高优先级的线程要执行时，Linux就会切换执行的线程，这个过程需要保存当前线程的执行状态，并恢复要执行的线程的状态，这个过程叫做上下文切换。</p>
-<p>  在Java应用中，典型的如进行IO操作（网络或者文件），锁等待，或者线程sleep时，当前线程会进入阻塞或者休眠状态，触发上下文切换。频繁的上下文切换会造成内核占据较多的CPU使用，使得应用的响应速度下降。</p>
-<p>  CS数目可以通过<code>vmstat</code> 和 <code>pidstat</code> 命令查看。</p>
-</li>
-<li><p>运行队列 System Load</p>
-<p>  每个CPU都维护了一个可运行的线程队列，例如一个某台机器共有四个单核CPU，Java应用共启动了8个线程，且都处于可运行状态，则平均下来每个CPU的的运行队列就有两个线程。 运行队列值越大， 意味着线程要消耗更长的时间才能执行完， 建议每个CPU核心上的运行队列的值在1~3个。</p>
-<p>  运行队列可以通过<code>top</code>命令查看。</p>
-</li>
-<li><p>利用率</p>
-<p>   CPU利用率为CPU在用户进程，内核、中断处理、IO等待以及空闲五个部分的使用百分比，这是五个分析CPU消耗情况的关键指标。建议用户进程的CPU消耗为65%~70%, 内核态为30%~35%左右。</p>
-<p>  CPU利用率可以通过<code>top</code> <code>vmstat</code> 和 <code>pidstat</code>查看。</p>
-</li>
-</ul>
-<h3 id="1-top"><a href="#1-top" class="headerlink" title="1. top"></a>1. top</h3><p>top命令类似于windows的资源监控器，用于监控整个系统的CPU资源的使用情况，并可以排序动态刷新状态，提供交互式的命令。</p>
-<p><img src="/images/top.png" alt="top命令"></p>
-<ol>
-<li><p><em>load average</em></p>
-<p> 表示1min, 5min, 15min到现在的平均值，注意这里对于多核CPU的情况，需要除以核心数目才能得到每个CPU核心上的运行队列的大小。</p>
-</li>
-</ol>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[work@44224012 ~]$ nproc</div><div class="line">24</div></pre></td></tr></table></figure>
-<ol>
-<li><em>us, sy, ni, id, wa ,hi, si</em></li>
-</ol>
-<p>当CPU消耗严重时，主要体现在us，sy, wa 或者hi的值变高，wa的值主要是CPU时间片内的IO等待造成的，hi的值主要是硬件中断造成的，如频繁的网卡接收数据。 </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">us	用户进程处理所占的百分比</div><div class="line">sy	内核态下操作系统线程处理所占的百分比</div><div class="line">ni	被nice命令改变优先级的任务所占的百分比</div><div class="line">id  CPU的空闲时间所占的百分比</div><div class="line">wa  CPU的执行过程中等待IO所占的百分比， 这个指标用来总和判断IO消耗情况。</div><div class="line">hi	硬件中断所占的百分比，一般由文件或者网络IO引起。</div><div class="line">si	软件中断所占的百分比</div></pre></td></tr></table></figure>
-<p>us高(大于建议的70%)，表示应用消耗了大部分的CPU时间， 主要是线程一直处于可运行状态，通常是在执行无阻塞、循环、正则或者纯粹的计算任务造成的。另一个造成us高的原因是频繁的GC。这里需要结合top的输出找到最耗CPU的线程，再结合jstack的输找到对应的线程。</p>
-<p>sy高(大于建议的35%),可能是Linux花费了更多的时间来进行线程切换，这些线程多数处于不断的阻塞（锁等待，IO等待）和执行状态的变化过程中，对于Java应用重要的是找出这种状态的线程。如果很多的线程处于TIMED_WAITING（on object monitor）状态和Runnable状态的切换中，通过on obejct monitor的对应的堆栈信息可以找到系统中锁竞争激烈的代码，这造成了系统频繁的上下文切换。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#jstack -l &lt;pid&gt; : print additonal information about locks</span></div></pre></td></tr></table></figure>
-<ol>
-<li>交互命令</li>
-</ol>
-<p><em>查看每个线程的CPU使用情况</em> : shift+h, 此时pid显示的是十进制的线程tid</p>
-<p><em>查看每个核上的cpu消耗情况</em> ： 进入top后按1</p>
-<h3 id="2-pidstat"><a href="#2-pidstat" class="headerlink" title="2. pidstat"></a>2. pidstat</h3><p>pidstat最大的好处是可以具体到每个线程上的资源信息，包括CPU信息， IO信息。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"># 显示pid为463的进程上所有线程(-t参数)的CPU使用情况，采样间隔为1s，采样次数为5</div><div class="line">[work@44224012 ~]$ pidstat -p 463 -t  1 5                                                                                                                 </div><div class="line">Linux 2.6.32_1-15-0-0 (44224012.aaf236c9-f59c-4fee-8d40-80abc7cdde60.jpaas.guid)        05/02/2016      _x86_64_        (24 CPU)                                                                                                                                                                                    </div><div class="line">01:50:50 PM      TGID       TID    %usr %system  %guest    %CPU   CPU  Command                                                                            </div><div class="line">01:50:51 PM       463         -    0.99    0.00    0.00    0.99    18  java                                                                               </div><div class="line">01:50:51 PM         -       463    0.00    0.00    0.00    0.00    18  |__java                                                                            </div><div class="line">01:50:51 PM         -       470    0.00    0.00    0.00    0.00     9  |__java                                                                            </div><div class="line">01:50:51 PM         -       471    0.00    0.00    0.00    0.00    13  |__java                                                                            </div><div class="line">01:50:51 PM         -       472    0.00    0.00    0.00    0.00     1  |__java                                                                            </div><div class="line">01:50:51 PM         -       473    0.00    0.00    0.00    0.00     0  |__java</div><div class="line">...</div></pre></td></tr></table></figure>
-<p><code>pidstat</code> 可以打印出进程的context switch的信息，对于判断sy使用率过高的情况很有帮助。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">pidstat -w -p &lt;pid&gt;</div></pre></td></tr></table></figure>
-<ol>
-<li><p><strong>cswch/s</strong></p>
-<p> Total number of voluntary context switches the task made per second.  A voluntary context switch occurs when a task blocks because it requires a resource that is unavailable.</p>
-</li>
-<li><p><strong>nvcswch/s</strong></p>
-<p> Total  number  of  non voluntary context switches the task made per second.  A involuntary context switch takes place when a task executes for the duration of its time slice and then is forced to relinquish the processor.</p>
-</li>
-</ol>
-<h3 id="3-vmstat"><a href="#3-vmstat" class="headerlink" title="3. vmstat"></a>3. vmstat</h3><p><code>vmstat</code> 可以用来查看系统层级context switch的信息， 以固定时间间隔对系统采样，打印如下信息。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">[work@44224012 ~]$ vmstat 1 5                                                                                                                             </div><div class="line">procs -----------memory---------- ---swap-- -----io---- --system-- -----cpu-----                                                                          </div><div class="line"> r  b   swpd   free   buff  cache   si   so    bi    bo   <span class="keyword">in</span>   cs us sy id wa st                                                                          </div><div class="line"> 2  0      0 40835040 667160 32114372    0    0     6    70    0    0  4  6 89  0  0                                                                      </div><div class="line"> 3  0      0 40827760 667160 32113680    0    0     0    44 127855 253237  6  8 86  0  0                                                                  </div><div class="line">11  0      0 40826772 667160 32114644    0    0     0   132 135581 260254  7 11 82  0  0                                                                  </div><div class="line"> 7  0      0 40828832 667160 32115720    0    0     0   160 132777 257887  8 11 82  0  0                                                                  </div><div class="line"> 4  1      0 40826496 667160 32116412    0    0     0  2132 132769 257816  9 12 79  1  0</div></pre></td></tr></table></figure>
+          在实际的线上环境中，经常需要针对线上问题找出瓶颈，这里需要用到一些Linux用于性能监控和分析的命令，并需要一些指导性的原则结合这些命令的输出来得出正确的结论。这篇文章主要针对CPU资源消耗的分析。
+在Linux中, CPU主要用于中断，内核，以及用户进程的任务处理。优先级为中断&gt;内核&gt;用户进程。关于CPU资源有以下三个重要的概念：
 
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/02/13/linux-bash-widgets/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/02/13/linux-bash-widgets/" itemprop="url">
-                  Linux Bash 小工具
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-02-13T00:00:00+08:00">
-                2016-02-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Linux/" itemprop="url" rel="index">
-                    <span itemprop="name">Linux</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2016/02/13/linux-bash-widgets/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/13/linux-bash-widgets/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-             <span id="/2016/02/13/linux-bash-widgets/" class="leancloud_visitors" data-flag-title="Linux Bash 小工具">
-               <span class="post-meta-divider">|</span>
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               
-                 <span class="post-meta-item-text">Visitors </span>
-               
-                 <span class="leancloud-visitors-count"></span>
-             </span>
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h3><h4 id="1-ps-with-headers"><a href="#1-ps-with-headers" class="headerlink" title="1. ps with headers"></a>1. ps with headers</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># 利用grep的OR条件</span></div><div class="line">$ ps -ef |egrep <span class="string">"PID|[your-pattern-goes-here]"</span></div><div class="line"><span class="comment"># 两次查询，第一次获取header，第二次grep实际的查询</span></div><div class="line">ps -ef | head -1; ps -ef | grep <span class="string">"[your-pattern-goes-here]"</span></div></pre></td></tr></table></figure>
-<h3 id="文件"><a href="#文件" class="headerlink" title="文件"></a>文件</h3><h4 id="1-find"><a href="#1-find" class="headerlink" title="1. find"></a>1. find</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"># find files with modified time 36hours ago and calcualate total size</div><div class="line">$ find . -mmin  +$((60*36)) -type f -name &quot;*&quot;  -exec du -hc  &#123;&#125; +</div></pre></td></tr></table></figure>
-
-          
+上下文切换 Context Switching
+ 
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/17/perfmon-cpu-1/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -818,38 +612,189 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2014/01/useful-jvm-flags-part-8-gc-logging/" target="_blank" rel="external">Useful JVM Flags – Part 8</a></p>
-<p>这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。</p>
-<p><strong>-XX:PrintGC</strong></p>
-<p><code>-XX:PrintGC</code>（或者<code>-verbose:gc</code>）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[GC 246656K-&gt;243120K(376320K), 0,0929090 secs]</div><div class="line">[Full GC 243120K-&gt;241951K(629760K), 1,5589690 secs]</div></pre></td></tr></table></figure></p>
-<p>每一行开始是GC的类型，后面是堆上GC前后的占用情况，括号内是当前堆的总大小，最后是每次GC的用时。例如第一行的日志标识GC使得堆上的对象从246656K降低到243120K，当前总大小为376320K，总耗时为0.093s。<br>简单的GC日志没有体现具体的GC算法差异，例如多少对象从新生代转移到了年老代。所以需要更详细的GC日志。</p>
-<p><strong>-XX:+PrintGCDetails</strong></p>
-<p><code>-XX:+PrintGCDetails</code>参数会打印更详细的日志，下面是一个吞吐量优先的回收器上一次GC的日志输出，这里为了更可读，加了一些分行和缩进，实际输出只是一行。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[GC</div><div class="line">    [PSYoungGen: 142816K-&gt;10752K(142848K)] 246648K-&gt;243136K(375296K),</div><div class="line">    0,0935090 secs</div><div class="line">]</div><div class="line">[Times: user=0,55 sys=0,10, real=0,09 secs]</div></pre></td></tr></table></figure>
-<p>从输出可以看出，一次新生代上的GC将堆上已用空间从246648K降低到243136K，耗时0.0.935秒。另外可以看出新生代上大小为142848K，使用的回收器为<code>PSYoungGen</code>。另外从新生代GC的结果来看触发GC的原因是因为已经没有足够的内存给新创建的对象。另外通过对比发现，虽然新生代上可用空间增大（142816K-&gt;10752K），但是总体堆内从占用没有减少（246648K-&gt;243136K），有大量的对象从新生代拷贝到了年老代。</p>
-<p><code>Times</code>行显示了GC占用的CPU时间，分为用户态(User)和核心态（Sys）。另外实际运行时间为0.0.9秒。这里用户态的时间远远大于实际运行时间，可见GC是多线程运行的。CPU时间统计的是所有核上的时间之和。相除可以得知，大概有8个线程并发执行GC。</p>
-<p>下面是一个Full GC的输出：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[Full GC</div><div class="line">    [PSYoungGen: 10752K-&gt;9707K(142848K)]</div><div class="line">    [ParOldGen: 232384K-&gt;232244K(485888K)] 243136K-&gt;241951K(628736K)</div><div class="line">    [PSPermGen: 3162K-&gt;3161K(21504K)],</div><div class="line">    1,5265450 secs</div><div class="line">]</div><div class="line">[Times: user=10,96 sys=0,06, real=1,53 secs]</div></pre></td></tr></table></figure>
-<p>Full GC打印出了年老代和永久代的GC信息。从日志可以看到三个内存区域使用的不同GC算法以及GC时的空间大小。例子中628736K为堆空间的总容量，142848K属于新生代，485888K属于年老代。Full GC耗时1.53秒，占用CPU时间为10.96秒（用户态），可见GC是并发执行的。（同上使用了8个线程）</p>
-<p>详细日志可以让我们推理是哪一块内存区域触发了GC。如果某一块区域在GC发生时的占用空间几乎等于总空间，则可以判断是这块区域触发了GC。但是在上面这个例子中三个区域都没有快占满，那么是什么原因呢？<br>在使用吞吐量优先的回收器时，如果JVM可以在需要的时候主动触发一次GC，而不需要等待某一块区域空间被耗尽。</p>
-<p>应用可以调用JDK API主动请求Sysmtem GC，这时在GC日志中会打印”Full GC(System)”开头，而不是”Full GC”。</p>
-<p>串行回收器的详细日志和吞吐量优先的回收器相似，除了日志开头打印的具体GC方法名不同，例如串行GC称年老代为”Tenured”而不是”ParOldGen”。使用具体GC方法名有一个好处，是让我们从日志直接了解JVM设置的具体细节。</p>
-<p>使用CMS回收器时，新生代上的回收日志和吞吐量优先的回收器大致相同。但是在年老代上有所不同，CMS回收器在年老代上的GC过程大部分和应用会并发进行，打印的日志并不连续，可能会混杂新生代的GC日志中间。但是如果理解了日志的输出方式，理解起来并不困难。唯一需要注意的是，CMS回收的日志时间跨度可能比较大，这是正常的。</p>
-<p>另外前面提到过，如果CMS回收器没能及时回收空间，JVM还是可能会触发Full GC。这种情况下Full GC的日志会打印出原因，即前面提到过的“并发模式故障”(“Concurrent Mode Failure”)。</p>
-<p>由于篇幅所限，这里不再展开解释CMS回收器的详细日志，但是强烈推荐这个算法的作者的<a href="https://blogs.oracle.com/jonthecollector/entry/the_unspoken_cms_and_printgcdetails" target="_blank" rel="external">一篇文章</a>。</p>
-<p><strong>-XX:+PrintGCTimeStamps 和 -XX:+PrintGCDateStamps</strong></p>
-<p>可以为GC日志添加具体时间戳，<code>-XX:+PrintGCTimeStamps</code>为每次GC打印相对从JVM启动以来的时间增量。例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">0,185: [GC 66048K-&gt;53077K(251392K), 0,0977580 secs]</div><div class="line">0,323: [GC 119125K-&gt;114661K(317440K), 0,1448850 secs]</div><div class="line">0,603: [GC 246757K-&gt;243133K(375296K), 0,2860800 secs]</div></pre></td></tr></table></figure>
-<p><code>-XX:+PrintGCDateStamps</code>打印绝对值时间，例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2014-01-03T12:08:38.102-0100: [GC 66048K-&gt;53077K(251392K), 0,0959470 secs]</div><div class="line">2014-01-03T12:08:38.239-0100: [GC 119125K-&gt;114661K(317440K), 0,1421720 secs]</div><div class="line">2014-01-03T12:08:38.513-0100: [GC 246757K-&gt;243133K(375296K), 0,2761000 secs]</div></pre></td></tr></table></figure>
-<p>推荐同时设置这两个参数<code>-XX:+PrintGCTimeStamps</code> 和 <code>-XX:+PrintGCDateStamps</code>，这样在分析的时候可以通过时间戳方便的关联其他信息。</p>
-<p><strong>-Xloggc</strong></p>
-<p>GC日志默认输出到标准输出，可以通过设置<code>-Xloggc:&lt;file&gt;</code>将日志打印到单独的文件。注意使用这个参数将隐式的启用<code>-XX:+PrintGC</code>参数和<code>-XX:+PrintGCTimeStamps</code>参数。但是为了防止以后的JVM做出调整，还是建议显式的加上这两个参数。</p>
-<p><strong>“Manageable” Flags</strong></p>
-<p>关于打印GC日志是否会带来额外开销这个问题经常被讨论。其实这个开销很小，因此笔者强烈建议加上这个参数。另外，其实不一定要在JVM启动前设置好这个参数，可以在运行时管理参数。</p>
-<p>Hotspot JVM 有一小类参数成为”Manageable Flags”, 这些参数可以在运行时设置。所以这里讨论的参数，以及以”PrintGC”开头的参数都属于这一类。使用这一功能需要借助于JDK自带的<code>jinfo</code>工具，或者使用JMX客户端，调用名为<code>&quot;HotSpotDiagnostic&quot;</code>的MBean对象上的<code>&quot;setVMOption&quot;</code>方法。</p>
+          Useful JVM Flags – Part 8
+这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。
+-XX:PrintGC
+-XX:PrintGC（或者-verbose:gc）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：12
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/13/jvmflags-8/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/02/13/linux-bash-widgets/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/02/13/linux-bash-widgets/" itemprop="url">
+                  Linux Bash 小工具
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-02-13T00:00:00+08:00">
+                2016-02-13
+              </time>
+            
+
+            
+
+            
+          </span>
 
           
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/02/13/linux-bash-widgets/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/13/linux-bash-widgets/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2016/02/13/linux-bash-widgets/" class="leancloud_visitors" data-flag-title="Linux Bash 小工具">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">Visitors </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+          进程1. ps with headers1234# 利用grep的OR条件$ ps -ef |egrep "PID|[your-pattern-goes-here]"# 两次查询，第一次获取header，第二次grep实际的查询ps -ef | head -1; ps -ef | grep "[your-pattern-goes-here]"
+文件1. find12# find files wit
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/13/linux-bash-widgets/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1011,56 +956,17 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2013/10/useful-jvm-flags-part-7-cms-collector/" target="_blank" rel="external">Useful JVM Flags – Part 7</a></p>
-<p>Hotspot JVM的并发标记-清除回收器（Concurrent Mark-Sweep Collector, CMS collector）的首要目标就是减少应用程序暂停时间。这个指标对于大部分交互类型的应用如Web应用是至关重要的。在介绍相关JVM参数时先简单了解一下CMS回收器的基本操作和使用时候的挑战。</p>
-<p>CMS(暂停时间优先)收集器和Parallel GC(吞吐量优先)的回收器（<a href="http://blog.joshuajiang.com/jvmflags-6/">第六部分</a>）一样都是用来处理年老代中的对象回收，但是实现上更为复杂。吞吐量优先的回收器都会暂停应用程序相当一段时间，这样至少避免了可能的并发问题。而CMS回收器被设计成大部分阶段和应用程序并发执行，只在少数阶段会暂停应用。并发执行的缺点在于需要处理同步和数据不一致的问题。为了并发的线程安全性，CMS回收器的GC过程被划分成若干连续的子阶段。</p>
-<p><strong>CMS回收器的步骤</strong></p>
-<p>CMS回收器的一个完整GC过程包括六个阶段，其中有四个阶段与应用程序并发执行，另外两个需要暂停应用程序。</p>
-<ol>
-<li>首次标记：<strong>暂停应用程序</strong>并收集对象引用信息，结束后应用程序继续执行；</li>
-<li>并发标记：从第一阶段收集的对象引用出发，遍历标记所有其他的对象引用；</li>
-<li>并发预清理：因为第二阶段与应用程序并行，部分对象引用已经被应用程序改变，需要从这些改变的引用触发，再次更新第二阶段标记的结果；</li>
-<li>再标记：因为第三阶段也是并发执行的，因此还是会有部分对象引用被改变了。因此第四阶段会再次暂停应用，追上第三阶段的更新，这样得到完整的需要被清除的对象的信息；</li>
-<li>并发清除：所有没有被引用的对象会从堆中移除；</li>
-<li>并发清理：回收器会执行一些清理工作，为下一次GC做准备；</li>
-</ol>
-<p>对CMS回收器有一种误读是认为其过程和应用程序完全并发，其实并不是这样的，尽管需要暂停的阶段(1,4)比并发执行的阶段相比较用时通常要短。另外需要注意，虽然CMS回收器使得年老代上的内存回收几乎完全与应用并发执行，但在新生代上的回收仍然采用的是完全暂停(Stop-The-World)的方式。这样做的理由是新生代上的GC一般足够快，造成的暂停即使在强调交互性的应用上也可以接受。</p>
-<p><strong>挑战</strong></p>
-<p>在使用CMS回收器时，会存在两个比较大的挑战：</p>
-<ol>
-<li>堆空间碎片化</li>
-<li>对象分配率高</li>
-</ol>
-<p>CMS回收器很可能造成堆空间碎片化，因为不像吞吐量优先的回收器有碎片整理的阶段。这可能导致堆上总的空闲空间满足对象分配的需求，但是无法单独给一个大的对象分配空间 - 因为没有一块足够大的连续空间。<strong>这种情况下JVM只能触发一次Full GC</strong>。Full GC会采用Parallel GC算法(stop-the-world方式)，暂停应用程序回收内存并且整理碎片。所以尽管CMS回收器提高了GC并发度，但是还是可能在Full GC时造成长时间的应用暂停。这个问题从设计层面是无法避免的 -只能通过调试JVM减少触发的可能性。这对于那些强调百分百不能造成明显暂停的交互式Web应用来说，是一个潜在的问题。</p>
-<p>另一个挑战来自应用频繁的给对象分配内存。如果对象初始化的速度超过回收器从堆中移除垃圾对象的速度，在某一时刻，年老代中会没有剩余的可用空间分配给从从新生代转移过来的对象。这种情况被称作“并发模式故障”(“Concurrent Mode Failure”)，这时候<strong>JVM也只能触发一次完整的垃圾回收(Full GC)。</strong></p>
-<p>当线上环境中发生以上两种情况时，一般会发现在年老代中有大量本该在新生代中的对象（生命周期较短的对象）过早的转移到了年老代。这时候一般会增大新生代的大小，防止对象的过早转移。另一种方法是线上分析或者解析Heap Dump文件，找出哪些对象被大量创建并改进实现。</p>
-<p>下面将介绍一些与CMS回收器相关的JVM参数。</p>
-<p><strong>-XX:+UseConcMarkSweepGC</strong></p>
-<p>使用该参数启用CMS回收器，JVM默认使用吞吐量优先的回收器。</p>
-<p><strong>-XX:+UseParNewGC</strong></p>
-<p>在年老代上启用CMS回收器时，可以使用<code>-XX：+UseParNewGC</code>使得新生代上也使用并发回收算法。在之前提及过吞吐量优先的回收器可以使用<code>-XX:+UseParallelGC</code>在新生代上使用多线程并发回收。但是因为在启用CMS回收器后，年老代和新生代之间之间的联系会有所不同，对于新生代上的并发回收也就有了两种不同的实现。</p>
-<p>注意在最新的JVM版本中，启用<code>-XX:+UseConcMarkSweepGC</code>参数后自动启用<code>-XX:+UseParNewGC</code>参数，因此如果此时不需要并发回收新生代，需要显式使用<code>-XX:-UseParNewGC</code>参数。</p>
-<p><strong>-XX:+CMSConcurrentMTEnabled</strong></p>
-<p>默认启用该参数，即在CMS回收器的四个并发阶段使用多线程并发执行。如果需要串行执行，考虑到硬件条件合理的情况下，可以使用<code>-XX:+CMSConcurrentMTEnabled</code>参数。</p>
-<p><strong>-XX:ConcGCThreads</strong></p>
-<p><code>-XX:ConcGCThreads=&lt;value&gt;</code>定义在CMS回收器的并发阶段并发线程的数量，在JVM的较早版本中为称为<code>-XX:ParallelCMSThreads</code>。虽然线程越多并发度越高，但是线程的额外同步开销也会增大。对于特定的应用需要评估增加线程数是否带来真的性能改进。</p>
-<p>如果没有显式指定<code>-XX:ConcGCThreads</code>参数，JVM将会根据<code>-XX: ParallelGCThreads</code>参数的大小计算CMS回收并发阶段的线程数，公式为ConcGCThreads = (ParallelGCThreads + 3)/4。<code>-XX: ParallelGCThreads</code>是吞吐量优先回收器在整个应用暂停期间回收内存时候的并发线程数。可见<code>-XX: ParallelGCThreads</code>不仅影响CMS回收器的暂停阶段的并发度也会影响四个并发阶段的并发度。</p>
-<p>综上所述，调整CMS回收器的参数不在少数。但是建议先在线上环境或者类线上环境上启用CMS回收器,然后观察一段时间检查最大暂停时间是否达到预期，只有没有达到预期指标时，人工干预参数才有必要。</p>
-<p><strong>-XX:CMSInitiatingOccupancyFraction</strong></p>
-<p>如前所述，吞吐量优先的回收器只会在堆上没有剩余可用空间分配给新对象或者从新生代转移的对象时才出发GC。但是CMS回收器情况不建议这样，因为在CMS的并发阶段应用程序仍然会不断创建对象。所以为了避免OOM，CMS回收器需要尽早的开始垃圾回收。</p>
-<p>因为不同的应用创建对象的特点也不同，JVM一开始会收集对象创建和销毁的统计信息，用来决定合适启动一个CMS回收周期。在这个自举过程的一开始截断，JVM可以由<code>-XX:CMSInitiatingOccupancyFraction</code>指定当年老代上内存使用率达到某一阈值时启动第一次CMS回收。默认值为68，即年老代上空间使用了68%时，启动第一次CMS回收。</p>
-<p><strong>-XX:+UseCMSInitiatingOccupancyOnly</strong></p>
-<p>如果设置<code>-XX+UseCMSInitiatingOccupancyOnly</code>，则JVM不再使用自身的统计信息决定CMS的启动时间，而是完全根据<code>-XX:CMSInitiatingOccupancyFraction</code>设置的阈值。但是记住一点：JVM总是比人工更擅长决定何时更合适启动CMS周期。因此除非理由特别充分，并且对应用的对象创建特征非常了解，否则不推荐启动这一参数。</p>
-<p><strong>-XX:+CMSClassUnloadingEnabled</strong></p>
-<p>与吞吐量优先的回收器算法不同，CMS回收器默认不会在永久代上进行垃圾回收。可以使用<code>-XX:+CMSClassUnloadingEnabled</code>参数启动，在一些老版本的JVM上可能还需要<code>-XX:+CMSPermGenSweepingEnabled</code>参数。注意即使没有设置这一参数，在堆上空间不够时，JVM还是会在永久代上运行垃圾回收的，但是这个过程不是并发的，会暂停应用程序并且会执行Full GC。</p>
-<p><strong>-XX:+CMSIncrementalMode</strong></p>
-<p>CMS的增量模式指在并发截断会定期的挂起所有的并发线程，将处理器时间让给应用线程。这在现在的服务器环境很少用到，因为大部分的现代服务器都拥有足够的核心数，能够同时容纳GC线程和应用线程。</p>
-<p><strong>-XX:+ExplicitGCInvokesConcurrent 和 -XX:+ExplicitGCInvokesConcurrentAndUnloadsClasses</strong></p>
-<p>目前统一的结论是避免在应用中显式调用System.gc()方法出发System GC过程。特别在CMS回收器上，System GC会触发Full GC。<code>-XX:+ExplicitGCInvokesConcurrent</code>参数可以让JVM在遇到System GC请求时触发一次CMS回收，同时<code>-XX:+ExplicitGCInvokesConcurrentAndUnloadsClasses</code>参数会在System GC请求时，在永久代上也执行一次回收。通过这两个参数，可以避免Systen GC时候造成很长时间的应用暂停。</p>
-<p><strong>-XX:+DisableExplicitGC</strong></p>
-<p><code>-XX:+DisableExplicitGC</code>参数可以让JVM完全忽略显式的调用System.gc()请求。笔者将这个参数作为JVM的默认配置。</p>
-
-          
+          Useful JVM Flags – Part 7
+Hotspot JVM的并发标记-清除回收器（Concurrent Mark-Sweep Collector, CMS collector）的首要目标就是减少应用程序暂停时间。这个指标对于大部分交互类型的应用如Web应用是至关重要的。在介绍相关JVM参数时先简单了解一下CMS回收器的基本操作和使用时候的挑战。
+CMS(暂停时间优先)收集器和Par
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/13/jvmflags-7/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1222,42 +1128,21 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2013/01/useful-jvm-flags-part-6-throughput-collector/" target="_blank" rel="external">Useful JVM Flags – Part 6</a></p>
-<p>对于大部分的Java应用，在实践中我们发现对于GC算法的评价一般根据两个标准：</p>
-<ol>
-<li>吞吐量越高，算法越好</li>
-<li>暂停时间越短，算法越好</li>
-</ol>
-<p>首先让我们来明确垃圾收集(GC)中的两个术语:吞吐量(throughput)和暂停时间(pause times)。 JVM总是在专门的GC线程(GC threads)中执行垃圾回收。只要GC线程是活动的，它们将与应用程序线程(application threads)争用当前可用CPU的时钟周期。我们把吞吐量简单的定义为应用程序线程用时占程序总用时的比例。 例如，吞吐量99/100意味着每100秒的程序执行时间内，应用程序线程运行了99秒，而GC线程运行了1秒。</p>
-<p>术语”暂停时间”是指垃圾回收过程中应用程序线程完全暂停等待GC线程执行的时间。例如100毫秒的暂停时间意味着在这100毫秒期间内没有应用程序线程是活动的。“平均暂停时间”100毫秒是指该应用程序所有GC的暂停时间平均为100毫秒。同样“最大暂停时间”100毫秒是指该应用程序所有的暂停时间最大不超过100毫秒。</p>
-<p><strong>吞吐量和暂停时间</strong></p>
-<p>因为用户只关心程序的实际工作时间，所以吞吐量越高用于越满意。吞吐量越高，用户的直观感受是程序运行越快，响应越及时。暂停时间同样影响用户体验，因为用户会感觉程序卡死或者短暂的无法响应，但并关心到到底是程序问题还是垃圾回收之类的底层原因。正常情况下超过200毫秒的暂停时间就会相当破坏用户体验了，因此对于交互类的应用，降低最大暂停时间非常必要。</p>
-<p>不幸的是，吞吐量和暂停时间是相互竞争的。可以简化下问题然后这样假设：正确运行垃圾回收需要一定的前提条件，比如当GC线程在标记清除对象时应用线程不可以修改对象的状态，所以在GC回收时应用线程必须暂停（具体GC算法有不同的暂停阶段）。这些会带来线程调度的额外开销：直接开销如上下文切换以及间接的比如缓存清空。加上其他JVM的GC需要的安全机制，这意味着每次GC除了GC线程执行实际工作的时间之外，都会有一些不可避免的额外负载。所以为了提高吞吐量我们需要尽量降低GC的频率，这样均摊到每次GC上的开销就会降低。</p>
-<p>但是仅仅降低GC的频率意味着每次GC的任务量加大了，因此每次GC时候堆空间聚集起来需要处理的对象更多。单次GC执行的时间延长，这反过来会增加“平均暂停时间”和“最大暂停时间”。所以如果考虑暂停时间，就需要增加GC频率，这样每次GC可以执行的更快，这反过来又会增加工作量并降低吞吐量指标。</p>
-<p>总结一下，当设计（或者使用）GC算法时候，我们需要想好目标是什么：一个GC算法只能同时满足一个目标（最大吞吐量或者最低暂停时间），或者寻找一个平衡点。</p>
-<p><strong>HotSpot JVM的垃圾回收</strong></p>
-<p>第五部分已经讲到了新生代上的垃圾回收。对于年老代上的回收，Hotspot JVM提供了两类算法（不包括新的G1 回收算法）。第一类是吞吐量优先第二类是暂停时间优先。下面集中讲述吞吐量优先的算法。</p>
-<p>因为我们还是围绕JVM参数来展开，所以只会大致介绍一下Hotspot的吞吐量优先的GC算法。如果年老代空间不足分配会触发GC（一般是年轻代拷贝或者直接分配导致的）。GC回收器从GC Root出发并标记堆中所有存活的对象，然后在年老代中移动这些存活的对象到一块完整的内存空间中，并将剩余的空间标记为可用。年老代中的回收并没有新生代中复制的过程，而是在同一块内存区域内执行碎片整理程序。回收器使用多个线程来执行回收，多个GC线程会先划分好各自的区域后工作，互不干扰。在GC期间，所有的应用线程都是暂停的。下面是一些相关的参数了。</p>
-<p><strong>-XX:+UseSerialGC</strong></p>
-<p>这个参数使得JVM使用串行GC，即单个GC线程来回收新生代和年老代。对于单核机器上的应用推荐此设置，因为多个GC线程在单核机器上只会增加线程调度的开销。</p>
-<p><strong>-XX:+UseParallelGC</strong></p>
-<p>这个参数使得JVM使用并行回收，即多个GC线程执行新生代上的回收。在Java 6上笔者不推荐使用该参数。因为<code>-XX:+UseParallelOldGC</code>更适合。但是在Java 7上情况不同(见此文)，<code>-XX:+UseParallelGC</code>和<code>-XX:+UseParallelOldGC</code>效果已经一样了。</p>
-<p><strong>-XX:+UseParallelOldGC</strong></p>
-<p>这个参数中的old并不表示是被废弃的参数，而是指年老代。<code>-XX:+UseParallelOldGC</code>更适合在多核机器上，因为它同时对新生代和年老代执行并行回收。笔者建议在多核机器上，对于吞吐量优先的场景采用该配置。</p>
-<p><strong>-XX:ParallelGCThreads</strong></p>
-<p><code>-XX:ParallelGCThreads=&lt;value&gt;</code>可以用来设置GC线程的数目，例如<code>-XX:ParallelGCThreads=6</code>表示每次GC将启动6个GC线程。默认情况下JVM会根据机器的处理器数目（物理核或者虚拟核），可以通过JDK中的<code>Runtime.avaiableProcessors()</code>来决定。对于n&lt;=8的情况，JVM将会启动相同数目的GC线程，对于n&gt;8的情况，将启动<code>3+5N/8</code>个线程。</p>
-<p>如果机器上只有单个应用在执行，那么使用JVM的默认配置是合理的。但是如果同一台机器有其他JVM在执行或者其他CPU密集型的进程，需要使用<code>-XX:ParallelGCThreads</code>参数设置成合理的值。例如一台16核的服务器上有四个JVM进程，那么<code>-XX:ParallelGCThreads=4</code>比较合理，因为不同JVM进程的GC线程不会相互干扰。</p>
-<p><strong>-XX:-UseAdaptiveSizePolicy</strong></p>
-<p>吞吐量优先的GC算法都引入了一个有趣的机制来改善GC配置的友好性。这个机制是”JVM工效学”的一部分，在Java5被引入。这种机制会让JVM在运行时动态的调整堆空间的大小以及回收设置，如果JVM认为这些调整可以提高GC的性能。具体性能的提高可以参考这两个参数<code>-XX:GCTimeRatio</code>和<code>-XX:MaxGCpauseMills</code>（见下面）。</p>
-<p>这一机制是默认生效的，因为JVM的确应该具备自适应调整配置的特点。但是如果对于特定应用需要什么样的配置用户很清楚，那么可以通过<code>-XX:-UseAdaptiveSizePolicy</code>参数阻止JVM在运行时动态调整配置。</p>
-<p><strong>-XX:GCTimeRatio</strong></p>
-<p><code>-XX:GCTimeRatio=&lt;value&gt;</code>用来告诉JVM期望的吞吐量，<code>-XX:GCTimeRatio=9</code>表示期望应用线程的执行时间至少占到整个程序执行之间的9/10，那么在运行时JVM会试图动态修改堆空间和GC的配置来达到这一目标。默认的<br><code>-XX:GCTimeRatio</code>为99，即应用线程的执行时间要占到总用时的99%。</p>
-<p><strong>-XX:MaxGCPauseMillis</strong></p>
-<p><code>-XX:GCTimeRatio=&lt;value&gt;</code>用来告诉JVM期望的最大的暂停时间。在运行时回收器会基于其观察到的GC暂停时间计算加权均值和标准方差。如果统计值超过了期望值，JVM会尝试修改修改堆空间和GC的配置来达到这一期望值。记住对于新生代和年老代的最大暂停时间是分开计算的，另外默认JVM没有配置这一指标。</p>
-<p>如果同时这是了最小吞吐量和最大暂停时间，最大暂停时间优先级更高。另外JVM不保证能达到任一设定的目标，这都取决于具体的应用。</p>
-<p>当设置最大暂停时间时应该避免设置的值过小。因为前面提及了为了降低最大暂停时间，JVM会启动更多的GC线程，这会显著的影响吞吐量。特别对于大部分的Web应用来说，更关心最大暂停时间，所以这里不推荐使用吞吐量优先的回收器，而是切换到CMS回收器。这是下一章的重点内容。</p>
+          Useful JVM Flags – Part 6
+对于大部分的Java应用，在实践中我们发现对于GC算法的评价一般根据两个标准：
 
-          
+吞吐量越高，算法越好
+暂停时间越短，算法越好
+
+首先让我们来明确垃圾收集(GC)中的两个术语:吞吐量(throughput)和暂停时间(pause times)。 JVM总是在专门的GC线程(GC threads)中执行垃圾回收。只要GC线程是活动的，它们将与应用程
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/13/jvmflags-6/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1419,230 +1304,17 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2012/08/useful-jvm-flags-part-5-young-generation-garbage-collection/" target="_blank" rel="external">Useful JVM Flags – Part 5</a></p>
-<p>这部分内容主要关注堆内存的主要几个部分之一，“新生代”。首先笔者会阐述新生代的配置对于Java应用的性能的重要性，然后再介绍与之相关的配置。</p>
-<p>从纯粹的功能角度，JVM只需要一块堆空间，不需要区分新生代。引入新生代首要原因是为了提高垃圾回收的性能。具体的说，将堆空间区分成新生代和年老代有两点好处：一是简化了新对象的内存分配（因为新对象只会在新生代分配空间），二是使得对于垃圾对象的回收更高效（通过采用分代回收算法）。</p>
-<p>通过对众多面向对象语言的程序的观察发现，大部分的应用都有一个共同的特点：大部分的对象存活期都很短，即创建不久后引用就会被废弃。另外，新创建对象很少会被年老的对象所引用。结合以上两点可以发现，如果能让GC算法快速的遍历所有的新生对象将加快回收的速度 - 如为新创建的对象划分一块专门的区域“新生代”。在这块内存空间里，GC算法能快速的扫描新创建的对象而不需要再遍历年老的对象，</p>
-<p>在Sun/Oracle Hotspot JVM的实现中，新生代被继续划分成三个子区域，较大的Eden Space、以及两个较小的Survivor Space,各称为”From”存活区和”To”存活区。规则是，新对象会被首先分配到Eden Space（如果对象过大超过了Eden Space的空闲区域，则直接分配到年老代）。在GC阶段，标记完成后，在Eden Space上的存活对象会被首先复制到Survivor Space中一直到这些对象经历了多次GC仍然存活，会被转移到年老代。所以Survivor Space的作用是使得新生代中的对象再经历第一次GC之后仍会存留在新生代中一段时间，使得它们如果下次GC标记为清除时能迅速回收。</p>
-<p>因为我们假设大部分的年轻对象都会很快被GC回收掉，所以生代上的GC一般采用复制策略(“Copy Collectin”)。在GC开始前，”To”存活区是空的，对象只在”From”存活区和Eden Space中。GC开始时，会标记所有在”From”存活区和Eden Space中需要被回收的对象。对于Eden Space存活的对象会被转移到”To”存活区。From”存活区中依然存活的对象，如果已经达到一定年龄（Tenuring Threshold）则会被转移到年老代，否则依然复制到”To”存活区。在复制阶段结束后，”From”存活区和Eden Space会被清空，所有新生代中依旧存活的对象都被转移到”To”存活区中了。如果在回收过程中，”To”存活区占满，则会立即一次性复制到年老代中。<br>GC的最后完成时，”From”存活区和”To”存活区会互换角色。所以”To”存活区会为空，为下一次GC做准备，而”From”存活区将包含所有所有存活的对象，新的对象继续在Eden Space上分配。</p>
-<p><img src="/images/young_gc.png" alt="young_gc.png"></p>
-<p><em>例子显示了一次新生代GC的开始和结束状态。空闲空间为绿色。需要清除的对象为黄色，存活饿对象为红色。这个例子中，Survivor Space足够大，因此没有对象被复制到年老代中。</em></p>
-<p>总结一下，对象总是在Eden Space被创建，在”From”存活区和”To”存活区中保留一段时间，达到一定存活时间后会被转移到年老代中。当对象在年老代中需要被会回收时，就需要更多的工作和更复杂的GC算法了（简单的标记复制算法无法使用，因为已经没有地方可以用来复制了）。</p>
-<p>现在可以理解为什么新生代的空间大小很重要：如果新生代过小，则存活期短的对象会被很快拷贝到年老代中，从而更难被回收。相反，如果新生代过大，会有很多对象已经存活很久但是还是在新生代中中来回复制直到被最终复制到年老代。因此我们需要找到一个合适的平衡点。但是找到合适的平衡点这个很难，需要系统性的评估和调试，并且需要借助以下的JVM参数。</p>
-<p><strong>-XX:NewSize 和-XX:MaxNewSize</strong></p>
-<p>之前提过可以通过<code>-Xms</code>和<code>-Xmx</code>参数设置整个堆空间的大小，同样也有类似的参数<code>-XX:NewSize</code>和<code>-XX:MaxNewSize</code>设置新生代空间的上下限。不过在用<code>maxNewSize</code>设置最大值时要考虑到新生代只是整个堆空间的一部分，会影响到年老代的大小。处于稳定性的考虑，在GC时候可能需要将整个新生代复制到年老代，所以需要限定<code>-XX:NewSize</code>的最大值是<code>-Xmx/2</code>。</p>
-<p>处于性能原因，也可以在启动时设置新生代的初始大小<code>-XX:NewSize</code>。如果事先评估过年轻对象的比例，则可以通过设置初始值避免JVM运行时不断调整新生代大小带来的额外开销。</p>
-<p><strong>-XX:NewRatio</strong></p>
-<p>也可以设置新生代和年老代的大小比例，这样带来的的好处是可以自适应JVM不断的调整新生代的大小。例如~-XX:NewRatio=3~可以让年老代的大小始终是新生代的三倍，或者这新生代将占据整个堆内存的1/4，年老代为3/4。</p>
-<p>如果我们同时配置新生代的比例和绝对大小，则绝对值会首先考虑，例如下面的例子中，JVM将努力使得新生代的空间是年老代的1/3,但是不超过512MB,而且不低于32MB。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:NewSize=32m -XX:MaxNewSize=512m -XX:NewRatio=3 MyApp</div></pre></td></tr></table></figure>
-<p>没有统一的结论表示究竟该使用相对比例还是绝对值设定新生代空间的大小。如果充分了解应用的内存使用情况，不管同时设定堆内存和新生代空间的大小还是只设定相对比例都不错。但是在这方面并没有仔细评估，最正确的方案是让JVM来调整，而不是使用人工参数。如果程序运行稳定就已经皆大欢喜了。即使程序抛出了OOM错误，还是应该首先仔细评估确定根本原因，才能进行人工干预。</p>
-<p><strong>-XX:SurvivorRatio</strong></p>
-<p><code>-XX:SurvivorRatio</code>和<code>-XX:NewRatio</code>相似但是是在新生代内部设定Eden Space和Survivor Space的大小比例。例如<code>-XX:SurvivorRatio=10</code>表示Eden Space将是”From”存活区和”To”存活区大小的10倍，所以Eden Space将占据整个新生代的10/12, 而”From”存活区和”To”存活区各占据1/12。</p>
-<p>调整Survivor Space的大小作用在哪呢？假设Survivor Space大大小远远小于Eden Space，创建新对象分配空间没有问题，这些新对象在下次GC时候都被回收，一切都看起来不错。但是如果有些对象没有回收而Survivor Space的空间不足，那么这些对象在第一次GC时候都会被复制到年老代，这就会带来问题。另一方面如果情况相反：Survivor Space相对较大，那么Eden Space会很快被耗尽，这将会增加新生代GC的频率，同样也会带来问题。</p>
-<p>总的来说，我们需要避免将那些存活短的对象过早的转移到年老代，但是同样要避免频繁的触发新生代上的GC。所以这里同样需要找到平衡点，这取决于具体应用的具体特性。一个很好的方法是分析应用中对象的存活时间的分布情况。</p>
-<p><strong>-XX:+PrintTenuringDistribution</strong></p>
-<p>参数<code>-XX:+PrintTenuringDistribution</code>可以将JVM在每次新生代GC时打印所有在Survivor Space上的对象的存活年龄分布，存活年龄即对象已经经历过的GC次数。如下是一个输出的实例：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Desired survivor size 75497472 bytes, new threshold 15 (max 15)</div><div class="line">- age   1:   19321624 bytes,   19321624 total</div><div class="line">- age   2:      79376 bytes,   19401000 total</div><div class="line">- age   3:    2904256 bytes,   22305256 total</div></pre></td></tr></table></figure>
-<p>第一行表示”To”存活区上共使用了75MB的空间，并且显示了”Tenuring Threshold”的大小为15，即对象在新生代上最多经历15次GC之后就会转移到年老代。这里的输出显示目前阈值为15，最大值也是15。</p>
-<p>接下来按存活年龄从小到大显示相应对象的总的字节数，如果某一年龄没有对应的对象则不显示。示例中经历过一次GC的对象为19MB，大约有79KB大小的对象经历过两次GC，大约3MB的对象经历过3次GC。每行的末尾显示按照年龄累加的对象的大小。因此最后一行显示目前”To”存活区内年龄从1到3累加的对象大小为22MB。因为当前目标阈值为75MB，而且”Tenuring Threshold”的大小为15，所以本次GC不需要转移对象到年老代中。假设下一次GC打印出以下信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Desired survivor size 75497472 bytes, new threshold 2 (max 15)</div><div class="line">- age   1:   68407384 bytes,   68407384 total</div><div class="line">- age   2:   12494576 bytes,   80901960 total</div><div class="line">- age   3:      79376 bytes,   80981336 total</div><div class="line">- age   4:    2904256 bytes,   83885592 total</div></pre></td></tr></table></figure>
-<p>通过比较可以发现上次存活年龄为2和3的对象都没有被回收，并且分别递增为3和4。本次GC回收一部分对象，因为年龄为2的字节数减少了。另外本次GC从Eden Space张新增的68MB对象被拷贝到”To”存活区了。</p>
-<p>注意到本次GC之后，”To”存活区总共使用了83MB的空间，已经超过了75MB的阈值，因此JVM将”Tenuring Threshold”的阈值调整为2，这意味着在下一次GC时，将有一部分年龄超过2的对象要么被回收（已经不再被引用）要么被转移到年老代中。</p>
-<p><strong>-XX:InitialTenuringThreshold, -XX:MaxTenuringThreshold 和 -XX:TargetSurvivorRatio</strong></p>
-<p><code>-XX:InitialTenuringThreshold</code>和<code>-XX:MaxTenuringThreshold</code>参数可以调整”Tenuring Threshold”的初始值和最大值。<code>-XX:TargetSurvivorRatio</code>可以用来设置”To”存活区在每次GC之后的目标占用比。综合两个参数<code>-XX:MaxTenuringThreshold=10</code>和<code>-XX:TargetSurvivorRatio=90</code>限定了”Tenuring Threshold”的上限为10并且”To”存活区每次GC的目标占用比为50%。</p>
-<p>虽然有这些参数可以用来调试年轻代，但是没有一个统一的准则来指导如何调试。以下两点思路稍微清晰一点：</p>
-<ul>
-<li>如果存活时间分布有大量的对象年龄一直递增直到超过”Tenuring Threshold”才被回收，说明也许应该降低<code>-XX:MaxTenuringThreshold</code>的值；</li>
-<li>如果<code>-XX:MaxTenuringThreshold</code>值大于1，而且大部分的对象存活年龄从未超过1，那么我们需要检查一下存活区的空间利用比阈值是否达到了参数<code>-XX:TargetSurvivorRatio</code>设定的值。如果从未目标占用比阈值，超过说明所有的年轻对象都很快很回收了，这是理想情况。但是如果标占用比阈值被频繁触发，说明JVM将有部分存活年龄为1的对象拷贝到了年老代，这种情况下我们需要调整存活区的大小或者提高存活区目标占用比。</li>
-</ul>
-<p><strong>-XX:+NeverTenure 和 -XX:+AlwaysTenure</strong></p>
-<p>最后,我们介绍2个颇为少见的参数,对应2种极端的新生代GC情况。设置参数<code>-XX:+NeverTenure</code>会使得对象永远不会转移到老年代.除非我们确定不需要老年代时，否则这样设置风险很大,并且会浪费至少一半的堆内存。相反设置参数<code>-XX:+AlwaysTenure</code>表示没有存活区,所有对象在第一次GC时，会直接转移到老年代。<br>在生产环境下并没有合理的场景使用这个参数，除非在测试环境中，看下这样设置会发生什么有趣的事。除此之外并不推荐使用这些参数。</p>
-<p><strong>结论</strong></p>
-<p>新生代的配置对程序还是很重要的，这里介绍了一些相应的参数。但是如果仅仅配置新生代而不考虑年老代也不行。在配置堆内存或者GC算法时，需要兼顾虑两者之间的相互影响。</p>
-
-          
-        
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-    <div>
-      
-    </div>
-
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/02/11/jvmflags-3/">
-
-  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <meta itemprop="name" content="Joshua Jiang">
-    <meta itemprop="description" content="">
-    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
-  </span>
-
-  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-    <meta itemprop="name" content="Joshua's Blog">
-    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
-      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
-    </span>
-  </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-            
-            
-              
-                
-                <a class="post-title-link" href="/2016/02/11/jvmflags-3/" itemprop="url">
-                  JVM参数 - Part 3( 打印XX参数列表 )
-                </a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-02-11T00:00:00+08:00">
-                2016-02-11
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Java/" itemprop="url" rel="index">
-                    <span itemprop="name">Java</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2016/02/11/jvmflags-3/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/11/jvmflags-3/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-             <span id="/2016/02/11/jvmflags-3/" class="leancloud_visitors" data-flag-title="JVM参数 - Part 3( 打印XX参数列表 )">
-               <span class="post-meta-divider">|</span>
-               <span class="post-meta-item-icon">
-                 <i class="fa fa-eye"></i>
-               </span>
-               
-                 <span class="post-meta-item-text">Visitors </span>
-               
-                 <span class="leancloud-visitors-count"></span>
-             </span>
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-3-printing-all-xx-flags-and-their-values/" target="_blank" rel="external"> Useful JVM Flags – Part 3</a></p>
-<p>Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。</p>
-<p><strong>-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial</strong></p>
-<p>在ClientVM上使用<code>-XX:+PrintFlagsFinal</code>参数可以打印出所有按照字母排序的XX参数（不同的JVM版本数目有所不同, 这个版本有590个之多）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ java -client -XX:+PrintFlagsFinal Benchmark</div><div class="line">[Global flags]</div><div class="line">uintx AdaptivePermSizeWeight               = 20               &#123;product&#125;</div><div class="line">uintx AdaptiveSizeDecrementScaleFactor     = 4                &#123;product&#125;</div><div class="line">uintx AdaptiveSizeMajorGCDecayTimeScale    = 10               &#123;product&#125;</div><div class="line">uintx AdaptiveSizePausePolicy              = 0                &#123;product&#125;</div><div class="line">[...]</div><div class="line">uintx YoungGenerationSizeSupplementDecay   = 8                &#123;product&#125;</div><div class="line">uintx YoungPLABSize                        = 4096             &#123;product&#125;</div><div class="line"> bool ZeroTLAB                             = false            &#123;product&#125;</div><div class="line"> intx hashCode                             = 0                &#123;product&#125;</div></pre></td></tr></table></figure>
-<p>输出的每一行的XX参数都有5列，第一列表示参数类型，第二列为参数名称，第四列是值，第五列为参数类别。第三列如果为”=”表示是默认值，为”:=”表示为非默认值（由用户或者JVM添加）。</p>
-<p>在Server VM 上需要添加<code>-XX:+UnlockExperimentalVMOptions</code>和<code>-XX:+UnlockDiagnosticVMOptions</code>来解锁所有的附加隐藏的参数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark</div></pre></td></tr></table></figure>
-<p>结果产生的数目众多，有724个参数。下面可以着重看下非默认值得参数，用<code>:=</code>条件过滤一下。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark | grep &quot;:&quot;</div><div class="line">uintx InitialHeapSize                     := 57505088         &#123;product&#125;</div><div class="line">uintx MaxHeapSize                         := 920649728        &#123;product&#125;</div><div class="line">uintx ParallelGCThreads                   := 4                &#123;product&#125;</div><div class="line"> bool PrintFlagsFinal                     := true             &#123;product&#125;</div><div class="line"> bool UseParallelGC                       := true             &#123;product&#125;</div></pre></td></tr></table></figure>
-<p>这其中只有<code>-XX:+PrintFlagsFinal</code>参数是我们添加的，其余的是ServerVM添加的用来选取合适的堆空间以及垃圾回收选项。</p>
-<p><code>-XX:+PrintFlagsInitial</code>参数可以只显示那些默认值的参数。这个参数的输出是第三列为”=”的参数。但是这个列表以<code>-XX:+PrintFlagsFinal</code>的过滤结果要少，因为有些是动态参数的缘故。</p>
-<p>通过这些参数可以很直观的比较Server VM和Client VM的不同，而且哪些参数会影响另外的参数的赋值。<a href="http://q-redux.blogspot.com/2011/01/inspecting-hotspot-jvm-options.html" target="_blank" rel="external">这篇博客</a>值得深入研究，并且这篇文章提到了第五列的参数类别的含义。</p>
-<p><strong>-XX:PrintCommandLineFlags</strong></p>
-<p>作为本文的结束，让我们认识一下另一个存在已久的参数<code>-XX:PrintCommandLineFlags</code>。这个参数可以让JVM显式的打印出所有由用户指定或者JVM自身启动时优化设置的参数。<br>换句话说，它会列举出<code>-XX:+PrintFlagsFinal</code>参数输出的结果中所有第三列为”:=”的参数，这个可以作为一个获取修改的参数的快捷方式。例子如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+PrintCommandLineFlags Benchmark</div><div class="line">-XX:InitialHeapSize=57505088 -XX:MaxHeapSize=920081408 -XX:ParallelGCThreads=4 -XX:+PrintCommandLineFlags -XX:+UseParallelGC</div></pre></td></tr></table></figure>
-<p>如果我们每次启动JVM时能设置<code>-XX:PrintCommandLineFlags</code>则可以从日志中直观的记录下参数设定对每次性能的影响。所以同<code>-showversion</code>参数一样，笔者建议<code>-XX:PrintCommandLineFlags</code>参数应该总是被启用，这个参数并不复杂，单提供的信息有时候可能非常需要。</p>
-<p>有个奇怪的地方，是这里的参数<code>-XX:PrintCommandLineFlags</code>打印出来的堆空间的最大值比参数<code>-XX:+PrintFlagsFinal</code>的值略小，如果谁知道原因，请告诉我。</p>
-
-          
+          Useful JVM Flags – Part 5
+这部分内容主要关注堆内存的主要几个部分之一，“新生代”。首先笔者会阐述新生代的配置对于Java应用的性能的重要性，然后再介绍与之相关的配置。
+从纯粹的功能角度，JVM只需要一块堆空间，不需要区分新生代。引入新生代首要原因是为了提高垃圾回收的性能。具体的说，将堆空间区分成新生代和年老代有两点好处：一是简化了新对象的内存分配（因为新对象只会在新生代分
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/12/jvmflags-5/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1804,33 +1476,17 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-4-heap-tuning/" target="_blank" rel="external">Useful JVM Flags – Part 4</a></p>
-<p>理想情况下，JVM的默认配置就可以让Java程序运行的很好，也就没有必要手工干预任何参数。但是一旦出现性能问题（很不幸的是，这些问题还经常出现），一些与之相关的JVM参数的知识会是解决问题的好帮手。这篇文章将介绍一些与内存管理相关的JVM参数。知道和理解这些参数将会极大帮助开发和运维相关的人员。</p>
-<p>所有现有的Hotspot内存管理和垃圾回收算法都基于对堆内存的同一种划分，即包含新创建的对象和存活期短的对象的新生代，和包含存活期超过一定时长的对象的年老代。另外永久代包括那些存活期伴随整个程序的对象，如类加载相关的对象以及内联的字符串常量池。以下的讨论都基于这种堆空间的传统划分。不过注意到其他可能的划分也很有前景，其中如G1垃圾回收算法对新生代和年老代的区分较为模糊。另外Hotspot JVM的未来版本有计划将不再区分年老代和永久代（译者注：Java 8取消了永久代划分，新增的MetaSpace不再属于堆空间）。</p>
-<p><strong>-Xms 和 -Xmx ( -XX:InitialHeapSize 和 -XX:MaxHeapSize)</strong></p>
-<p><code>-Xms</code>和<code>-Xmx</code>可以说是最流行的JVM参数，用来分别设置JVM堆空间的起始值和最大值。这两个参数均支持字节为单位的值，或者”k”,”K”, “m”,”M”以及”g”,”G”。例如下面的例子的初始内存为128M，最大内存2G。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -Xms128m -Xmx2g MyApp</div></pre></td></tr></table></figure>
-<p>注意在实际工作中，起始堆空间值通常也是最小堆空间值。虽然JVM确实会动态的调整堆的大小，理论上有些应用的堆大小可能低于起始值设定。不过笔者在实际工作中没有遇到这种情况，即使程序占用的内存很小。这一点对开发和人员人员还是很方便的，如果有必要的话，可以将<code>-Xms</code>和<code>-Xmx</code>设定为同一值，这样堆空间的大小将始终保持不变。</p>
-<p>另外有必要了解<code>-Xms</code>和<code>-Xmx</code>是<code>-XX:InitialHeapSize</code> 和 <code>-XX:MaxHeapSize</code>的快捷方式.JVM内部会将内部映射这两对参数。但是在使用<code>-XX:PrintCommandLineFlags</code>打印启动参数，或者使用JMX查询JVM参数时，会显示<code>-XX:InitialHeapSize</code> 和 <code>-XX:MaxHeapSize</code>而非简称。</p>
-<p><strong>-XX:+HeapDumpOnOutOfMemoryError and -XX:HeapDumpPath</strong></p>
-<p>如果我们没有置<code>-Xmx</code>为足够大就会来内存溢出(OOM)的风险，这也可能是与JVM打交道的过程最糟糕的问题之一了。正如我们另一个博客系列所描述的那样，处理这种问题必须仔细的定位导致溢出的根本原因。通常我们可以从分析溢出时的Heap Dump着手。报错后没有Heap Dump文件将会非常难以定位原因，特别对于线上环境上那些正常运行数小时甚至数天才会报错的程序，再次重现会非常耗时。</p>
-<p>幸运的是，JVM的-XX:+HeapDumpOnOutOfMemoryError参数可以在OOM时自动生成HeapDump文件。启用这个参数将会在发生OOM时节约大量的时间。默认情况下Heap Dump文件会以<code>java_pid&lt;pid&gt;.hprof</code>文件名存储在当前的工作目录(译者注：通常是Shell环境下的启动JVM时的当前工作目录)。<code>pid</code>是JVM的进程ID。可以通过指定<br><code>-XX:HeapDumpPath</code>参数的值改变Heap Dump文件的路径和名称。 例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:HeapDumpPath=/var/log/java/java_heapdump.hprof</div></pre></td></tr></table></figure>
-<p>有一点需要牢记，Heap Dump文件在内存溢出的时候可能可能会很庞大，所以推荐使用<code>-XX:HeapDumpPath</code>来指定一个有足够空间的位置用来存放。</p>
-<p><strong>-XX:OnOutOfMemoryError</strong></p>
-<p>在内存溢出时我们甚至可以执行一段自定义的命令，例如发送邮件给管理员或执行一些清理工作。这些可以通过<code>-XX:OnOutOfMemoryError</code>参数来完成。这个参数可以接受一串命令以及其参数。本文不会讨论细节但是给出了以下实例，在内存溢出时，将会写文件到<code>/tmp/headdump.hprof</code>文件中，并在当前用户的Home目录下执行<code>cleanup.sh</code>脚本。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof -XX:OnOutOfMemoryError =&quot;sh ~/cleanup.sh&quot; MyApp</div></pre></td></tr></table></figure>
-<p><strong>-XX:PermSize and -XX:MaxPermSize</strong></p>
-<p>JVM的永久代是一块与堆隔离开的内存空间，它包含了JVM加载的类文件的对象表示。如果一个应用需要加载大量的类（比如因为使用了很多第三方的库，这些库又依赖了更多别的库），就需要增大永久代的大小。这里，<code>-XX:MaxPermSize</code>设置永久代的最大值，而<code>-XX:PermSize</code>设置JVM启动时的初始值。例子如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:PermSize=128m -XX:MaxPermSize=256m MyApp</div></pre></td></tr></table></figure>
-<p>注意永久代空间的大小不计入<code>-XX:MaxHeapSize</code>的指定值。除了<code>-XX:MaxHeapSize</code>参数之外，还需要额外指定<code>-XX:MaxPermSize</code>的值。</p>
-<p><strong>-XX:InitialCodeCacheSize 和 -XX:ReservedCodeCacheSize</strong></p>
-<p>JVM中有一块专门存储已编译方法生成的本地代码，称为”Code Cache”，这一点常常被忽略。不过一般情况下CodeCache不会引入性能问题，但是一旦产生此类问题后果会很严重。如果CodeCache已满，JVM会打印警告信息同时切换到编译模式运行：JIT编译器会被停用，字节码将不会再被编译成本地代码。程序会继续运行，但是速度会降低一个数量级，直到有人注意到。</p>
-<p>和其他内存空间区域一样，可以通过<code>-XX:InitialCodeCacheSize</code>和 <code>-XX:ReservedCodeCacheSize</code>来指定Code Cache的大小，这两个参数也接受与上述其他参数类似的值。</p>
-<p><strong>-XX:+UseCodeCacheFlushing</strong></p>
-<p>如果代码缓存不断增长，例如，因为热部署引起的内存泄漏，那么提高Code Cache的大小只会延缓但不会阻止其溢出。为了避免这种情况的发生，我们可以尝试一个有趣的新参数：当代码缓存被填满时，通过使用<code>-XX:+UseCodeCacheFlushing</code> 这个参数让JVM放弃一些编译代码。这样至少可以避免当代码缓存被填满的时候JVM切换到interpreted-only 模式。不过笔者建议一旦发现缓存问题应该尽快找出根本原因并解决，如找出可能的内存泄漏并修复。</p>
-
-          
+          Useful JVM Flags – Part 4
+理想情况下，JVM的默认配置就可以让Java程序运行的很好，也就没有必要手工干预任何参数。但是一旦出现性能问题（很不幸的是，这些问题还经常出现），一些与之相关的JVM参数的知识会是解决问题的好帮手。这篇文章将介绍一些与内存管理相关的JVM参数。知道和理解这些参数将会极大帮助开发和运维相关的人员。
+所有现有的Hotspot内存管理和垃圾回收算法都基
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/11/jvmflags-4/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -1869,7 +1525,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/02/10/jvmflags-2/">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/02/11/jvmflags-3/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Joshua Jiang">
@@ -1894,8 +1550,8 @@
             
               
                 
-                <a class="post-title-link" href="/2016/02/10/jvmflags-2/" itemprop="url">
-                  JVM参数 - Part 2( 参数归类和JIT编译诊断 )
+                <a class="post-title-link" href="/2016/02/11/jvmflags-3/" itemprop="url">
+                  JVM参数 - Part 3( 打印XX参数列表 )
                 </a>
               
             
@@ -1911,8 +1567,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-02-10T00:00:00+08:00">
-                2016-02-10
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-02-11T00:00:00+08:00">
+                2016-02-11
               </time>
             
 
@@ -1952,8 +1608,8 @@
                 <span class="post-meta-item-icon">
                   <i class="fa fa-comment-o"></i>
                 </span>
-                <a href="/2016/02/10/jvmflags-2/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/10/jvmflags-2/" itemprop="commentCount"></span>
+                <a href="/2016/02/11/jvmflags-3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/11/jvmflags-3/" itemprop="commentCount"></span>
                 </a>
               </span>
             
@@ -1961,7 +1617,7 @@
 
           
           
-             <span id="/2016/02/10/jvmflags-2/" class="leancloud_visitors" data-flag-title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
+             <span id="/2016/02/11/jvmflags-3/" class="leancloud_visitors" data-flag-title="JVM参数 - Part 3( 打印XX参数列表 )">
                <span class="post-meta-divider">|</span>
                <span class="post-meta-item-icon">
                  <i class="fa fa-eye"></i>
@@ -1992,40 +1648,18 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-2-flag-categories-and-jit-compiler-diagnostics/" target="_blank" rel="external"> Useful JVM Flags – Part 2</a></p>
-<p>在这个系列博客的第二部分，笔者将介绍Hotspot虚拟机提供的不同类别的参数。另外还将介绍一些关于JIT编译器诊断的讨论。</p>
-<p><strong>JVM 参数类别</strong></p>
-<p>Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行<code>java</code>命令就可以列出所有的标准参数（或者 <code>java -help</code>，这正好是一个标准参数命令）。博客的<a href="http://blog.joshuajiang.com/JVMFlags-1/">第一部分</a>已经提及了一些标准参数，如<code>-server</code>参数。</p>
-<p>第二类为X参数，这些为非标准参数，其行为和可用性在后续版本中未知。<code>java  -X</code>命令可以列出以<code>-X</code>开头的参数，这个列表并不完全，例如并不包括<code>-Xcomp</code>参数。</p>
-<p>第三类也是目前数目最多的一类是XX参数，这些参数也是非标准参数，后面会讲到如何列出这些参数。从使用角度，X参数和XX参数并无不同。<em>X参数</em>更稳定一点，而XX参数实验性更强（且通常只会由开发者用于诊断和JVM调优用途）。<a href="http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html" target="_blank" rel="external">这篇文档</a>对于了解XX参数值得一读，其中明确提出应该谨慎使用XX参数。这种说法笔者认为同样适用于X参数和有些标准参数。总之无论何种参数，在使用前都值得花时间理解其行为和可能的副作用。</p>
-<p>简单的说，所有的XX参数都以<code>-XX:</code>开头，但是具体参数有所不同：</p>
-<ul>
-<li>boolean类型的参数使用<code>+</code>和<code>-</code>。例如 <code>-XX:+&lt;name&gt;</code>打开该选项，而<code>-XX:-&lt;name&gt;</code>关闭该选项。</li>
-<li>非boolean参数，例如字符串或者整型数字，按照<code>-XX:&lt;name&gt;=&lt;value&gt;</code>的方式来为选项赋值。</li>
-</ul>
-<p>下面将介绍一些与JIT编译有关的XX参数。</p>
-<p><strong>-XX:+PrintCompilation 和 -XX：+CITime</strong></p>
-<p>如果能在程序运行的同时观察JIT编译怎样工作可以更直观的理解JIT的行为。<code>-XX:+PrintCompilation</code>参数可以打印出JIT编译字节码到本地代码的输出。下面是一个Server VM的输出实例。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+PrintCompilation Benchmark</div><div class="line">  1       java.lang.String::<span class="built_in">hash</span>Code (64 bytes)</div><div class="line">  2       java.lang.AbstractStringBuilder::stringSizeOfInt (21 bytes)</div><div class="line">  3       java.lang.Integer::getChars (131 bytes)</div><div class="line">  4       java.lang.Object::&lt;init&gt; (1 bytes)</div><div class="line">---   n   java.lang.System::arraycopy (static)</div><div class="line">  5       java.util.HashMap::indexFor (6 bytes)</div><div class="line">  6       java.lang.Math::min (11 bytes)</div><div class="line">  7       java.lang.String::getChars (66 bytes)</div><div class="line">  8       java.lang.AbstractStringBuilder::append (60 bytes)</div><div class="line">  9       java.lang.String::&lt;init&gt; (72 bytes)</div><div class="line"> 10       java.util.Arrays::copyOfRange (63 bytes)</div><div class="line"> 11       java.lang.StringBuilder::append (8 bytes)</div><div class="line"> 12       java.lang.AbstractStringBuilder::&lt;init&gt; (12 bytes)</div><div class="line"> 13       java.lang.StringBuilder::toString (17 bytes)</div><div class="line"> 14       java.lang.StringBuilder::&lt;init&gt; (18 bytes)</div><div class="line"> 15       java.lang.StringBuilder::append (8 bytes)</div><div class="line">[...]</div><div class="line"> 29       java.util.regex.Matcher::reset (83 bytes)</div></pre></td></tr></table></figure>
-<p><code>-XX:+PrintCompilation</code>参数会在每个方法编译时打印出一行信息，包括一个运行时顺序号（编译任务的ID），方法的名称和大小。因此上述第一行表示JIT编译器将<code>String:hashcode</code>方法编译成本地代码，方法不同或者编译任务不同输出也不同。例如创建本地包装方法会标记成”n”，例如<code>System:arraycopy</code>方法，注意这一行被没有顺序号和方法大小，因为它不需要编译成本地代码。另外有些方法被重复编译了，例如11行，15行的<code>StringBuilder:append</code>方法。输出停留在序号29，表示共执行了29个方法编译。</p>
-<p>对于<code>-XX:+PrintCompilation</code>参数并没有官方文档，但是<a href="https://gist.github.com/rednaxelafx/1165804#file_notes.md" target="_blank" rel="external">这篇介绍</a>推荐阅读。</p>
-<p>JIT编译器的输出帮助我们理解了Server VM和Client VM的区别。Server VM在上面的例子中打印了29行编译输出，而Client VM有55行（无图）。这看起来奇怪因为Server VM理应执行更多的优化。而实际情况是，Server VM在判断方法是不是热点和需不需要编译时时间更久。因此Server VM会推迟某些方法的编译时间。</p>
-<p>另外<code>-XX:CITime</code>参数可以在JVM关闭之前打印JIT编译的统计信息，下面是一个例子：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+CITime Benchmark</div><div class="line">[...]</div><div class="line">Accumulated compiler <span class="built_in">times</span> (<span class="keyword">for</span> compiled methods only)</div><div class="line">------------------------------------------------</div><div class="line">  Total compilation time   :  0.178 s</div><div class="line">    Standard compilation   :  0.129 s, Average : 0.004</div><div class="line">    On stack replacement   :  0.049 s, Average : 0.024</div><div class="line">[...]</div></pre></td></tr></table></figure>
-<p>如上所示，29个编译任务总共耗时总共0.178秒，其中0.0.49秒花在栈上替换(OSR, On Stack Replacement)，即对正在执行的方法进行编译并在及时替换栈帧上该方法。OSR技术想达到高性能并不简单，但是非常重要。如果没有OSR技术，对于长时间执行的方法（例如该方法体是一个很长的循环），无法立即在运行时由编译的本地码替换掉。</p>
-<p>另外Client VM编译了55个方法，但是只耗时0.021秒。因此尽管Server VM执行的编译比Client VM少，但是却花了很多的时间。原因是在编译方法的过程中，Server VM执行了更多的优化。</p>
-<p>在博客的第一部分讲到了<code>-Xint</code>和<code>-Xcomp</code>参数。通过<code>-XX:+PrintCompilation</code>和<code>-XX:CITime</code>参数能更进一步的了解之间的差别。<code>-Xint</code>参数不会产生任何编译输出，而不会有任何编译耗时。使用<code>-Xcomp</code>参数的话，对于Client VM启动后会立即打印726行编译信息，但是之后不会再新增，因为所有方法都立即编译了。而ServerVM会打印993行，表明ServerVM的优化更积极。另外Server VM编译时间上的统计如下：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">$ java -server -Xcomp -XX:+CITime Benchmark</div><div class="line">[...]</div><div class="line">Accumulated compiler <span class="built_in">times</span> (<span class="keyword">for</span> compiled methods only)</div><div class="line">------------------------------------------------</div><div class="line">  Total compilation time   :  1.567 s</div><div class="line">    Standard compilation   :  1.567 s, Average : 0.002</div><div class="line">    On stack replacement   :  0.000 s, Average : -1.<span class="comment">#IO</span></div><div class="line">[...]</div></pre></td></tr></table></figure>
-<p>可以看出Server VM在编译执行模式下耗时1.567秒执行编译，比混合模式慢了10倍，程序反而更慢。而Client VM使用了0.208秒执行编译，但是程序执行时间比Server VM还要慢。另外，在编译模式下不会触发OSR技术，因为所有的方法都是再首次调用之前就编译了。这里Average行显示时间错误，也从侧面印证了XX参数并不那么十分可靠。</p>
-<p><strong>-XX:+UnlockExperimentalVMOptions</strong></p>
-<p>有时候当你设置完JVM参数并启动后，JVM会意外退出并打印”Unrecongized VM option”错误。当然首先你应该检查是否有参数拼写错误。<br>但是有时候一切无误后仍旧报错，这时候需要使用<code>-XX:+UnlockExperimentalVMOptions</code>。笔者不是很清楚这种安全机制的意义，但是猜测这种类型的参数如果不正确使用可能会影响JVM的稳定性，比如打印过多的调试信息。这个参数更适用于JVM开发者而不是普通的Java应用开发人员。<br>如果某个参数无法通过添加<code>-XX:+UnlockExperimentalVMOptions</code>开启，而你真的需要使用这个参数，你可以尝试编译Debug版本JVM。</p>
-<p><strong>-XX:+LogCompilation and -XX:+PrintOptoAssembly</strong></p>
-<p>如果<code>-XX:+PrintCompilation</code>提供的信息仍旧有限，可以尝试<code>-XX:+LogCompilation</code>打印的”hotspot.log”文件，这个文件会包含更多方法编译的细节以及编译任务的启动线程等。<br>另外这个参数需要搭配<code>-XX:+UnlockExperimentalVMOptions</code>。</p>
-<p><code>-XX:+PrintOptoAssembly</code>参数可以让你得以窥探字节码编译后的本地代码，本地代码会同时打印到标准输出和”hotspot.log”文件中。这个参数需要ServerVM模式下的Debug版本的JVM实现。通过了解<code>-XX:+PrintOptoAssembly</code>的输出可以理解JVM使用了那些优化方法，比如如何消除死代码。<a href="https://community.oracle.com/people/kohsuke/blog/2008/03/30/deep-dive-assembly-code-java?customTheme=otn" target="_blank" rel="external">这篇文章</a>有一些介绍。</p>
-<p><strong>更多关于XX参数</strong></p>
-<p>如果这篇文章激发了你对Hot Spot JVM的XX参数的兴趣，可以从<a href="http://stas-blogspot.blogspot.de/2011/07/most-complete-list-of-xx-options-for.html" target="_blank" rel="external">这个列表</a>了解更多。</p>
-
-          
+           Useful JVM Flags – Part 3
+Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。
+-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial
+在ClientVM上使用-XX:+PrintFlags
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/11/jvmflags-3/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -2187,26 +1821,194 @@
       
         
           
-            <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-1-jvm-types-and-compiler-modes/" title="Original Link Useful JVM flags - Part 1" target="_blank" rel="external">Useful JVM flags - Part 1</a></p>
-<p>现在的JVM已经为Java和虚拟机上其他兼容语言(如Groovy, JRuby, Jython等)的应用程序出色的完成了大部分工作，并且性能高效且稳定。例如当下流行JVM提供了包括自适应的内存管理(Adaptive Memory Mangement)，垃圾回收(Garbage Collection),JIT编译，动态类加载(Dynamic class Loading)，锁优化等一系列功能，这些还只是引用了其中一部分。更重要的是这些功能很少直接影响一般的Java开发者。总的来说，在运行时状态JVM会以一种持续评估和动态分析的方式来优化其对应用程序的处理。</p>
-<p>尽管JVM的自动化程序已经很高（甚至某些意见已经认为已经非常高了），JVM仍然提供了很多工具来方便进行外部监控和人工调优。以防万一出现错误或者性能低下时，人工干预会变得非常可能且必要。<br>值得一提的是，现代JVM的实现同样提供了很多人工优化的工具，其中特别被提及的就是JMV启动时的命令行参数。一些JVM的实现提供了几百个这样的启动参数，使得缺乏经验的开发者很容易不知所措。这个博客系列的目的就是着重介绍日常开发中最相关的参数，并解释其功能。这里的JVM特指Sun/Orcale HotSpot JVM的Java 6版本，不过大部分情况下其他流行的JVM实现也提供了类似的参数。</p>
-<p><strong>-server 和 -client</strong></p>
-<p>“server”和”client”是两种类型的Hotspot JVM。server类型的JVM（以下简称 Server VM）默认使用更大的堆内存，并行的垃圾回收(parellel garbage collecor), 并且在运行时采用更积极的代码优化策略。client类型的JVM(以下简称 Client VM)更加保守，这会带来更短的启动时间，更少的内存占用。谢天谢地有这样一个名词叫”虚拟机工效学”(JVM ergonomics),旨在根据一定的标准例如可用的硬件和操作系统等来自动的选择合适的JVM类型。具体的标准可以参考<a href="http://docs.oracle.com/javase/6/docs/technotes/guides/vm/server-class.html" target="_blank" rel="external">这里</a>。从这个标准中可以看出，Client VM只在32位系统上可用。</p>
-<p>如果我们对预先选择的JVM类型不满意，可以使用参数<code>-server</code>和<code>-client</code>来规定相应的JVM类型。尽管Server VM最初是用于长时间执行的进程，但是如今在很多独立的进程场景中，Server VM也展现出更高的性能。因此我这里推荐使用<code>-server</code>参数，只要程序的首要性能指标是更快的执行时间。简单的记住：32位的系统上, Hotspot JDK要求能够以server方式启动JVM，而32位JRE只有client VM。</p>
-<p><strong>-version和-showversion</strong></p>
-<p>假设你的机器安装了多个版本的JVM实现，能够准确的知道你启动的JVM类型就变得特别重要了。这个问题在Linux版本上更为常见。<br>幸运的是，我们可以使用1<code>version</code>参数，它可以打印出以下信息到标准输出上，例如：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">$ java -version</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Client VM (build 19.1-b02, mixed mode, sharing)</div></pre></td></tr></table></figure>
-<p>输出显示Java版本号为1.6_024,准确的JRE的构建编号(1.6.0_24-b07),JVM为Hotspot, 类型为Client，JVM的构建编号为19.1-b02。另外我们知道JVM以Mixed Mode方式运行，这也是Hotspot的默认模式，表示JVM会动态的在运行时将字节码(byte code)编译为本地编码(native mode)。最后Sharing是指类加载数据会共享。类数据共享是指JRE的系统类会加载到一个只读的缓存中(jsa文件，”Java Shared Archive”)，这个缓存会被所有的Java进程共享。相比较重复读取jar包而言，类数据共享能优化性能。</p>
-<p><code>-version</code>参数在打印完上述信息后会退出，但是<code>-showversion</code>不仅可以产生同样的输出，而且也可以指定指定的Java程序。因此<code>-showversion</code>参数在生产环境下打印JVM信息很有用处。你永远不确定何时你会需要这些JVM信息来定位一些程序崩溃的问题，因此在启动时候加上<code>-showversion</code>参数能保证这些信息可以及时获取。</p>
-<p><strong>-Xint, -Xcomp和-Xmixed</strong></p>
-<p>参数<code>-Xint</code>和<code>-Xcomp</code>对于日常开发并不相关，但是可以帮助更好的学习JVM。<code>-Xint</code>参数使JVM以解释执行的方式执行所有的字节码，因此会显著的降低执行速度，通常会降低10倍以上。参数<code>-Xcomp</code>正好相反，即JVM在首次使用时将所有的字节码编译成本地代码，采用了最高的优化等级。这听起来不错，因为它完全避免了缓慢的解释执行过程。但是很多应用在使用<code>-Xcomp</code>也会有性能损失，尽管没有使用<code>-Xint</code>参数严重。原因是<code>-Xcomp</code>使得JVM无法充分利用JIT编译。JIT编译能在运行时创建方法调用文件(method usage profiles)，然后逐步的优化每个方法，有时候会主动的优化应用的行为。其中一些优化技术，例如积极的分支预测(Optimistic Branch Prediction),如果不事先分析应用就无法有效的使用。另一方面，JIT只会对那些重要的频繁调用的方法编译成本地代码，比如这些方法构成了整个应用某种程度上的热点。而那些调用很少（甚至只调用一次）的方法仍然在解释模式下执行，从而降低了编译和优化的的开销。</p>
-<p>注意混合模式参数<code>-Xmixed</code>,最新版本的Hotspot默认采用混合模式，因此无须特别指定。下面是一个基准测试，向一个HashMap中插入对象并检索然后取平均时间。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -showversion Benchmark</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Server VM (build 19.1-b02, mixed mode)</div><div class="line"> </div><div class="line">Average time: 0.856449 seconds</div></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -showversion -Xint Benchmark</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Server VM (build 19.1-b02, interpreted mode)</div><div class="line"> </div><div class="line">Average time: 7.622285 seconds</div></pre></td></tr></table></figure>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -showversion -Xcomp Benchmark</div><div class="line">java version <span class="string">"1.6.0_24"</span></div><div class="line">Java(TM) SE Runtime Environment (build 1.6.0_24-b07)</div><div class="line">Java HotSpot(TM) Server VM (build 19.1-b02, compiled mode)</div><div class="line"> </div><div class="line">Average time: 0.950892 seconds</div></pre></td></tr></table></figure>
-<p>当然也有例子证明<code>-Xcomp</code>是最好的，特别是那些运行时间久的应用。笔者强烈建议采用Hotspot的默认配置，让JIT编译器能充分发挥潜力。毕竟JIT编译是JVM上设计最高级的组件之一，事实上也是因为JVM在这一领域的进步使得Java已经不再被认为是很慢的语言了。</p>
+          Useful JVM flags - Part 1
+现在的JVM已经为Java和虚拟机上其他兼容语言(如Groovy, JRuby, Jython等)的应用程序出色的完成了大部分工作，并且性能高效且稳定。例如当下流行JVM提供了包括自适应的内存管理(Adaptive Memory Mangement)，垃圾回收(Garbage Collection),JIT编译，动态类加载(Dynamic cla
+          ...
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/10/jvmflags-1/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://blog.joshuajiang.com/2016/02/10/jvmflags-2/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Joshua Jiang">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="https://secure.gravatar.com/userimage/72335064/2a2d96d92000b72004b594b2e5d3f0bf">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Joshua's Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Joshua's Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/02/10/jvmflags-2/" itemprop="url">
+                  JVM参数 - Part 2( 参数归类和JIT编译诊断 )
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2016-02-10T00:00:00+08:00">
+                2016-02-10
+              </time>
+            
+
+            
+
+            
+          </span>
 
           
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+              <span class="post-comments-count">
+                <span class="post-meta-divider">|</span>
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-comment-o"></i>
+                </span>
+                <a href="/2016/02/10/jvmflags-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/02/10/jvmflags-2/" itemprop="commentCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+          
+             <span id="/2016/02/10/jvmflags-2/" class="leancloud_visitors" data-flag-title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
+               <span class="post-meta-divider">|</span>
+               <span class="post-meta-item-icon">
+                 <i class="fa fa-eye"></i>
+               </span>
+               
+                 <span class="post-meta-item-text">Visitors </span>
+               
+                 <span class="leancloud-visitors-count"></span>
+             </span>
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          <p><a href="https://blog.codecentric.de/en/2012/07/useful-jvm-flags-part-2-flag-categories-and-jit-compiler-diagnostics/"> Useful JVM Flags – Part 2</a></p>
+<p>在这个系列博客的第二部分，笔者将介绍Hotspot虚拟机提供的不同类别的参数。另外还将介绍一些关于JIT编译器诊断的讨论。</p>
+<p><strong>JVM 参数类别</strong></p>
+<p>Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行<code>java</code>命令就可以列出所有的标准参数（或者 <code>java -help</code>，这正好是一个标准参数命令）。博客的<a href="http://blog.joshuajiang.com/JVMFlags-1/">第一部分</a>已经提及了一些标准参数，如<code>-server</code>参数。</p>
+<p>第二类为X参数，这些为非标准参数，其行为和可用性在后续版本中未知。<code>java  -X</code>命令可以列出以<code>-X</code>开头的参数，这个列表并不完全，例如并不包括<code>-Xcomp</code>参数。</p>
+<p>第三类也是目前数目最多的一类是XX参数，这些参数也是非标准参数，后面会讲到如何列出这些参数。从使用角度，X参数和XX参数并无不同。<em>X参数</em>更稳定一点，而XX参数实验性更强（且通常只会由开发者用于诊断和JVM调优用途）。<a href="http://www.oracle.com/technetwork/java/javase/tech/vmoptions-jsp-140102.html">这篇文档</a>对于了解XX参数值得一读，其中明确提出应该谨慎使用XX参数。这种说法笔者认为同样适用于X参数和有些标准参数。总之无论何种参数，在使用前都值得花时间理解其行为和可能的副作用。</p>
+<p>简单的说，所有的XX参数都以<code>-XX:</code>开头，但是具体参数有所不同：</p>
+<ul>
+<li>boolean类型的参数使用<code>+</code>和<code>-</code>。例如 <code>-XX:+&lt;name&gt;</code>打开该选项，而<code>-XX:-&lt;name&gt;</code>关闭该选项。</li>
+<li>非boolean参数，例如字符串或者整型数字，按照<code>-XX:&lt;name&gt;=&lt;value&gt;</code>的方式来为选项赋值。</li>
+</ul>
+          <!--noindex-->
+          <div class="post-button text-center">
+            <a class="btn" href="/2016/02/10/jvmflags-2/#more" rel="contents">
+              Read more &raquo;
+            </a>
+          </div>
+          <!--/noindex-->
         
       
     </div>
@@ -2360,7 +2162,7 @@
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -2369,19 +2171,24 @@
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

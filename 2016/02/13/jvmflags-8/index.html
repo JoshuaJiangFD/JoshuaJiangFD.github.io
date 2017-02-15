@@ -425,6 +425,11 @@
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -444,15 +449,15 @@
         <p><a href="https://blog.codecentric.de/en/2014/01/useful-jvm-flags-part-8-gc-logging/" target="_blank" rel="external">Useful JVM Flags – Part 8</a></p>
 <p>这个系列博客的最后一部分将会介绍JVM的GC日志和相关的参数。GC日志对于优化堆设置、GC参数或者分析应用分配对象的特征都至关重要。GC日志详细记录了每次GC的过程和结果的准确数据。</p>
 <p><strong>-XX:PrintGC</strong></p>
-<p><code>-XX:PrintGC</code>（或者<code>-verbose:gc</code>）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[GC 246656K-&gt;243120K(376320K), 0,0929090 secs]</div><div class="line">[Full GC 243120K-&gt;241951K(629760K), 1,5589690 secs]</div></pre></td></tr></table></figure></p>
+<p><code>-XX:PrintGC</code>（或者<code>-verbose:gc</code>）会让JVM将GC的简单信息打印出来，包括新生代GC和Full GC。下面是一个例子：<br><figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">[GC <span class="number">246656</span>K-&gt;<span class="number">243120</span>K(<span class="number">376320</span>K), <span class="number">0</span>,<span class="number">0929090</span> secs]</div><div class="line">[Full GC <span class="number">243120</span>K-&gt;<span class="number">241951</span>K(<span class="number">629760</span>K), <span class="number">1</span>,<span class="number">5589690</span> secs]</div></pre></td></tr></table></figure></p>
 <p>每一行开始是GC的类型，后面是堆上GC前后的占用情况，括号内是当前堆的总大小，最后是每次GC的用时。例如第一行的日志标识GC使得堆上的对象从246656K降低到243120K，当前总大小为376320K，总耗时为0.093s。<br>简单的GC日志没有体现具体的GC算法差异，例如多少对象从新生代转移到了年老代。所以需要更详细的GC日志。</p>
 <p><strong>-XX:+PrintGCDetails</strong></p>
 <p><code>-XX:+PrintGCDetails</code>参数会打印更详细的日志，下面是一个吞吐量优先的回收器上一次GC的日志输出，这里为了更可读，加了一些分行和缩进，实际输出只是一行。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[GC</div><div class="line">    [PSYoungGen: 142816K-&gt;10752K(142848K)] 246648K-&gt;243136K(375296K),</div><div class="line">    0,0935090 secs</div><div class="line">]</div><div class="line">[Times: user=0,55 sys=0,10, real=0,09 secs]</div></pre></td></tr></table></figure>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">[GC</div><div class="line">    [PSYoungGen: <span class="number">142816</span>K-&gt;<span class="number">10752</span>K(<span class="number">142848</span>K)] <span class="number">246648</span>K-&gt;<span class="number">243136</span>K(<span class="number">375296</span>K),</div><div class="line">    <span class="number">0</span>,<span class="number">0935090</span> secs</div><div class="line">]</div><div class="line">[Times: user=<span class="number">0</span>,<span class="number">55</span> sys=<span class="number">0</span>,<span class="number">10</span>, real=<span class="number">0</span>,<span class="number">09</span> secs]</div></pre></td></tr></table></figure>
 <p>从输出可以看出，一次新生代上的GC将堆上已用空间从246648K降低到243136K，耗时0.0.935秒。另外可以看出新生代上大小为142848K，使用的回收器为<code>PSYoungGen</code>。另外从新生代GC的结果来看触发GC的原因是因为已经没有足够的内存给新创建的对象。另外通过对比发现，虽然新生代上可用空间增大（142816K-&gt;10752K），但是总体堆内从占用没有减少（246648K-&gt;243136K），有大量的对象从新生代拷贝到了年老代。</p>
 <p><code>Times</code>行显示了GC占用的CPU时间，分为用户态(User)和核心态（Sys）。另外实际运行时间为0.0.9秒。这里用户态的时间远远大于实际运行时间，可见GC是多线程运行的。CPU时间统计的是所有核上的时间之和。相除可以得知，大概有8个线程并发执行GC。</p>
 <p>下面是一个Full GC的输出：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[Full GC</div><div class="line">    [PSYoungGen: 10752K-&gt;9707K(142848K)]</div><div class="line">    [ParOldGen: 232384K-&gt;232244K(485888K)] 243136K-&gt;241951K(628736K)</div><div class="line">    [PSPermGen: 3162K-&gt;3161K(21504K)],</div><div class="line">    1,5265450 secs</div><div class="line">]</div><div class="line">[Times: user=10,96 sys=0,06, real=1,53 secs]</div></pre></td></tr></table></figure>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">[Full GC</div><div class="line">    [PSYoungGen: <span class="number">10752</span>K-&gt;<span class="number">9707</span>K(<span class="number">142848</span>K)]</div><div class="line">    [ParOldGen: <span class="number">232384</span>K-&gt;<span class="number">232244</span>K(<span class="number">485888</span>K)] <span class="number">243136</span>K-&gt;<span class="number">241951</span>K(<span class="number">628736</span>K)</div><div class="line">    [PSPermGen: <span class="number">3162</span>K-&gt;<span class="number">3161</span>K(<span class="number">21504</span>K)],</div><div class="line">    <span class="number">1</span>,<span class="number">5265450</span> secs</div><div class="line">]</div><div class="line">[Times: user=<span class="number">10</span>,<span class="number">96</span> sys=<span class="number">0</span>,<span class="number">06</span>, real=<span class="number">1</span>,<span class="number">53</span> secs]</div></pre></td></tr></table></figure>
 <p>Full GC打印出了年老代和永久代的GC信息。从日志可以看到三个内存区域使用的不同GC算法以及GC时的空间大小。例子中628736K为堆空间的总容量，142848K属于新生代，485888K属于年老代。Full GC耗时1.53秒，占用CPU时间为10.96秒（用户态），可见GC是并发执行的。（同上使用了8个线程）</p>
 <p>详细日志可以让我们推理是哪一块内存区域触发了GC。如果某一块区域在GC发生时的占用空间几乎等于总空间，则可以判断是这块区域触发了GC。但是在上面这个例子中三个区域都没有快占满，那么是什么原因呢？<br>在使用吞吐量优先的回收器时，如果JVM可以在需要的时候主动触发一次GC，而不需要等待某一块区域空间被耗尽。</p>
 <p>应用可以调用JDK API主动请求Sysmtem GC，这时在GC日志中会打印”Full GC(System)”开头，而不是”Full GC”。</p>
@@ -462,9 +467,9 @@
 <p>由于篇幅所限，这里不再展开解释CMS回收器的详细日志，但是强烈推荐这个算法的作者的<a href="https://blogs.oracle.com/jonthecollector/entry/the_unspoken_cms_and_printgcdetails" target="_blank" rel="external">一篇文章</a>。</p>
 <p><strong>-XX:+PrintGCTimeStamps 和 -XX:+PrintGCDateStamps</strong></p>
 <p>可以为GC日志添加具体时间戳，<code>-XX:+PrintGCTimeStamps</code>为每次GC打印相对从JVM启动以来的时间增量。例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">0,185: [GC 66048K-&gt;53077K(251392K), 0,0977580 secs]</div><div class="line">0,323: [GC 119125K-&gt;114661K(317440K), 0,1448850 secs]</div><div class="line">0,603: [GC 246757K-&gt;243133K(375296K), 0,2860800 secs]</div></pre></td></tr></table></figure>
+<figure class="highlight mathematica"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="number">0</span>,<span class="number">185</span>: [GC <span class="number">66048</span><span class="keyword">K</span>-&gt;<span class="number">53077</span><span class="keyword">K</span>(<span class="number">251392</span><span class="keyword">K</span>), <span class="number">0</span>,<span class="number">0977580</span> secs]</div><div class="line"><span class="number">0</span>,<span class="number">323</span>: [GC <span class="number">119125</span><span class="keyword">K</span>-&gt;<span class="number">114661</span><span class="keyword">K</span>(<span class="number">317440</span><span class="keyword">K</span>), <span class="number">0</span>,<span class="number">1448850</span> secs]</div><div class="line"><span class="number">0</span>,<span class="number">603</span>: [GC <span class="number">246757</span><span class="keyword">K</span>-&gt;<span class="number">243133</span><span class="keyword">K</span>(<span class="number">375296</span><span class="keyword">K</span>), <span class="number">0</span>,<span class="number">2860800</span> secs]</div></pre></td></tr></table></figure>
 <p><code>-XX:+PrintGCDateStamps</code>打印绝对值时间，例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2014-01-03T12:08:38.102-0100: [GC 66048K-&gt;53077K(251392K), 0,0959470 secs]</div><div class="line">2014-01-03T12:08:38.239-0100: [GC 119125K-&gt;114661K(317440K), 0,1421720 secs]</div><div class="line">2014-01-03T12:08:38.513-0100: [GC 246757K-&gt;243133K(375296K), 0,2761000 secs]</div></pre></td></tr></table></figure>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2014<span class="selector-tag">-01-03T12</span><span class="selector-pseudo">:08</span><span class="selector-pseudo">:38.102-0100</span>: <span class="selector-attr">[GC 66048K-&gt;53077K(251392K), 0,0959470 secs]</span></div><div class="line">2014<span class="selector-tag">-01-03T12</span><span class="selector-pseudo">:08</span><span class="selector-pseudo">:38.239-0100</span>: <span class="selector-attr">[GC 119125K-&gt;114661K(317440K), 0,1421720 secs]</span></div><div class="line">2014<span class="selector-tag">-01-03T12</span><span class="selector-pseudo">:08</span><span class="selector-pseudo">:38.513-0100</span>: <span class="selector-attr">[GC 246757K-&gt;243133K(375296K), 0,2761000 secs]</span></div></pre></td></tr></table></figure>
 <p>推荐同时设置这两个参数<code>-XX:+PrintGCTimeStamps</code> 和 <code>-XX:+PrintGCDateStamps</code>，这样在分析的时候可以通过时间戳方便的关联其他信息。</p>
 <p><strong>-Xloggc</strong></p>
 <p>GC日志默认输出到标准输出，可以通过设置<code>-Xloggc:&lt;file&gt;</code>将日志打印到单独的文件。注意使用这个参数将隐式的启用<code>-XX:+PrintGC</code>参数和<code>-XX:+PrintGCTimeStamps</code>参数。但是为了防止以后的JVM做出调整，还是建议显式的加上这两个参数。</p>
@@ -507,8 +512,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/13/jvmflags-7/" rel="next" title="JVM参数 - Part 7( CMS回收器 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 7( CMS回收器 )
+              <a href="/2016/02/13/linux-bash-widgets/" rel="next" title="Linux Bash 小工具">
+                <i class="fa fa-chevron-left"></i> Linux Bash 小工具
               </a>
             
           </div>
@@ -517,8 +522,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/13/linux-bash-widgets/" rel="prev" title="Linux Bash 小工具">
-                Linux Bash 小工具 <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/17/perfmon-cpu-1/" rel="prev" title="性能调优 - Part 1( CPU监控 )">
+                性能调优 - Part 1( CPU监控 ) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -661,7 +666,7 @@
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -670,19 +675,24 @@
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

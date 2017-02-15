@@ -406,6 +406,11 @@ GC的日志可以使用">
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -423,17 +428,17 @@ GC的日志可以使用">
 
       
         <h2 id="打印GC日志"><a href="#打印GC日志" class="headerlink" title="打印GC日志"></a>打印GC日志</h2><p>使用下面三个参数可以打印Oracle Hotspot JVM每次的GC日志。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">-verbose:gc : 打印GC日志</div><div class="line">-XX:+PrintGCDateStamps ：添加时间戳</div><div class="line">-XX:+PrintGCDetails ：打印GC详细</div></pre></td></tr></table></figure>
+<figure class="highlight haml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">-<span class="ruby"><span class="symbol">verbose:</span>gc : 打印GC日志</span></div><div class="line">-<span class="ruby"><span class="symbol">XX:</span>+PrintGCDateStamps ：添加时间戳</span></div><div class="line">-<span class="ruby"><span class="symbol">XX:</span>+PrintGCDetails ：打印GC详细</span></div></pre></td></tr></table></figure>
 <p>同时将GC日志重定向到单独的log文件</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-Xloggc:&lt;file-path&gt; ： 保存GC日志到单独文件，方便分析</div></pre></td></tr></table></figure>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-Xloggc:&lt;<span class="built_in">file</span>-path&gt; ： 保存GC日志到单独文件，方便分析</div></pre></td></tr></table></figure>
 <p>GC的日志可以使用以下工具分析：</p>
 <ol>
 <li>IBM GCMV (Garbage Collection and Memory Visualizer)<br>这款工具可以作为eclipse插件安装并切换到GCMV视图。GCMV同时支持Oracle Hotspot JVM 和 IBM， HP等JVM实现。</li>
 </ol>
 <h2 id="Heap-Dump文件"><a href="#Heap-Dump文件" class="headerlink" title="Heap Dump文件"></a>Heap Dump文件</h2><h3 id="生成hprof文件"><a href="#生成hprof文件" class="headerlink" title="生成hprof文件"></a>生成hprof文件</h3><p>Heap dump文件在分析JVM性能，优化应用程序，检查内存泄漏时十分重要，尤其是在发生内存溢出（OutOfMemoryError）时更加必要。通常可以设置JVM参数在OOM时候触发生成Heap Dump文件。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:+HeapDumpOnOutofMemoryError</div></pre></td></tr></table></figure>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">-XX</span><span class="selector-pseudo">:+HeapDumpOnOutofMemoryError</span></div></pre></td></tr></table></figure>
 <p>或者添加触发命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:OnOutOfMemoryError=&quot;jmap -F -dump:format=b,file=java_pid%p.hprof %p; chmod +r java_pid%p.hprof; kill -9 %p&quot;</div></pre></td></tr></table></figure>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:OnOutOfMemoryError=<span class="string">"jmap -F -dump:format=b,file=java_pid%p.hprof %p; chmod +r java_pid%p.hprof; kill -9 %p"</span></div></pre></td></tr></table></figure>
 <p>对于本地的JVM进程，可以使用JDk自带的GUI Debug工具如JVisualVM来生成.hprof文件。</p>
 <p>有一类比较复杂的情况是，在生产环境的某台机器上出现了JVM异常，但是使用jmap命令十分耗时，这会影响应用程序的执行，造成很大的暂停，甚至jmap执行可能失败。这时候可以借助Linux/Unix的gdb工具生成core文件，再使用jmap从core文件中生成hpprof文件。生成core文件非常快，通常只需要几秒钟。以下是详细步骤：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"># 1. install gdb</div><div class="line">$sudo apt-get install gdb – for Debian/Ubuntu systems.</div><div class="line">$sudo yum install gdb – for RedHat/CentOS systems.</div><div class="line"># 2. get the Process ID of JVM</div><div class="line">$ps -ef|egrep &quot;PID|[keyword]&quot;</div><div class="line"># 3. get the core files</div><div class="line">$gdb --pid=[pid]</div><div class="line">...bunch of info...</div><div class="line">$(gdb) gcore /tmp/jvm.core</div><div class="line">Saved corefile /tmp/jvm.core</div><div class="line">$(gdb) detach</div><div class="line">$(gdb) quit</div><div class="line"># 4. get the hprof binary dump for core file using jmap</div><div class="line">$jmap -dump:format=b,file=jvm.hprof /usr/bin/java /tmp/jvm.core</div></pre></td></tr></table></figure>
@@ -441,9 +446,9 @@ GC的日志可以使用">
 <h3 id="分析heap-dump"><a href="#分析heap-dump" class="headerlink" title="分析heap dump"></a>分析heap dump</h3><p>hprof文件可以使用JVisualVM或者MAT(Eclipse Memory Analyzer)来装载并分析。MAT工具的使用介绍。MAT会首先解析hprof文件并生成一系列的index文件，这个过程比较耗时，但是下一次加载时会载入上一次分析好的index文件。</p>
 <p><a href="http://eclipsesource.com/blogs/2013/01/21/10-tips-for-using-the-eclipse-memory-analyzer/" target="_blank" rel="external">[SEE ALSO]MAT工具的使用介绍</a></p>
 <p>因为Heap Dump是当前内存的一份快照，因此在线上机器生成的heap dump会很大，无法用MAT GUI工具装载。可以在线下某台拥有和线上同等配置的机器上使用MAT自带的ParseHeapDump.sh文件来生成索引文件，并生成一系列的report。这样就可以方便的在开发机器上用MAT GUI加载这些生成好的report文件了。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./ParseHeapDump.sh ../today_heap_dump/jvm.hprof org.eclipse.mat.api:suspects</div></pre></td></tr></table></figure>
+<figure class="highlight stylus"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">./ParseHeapDump<span class="selector-class">.sh</span> ../today_heap_dump/jvm<span class="selector-class">.hprof</span> org<span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span>:suspects</div></pre></td></tr></table></figure>
 <p>其他可用的report参数有：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">org.eclipse.mat.api:suspects </div><div class="line">org.eclipse.mat.api:overview</div><div class="line">org.eclipse.mat.api:top_components</div></pre></td></tr></table></figure>
+<figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="selector-tag">org</span><span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span><span class="selector-pseudo">:suspects</span> </div><div class="line"><span class="selector-tag">org</span><span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span><span class="selector-pseudo">:overview</span></div><div class="line"><span class="selector-tag">org</span><span class="selector-class">.eclipse</span><span class="selector-class">.mat</span><span class="selector-class">.api</span><span class="selector-pseudo">:top_components</span></div></pre></td></tr></table></figure>
 <p>另外一个工具为bheapsampler, 这个工具对heap dump文件进行抽象，生成 一份更简洁的heap dump文件，虽然有点不太准确但是在MAT失败的情况下总比没有好。</p>
 <p><a href="http://javaforu.blogspot.com/2013/11/analyzing-large-java-heap-dumps-when.html" target="_blank" rel="external">[SEE ALSO]Analyzing Large Java Heap when MAT UI fails</a></p>
 <h2 id="JVM-参数"><a href="#JVM-参数" class="headerlink" title="JVM 参数"></a>JVM 参数</h2><h3 id="XX-UseGCOverheadLimit"><a href="#XX-UseGCOverheadLimit" class="headerlink" title="-XX:-UseGCOverheadLimit"></a>-XX:-UseGCOverheadLimit</h3><p>JVM的Parallel GC如果占用应用程序大部分的执行时间。将会抛出OutOfMemoryError：如果98%的时间都浪费在垃圾回收上，而且只有不到2%的堆内存被回收的话，JVM将会抛出OutOfMemoryError。这个设计的作用是防止应用程序因为堆大小不足导致浪费时间在GC上并且毫无进展。但是可以使用参数<br><em>-XX:-UseGCOverheadLimit</em>来禁用该功能。<br>JVM的CMS GC也有相同的功能，不过只有造成应用程序暂停的GC时间才会被计算到98%这个指标中，这一类GC通常是因为在CMS GC发生Concurrent Mode Failure或者显式的GC调用时发生（System.gc()）。</p>
@@ -657,7 +662,7 @@ GC的日志可以使用">
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -666,19 +671,24 @@ GC的日志可以使用">
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

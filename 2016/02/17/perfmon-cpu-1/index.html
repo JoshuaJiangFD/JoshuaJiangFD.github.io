@@ -427,6 +427,11 @@
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -472,7 +477,7 @@
 <li><em>us, sy, ni, id, wa ,hi, si</em></li>
 </ol>
 <p>当CPU消耗严重时，主要体现在us，sy, wa 或者hi的值变高，wa的值主要是CPU时间片内的IO等待造成的，hi的值主要是硬件中断造成的，如频繁的网卡接收数据。 </p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">us	用户进程处理所占的百分比</div><div class="line">sy	内核态下操作系统线程处理所占的百分比</div><div class="line">ni	被nice命令改变优先级的任务所占的百分比</div><div class="line">id  CPU的空闲时间所占的百分比</div><div class="line">wa  CPU的执行过程中等待IO所占的百分比， 这个指标用来总和判断IO消耗情况。</div><div class="line">hi	硬件中断所占的百分比，一般由文件或者网络IO引起。</div><div class="line">si	软件中断所占的百分比</div></pre></td></tr></table></figure>
+<figure class="highlight vim"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">us	用户进程处理所占的百分比</div><div class="line"><span class="keyword">sy</span>	内核态下操作系统线程处理所占的百分比</div><div class="line">ni	被nice命令改变优先级的任务所占的百分比</div><div class="line">id  CPU的空闲时间所占的百分比</div><div class="line"><span class="keyword">wa</span>  CPU的执行过程中等待IO所占的百分比， 这个指标用来总和判断IO消耗情况。</div><div class="line"><span class="keyword">hi</span>	硬件中断所占的百分比，一般由文件或者网络IO引起。</div><div class="line">si	软件中断所占的百分比</div></pre></td></tr></table></figure>
 <p>us高(大于建议的70%)，表示应用消耗了大部分的CPU时间， 主要是线程一直处于可运行状态，通常是在执行无阻塞、循环、正则或者纯粹的计算任务造成的。另一个造成us高的原因是频繁的GC。这里需要结合top的输出找到最耗CPU的线程，再结合jstack的输找到对应的线程。</p>
 <p>sy高(大于建议的35%),可能是Linux花费了更多的时间来进行线程切换，这些线程多数处于不断的阻塞（锁等待，IO等待）和执行状态的变化过程中，对于Java应用重要的是找出这种状态的线程。如果很多的线程处于TIMED_WAITING（on object monitor）状态和Runnable状态的切换中，通过on obejct monitor的对应的堆栈信息可以找到系统中锁竞争激烈的代码，这造成了系统频繁的上下文切换。</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="comment">#jstack -l &lt;pid&gt; : print additonal information about locks</span></div></pre></td></tr></table></figure>
@@ -531,8 +536,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/13/linux-bash-widgets/" rel="next" title="Linux Bash 小工具">
-                <i class="fa fa-chevron-left"></i> Linux Bash 小工具
+              <a href="/2016/02/13/jvmflags-8/" rel="next" title="JVM参数 - Part 8( GC日志 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 8( GC日志 )
               </a>
             
           </div>
@@ -710,7 +715,7 @@
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -719,19 +724,24 @@
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

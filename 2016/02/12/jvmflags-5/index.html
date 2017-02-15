@@ -424,6 +424,11 @@
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -456,7 +461,7 @@
 <p><strong>-XX:NewRatio</strong></p>
 <p>也可以设置新生代和年老代的大小比例，这样带来的的好处是可以自适应JVM不断的调整新生代的大小。例如~-XX:NewRatio=3~可以让年老代的大小始终是新生代的三倍，或者这新生代将占据整个堆内存的1/4，年老代为3/4。</p>
 <p>如果我们同时配置新生代的比例和绝对大小，则绝对值会首先考虑，例如下面的例子中，JVM将努力使得新生代的空间是年老代的1/3,但是不超过512MB,而且不低于32MB。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:NewSize=32m -XX:MaxNewSize=512m -XX:NewRatio=3 MyApp</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -<span class="string">XX:</span>NewSize=<span class="number">32</span>m -<span class="string">XX:</span>MaxNewSize=<span class="number">512</span>m -<span class="string">XX:</span>NewRatio=<span class="number">3</span> MyApp</div></pre></td></tr></table></figure>
 <p>没有统一的结论表示究竟该使用相对比例还是绝对值设定新生代空间的大小。如果充分了解应用的内存使用情况，不管同时设定堆内存和新生代空间的大小还是只设定相对比例都不错。但是在这方面并没有仔细评估，最正确的方案是让JVM来调整，而不是使用人工参数。如果程序运行稳定就已经皆大欢喜了。即使程序抛出了OOM错误，还是应该首先仔细评估确定根本原因，才能进行人工干预。</p>
 <p><strong>-XX:SurvivorRatio</strong></p>
 <p><code>-XX:SurvivorRatio</code>和<code>-XX:NewRatio</code>相似但是是在新生代内部设定Eden Space和Survivor Space的大小比例。例如<code>-XX:SurvivorRatio=10</code>表示Eden Space将是”From”存活区和”To”存活区大小的10倍，所以Eden Space将占据整个新生代的10/12, 而”From”存活区和”To”存活区各占据1/12。</p>
@@ -464,10 +469,10 @@
 <p>总的来说，我们需要避免将那些存活短的对象过早的转移到年老代，但是同样要避免频繁的触发新生代上的GC。所以这里同样需要找到平衡点，这取决于具体应用的具体特性。一个很好的方法是分析应用中对象的存活时间的分布情况。</p>
 <p><strong>-XX:+PrintTenuringDistribution</strong></p>
 <p>参数<code>-XX:+PrintTenuringDistribution</code>可以将JVM在每次新生代GC时打印所有在Survivor Space上的对象的存活年龄分布，存活年龄即对象已经经历过的GC次数。如下是一个输出的实例：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Desired survivor size 75497472 bytes, new threshold 15 (max 15)</div><div class="line">- age   1:   19321624 bytes,   19321624 total</div><div class="line">- age   2:      79376 bytes,   19401000 total</div><div class="line">- age   3:    2904256 bytes,   22305256 total</div></pre></td></tr></table></figure>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">Desired survivor size<span class="number"> 75497472 </span>bytes, new threshold<span class="number"> 15 </span>(max 15)</div><div class="line">- age   1:  <span class="number"> 19321624 </span>bytes,  <span class="number"> 19321624 </span>total</div><div class="line">- age   2:     <span class="number"> 79376 </span>bytes,  <span class="number"> 19401000 </span>total</div><div class="line">- age   3:   <span class="number"> 2904256 </span>bytes,  <span class="number"> 22305256 </span>total</div></pre></td></tr></table></figure>
 <p>第一行表示”To”存活区上共使用了75MB的空间，并且显示了”Tenuring Threshold”的大小为15，即对象在新生代上最多经历15次GC之后就会转移到年老代。这里的输出显示目前阈值为15，最大值也是15。</p>
 <p>接下来按存活年龄从小到大显示相应对象的总的字节数，如果某一年龄没有对应的对象则不显示。示例中经历过一次GC的对象为19MB，大约有79KB大小的对象经历过两次GC，大约3MB的对象经历过3次GC。每行的末尾显示按照年龄累加的对象的大小。因此最后一行显示目前”To”存活区内年龄从1到3累加的对象大小为22MB。因为当前目标阈值为75MB，而且”Tenuring Threshold”的大小为15，所以本次GC不需要转移对象到年老代中。假设下一次GC打印出以下信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Desired survivor size 75497472 bytes, new threshold 2 (max 15)</div><div class="line">- age   1:   68407384 bytes,   68407384 total</div><div class="line">- age   2:   12494576 bytes,   80901960 total</div><div class="line">- age   3:      79376 bytes,   80981336 total</div><div class="line">- age   4:    2904256 bytes,   83885592 total</div></pre></td></tr></table></figure>
+<figure class="highlight tap"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">Desired survivor size<span class="number"> 75497472 </span>bytes, new threshold<span class="number"> 2 </span>(max 15)</div><div class="line">- age   1:  <span class="number"> 68407384 </span>bytes,  <span class="number"> 68407384 </span>total</div><div class="line">- age   2:  <span class="number"> 12494576 </span>bytes,  <span class="number"> 80901960 </span>total</div><div class="line">- age   3:     <span class="number"> 79376 </span>bytes,  <span class="number"> 80981336 </span>total</div><div class="line">- age   4:   <span class="number"> 2904256 </span>bytes,  <span class="number"> 83885592 </span>total</div></pre></td></tr></table></figure>
 <p>通过比较可以发现上次存活年龄为2和3的对象都没有被回收，并且分别递增为3和4。本次GC回收一部分对象，因为年龄为2的字节数减少了。另外本次GC从Eden Space张新增的68MB对象被拷贝到”To”存活区了。</p>
 <p>注意到本次GC之后，”To”存活区总共使用了83MB的空间，已经超过了75MB的阈值，因此JVM将”Tenuring Threshold”的阈值调整为2，这意味着在下一次GC时，将有一部分年龄超过2的对象要么被回收（已经不再被引用）要么被转移到年老代中。</p>
 <p><strong>-XX:InitialTenuringThreshold, -XX:MaxTenuringThreshold 和 -XX:TargetSurvivorRatio</strong></p>
@@ -517,8 +522,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/11/jvmflags-3/" rel="next" title="JVM参数 - Part 3( 打印XX参数列表 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 3( 打印XX参数列表 )
+              <a href="/2016/02/11/jvmflags-4/" rel="next" title="JVM参数 - Part 4（堆调优）">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 4（堆调优）
               </a>
             
           </div>
@@ -671,7 +676,7 @@
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -680,19 +685,24 @@
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

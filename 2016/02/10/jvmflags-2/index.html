@@ -99,7 +99,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 在这个系列博客的第二部分，笔者将介绍Hotspot虚拟机提供的不同类别的参数。另外还将介绍一些关于JIT编译器诊断的讨论。
 JVM 参数类别
 Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standard Flags)，这些参数的功能和输出都很稳定而且也不太可能会在以后的JVM版本中改变。简单的无参数运行java命令就可以列出所有">
-<meta property="og:updated_time" content="2017-02-14T08:17:41.050Z">
+<meta property="og:updated_time" content="2017-02-15T03:58:46.917Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
 <meta name="twitter:description" content="Useful JVM Flags – Part 2
@@ -425,6 +425,11 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -452,6 +457,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 <li>boolean类型的参数使用<code>+</code>和<code>-</code>。例如 <code>-XX:+&lt;name&gt;</code>打开该选项，而<code>-XX:-&lt;name&gt;</code>关闭该选项。</li>
 <li>非boolean参数，例如字符串或者整型数字，按照<code>-XX:&lt;name&gt;=&lt;value&gt;</code>的方式来为选项赋值。</li>
 </ul>
+<a id="more"></a>
 <p>下面将介绍一些与JIT编译有关的XX参数。</p>
 <p><strong>-XX:+PrintCompilation 和 -XX：+CITime</strong></p>
 <p>如果能在程序运行的同时观察JIT编译怎样工作可以更直观的理解JIT的行为。<code>-XX:+PrintCompilation</code>参数可以打印出JIT编译字节码到本地代码的输出。下面是一个Server VM的输出实例。</p>
@@ -509,18 +515,14 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/10/jvmflags-1/" rel="next" title="JVM参数 - Part 1( JVM类型和编译器模式 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 1( JVM类型和编译器模式 )
-              </a>
-            
           </div>
 
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/11/jvmflags-4/" rel="prev" title="JVM参数 - Part 4（堆调优）">
-                JVM参数 - Part 4（堆调优） <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/10/jvmflags-1/" rel="prev" title="JVM参数 - Part 1( JVM类型和编译器模式 )">
+                JVM参数 - Part 1( JVM类型和编译器模式 ) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -663,7 +665,7 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -672,19 +674,24 @@ Hotspot虚拟机提供了三种类别的参数。第一类为标准参数(Standa
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

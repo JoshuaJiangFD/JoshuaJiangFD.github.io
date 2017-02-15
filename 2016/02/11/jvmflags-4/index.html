@@ -422,6 +422,11 @@
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -449,14 +454,14 @@
 <p><strong>-XX:+HeapDumpOnOutOfMemoryError and -XX:HeapDumpPath</strong></p>
 <p>如果我们没有置<code>-Xmx</code>为足够大就会来内存溢出(OOM)的风险，这也可能是与JVM打交道的过程最糟糕的问题之一了。正如我们另一个博客系列所描述的那样，处理这种问题必须仔细的定位导致溢出的根本原因。通常我们可以从分析溢出时的Heap Dump着手。报错后没有Heap Dump文件将会非常难以定位原因，特别对于线上环境上那些正常运行数小时甚至数天才会报错的程序，再次重现会非常耗时。</p>
 <p>幸运的是，JVM的-XX:+HeapDumpOnOutOfMemoryError参数可以在OOM时自动生成HeapDump文件。启用这个参数将会在发生OOM时节约大量的时间。默认情况下Heap Dump文件会以<code>java_pid&lt;pid&gt;.hprof</code>文件名存储在当前的工作目录(译者注：通常是Shell环境下的启动JVM时的当前工作目录)。<code>pid</code>是JVM的进程ID。可以通过指定<br><code>-XX:HeapDumpPath</code>参数的值改变Heap Dump文件的路径和名称。 例如：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-XX:HeapDumpPath=/var/log/java/java_heapdump.hprof</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">-<span class="string">XX:</span>HeapDumpPath=<span class="regexp">/var/</span>log<span class="regexp">/java/</span>java_heapdump.hprof</div></pre></td></tr></table></figure>
 <p>有一点需要牢记，Heap Dump文件在内存溢出的时候可能可能会很庞大，所以推荐使用<code>-XX:HeapDumpPath</code>来指定一个有足够空间的位置用来存放。</p>
 <p><strong>-XX:OnOutOfMemoryError</strong></p>
 <p>在内存溢出时我们甚至可以执行一段自定义的命令，例如发送邮件给管理员或执行一些清理工作。这些可以通过<code>-XX:OnOutOfMemoryError</code>参数来完成。这个参数可以接受一串命令以及其参数。本文不会讨论细节但是给出了以下实例，在内存溢出时，将会写文件到<code>/tmp/headdump.hprof</code>文件中，并在当前用户的Home目录下执行<code>cleanup.sh</code>脚本。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/heapdump.hprof -XX:OnOutOfMemoryError =&quot;sh ~/cleanup.sh&quot; MyApp</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -<span class="string">XX:</span>+HeapDumpOnOutOfMemoryError -<span class="string">XX:</span>HeapDumpPath=<span class="regexp">/tmp/</span>heapdump.hprof -<span class="string">XX:</span>OnOutOfMemoryError =<span class="string">"sh ~/cleanup.sh"</span> MyApp</div></pre></td></tr></table></figure>
 <p><strong>-XX:PermSize and -XX:MaxPermSize</strong></p>
 <p>JVM的永久代是一块与堆隔离开的内存空间，它包含了JVM加载的类文件的对象表示。如果一个应用需要加载大量的类（比如因为使用了很多第三方的库，这些库又依赖了更多别的库），就需要增大永久代的大小。这里，<code>-XX:MaxPermSize</code>设置永久代的最大值，而<code>-XX:PermSize</code>设置JVM启动时的初始值。例子如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -XX:PermSize=128m -XX:MaxPermSize=256m MyApp</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -<span class="string">XX:</span>PermSize=<span class="number">128</span>m -<span class="string">XX:</span>MaxPermSize=<span class="number">256</span>m MyApp</div></pre></td></tr></table></figure>
 <p>注意永久代空间的大小不计入<code>-XX:MaxHeapSize</code>的指定值。除了<code>-XX:MaxHeapSize</code>参数之外，还需要额外指定<code>-XX:MaxPermSize</code>的值。</p>
 <p><strong>-XX:InitialCodeCacheSize 和 -XX:ReservedCodeCacheSize</strong></p>
 <p>JVM中有一块专门存储已编译方法生成的本地代码，称为”Code Cache”，这一点常常被忽略。不过一般情况下CodeCache不会引入性能问题，但是一旦产生此类问题后果会很严重。如果CodeCache已满，JVM会打印警告信息同时切换到编译模式运行：JIT编译器会被停用，字节码将不会再被编译成本地代码。程序会继续运行，但是速度会降低一个数量级，直到有人注意到。</p>
@@ -499,8 +504,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/10/jvmflags-2/" rel="next" title="JVM参数 - Part 2( 参数归类和JIT编译诊断 )">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 2( 参数归类和JIT编译诊断 )
+              <a href="/2016/02/11/jvmflags-3/" rel="next" title="JVM参数 - Part 3( 打印XX参数列表 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 3( 打印XX参数列表 )
               </a>
             
           </div>
@@ -509,8 +514,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/11/jvmflags-3/" rel="prev" title="JVM参数 - Part 3( 打印XX参数列表 )">
-                JVM参数 - Part 3( 打印XX参数列表 ) <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/12/jvmflags-5/" rel="prev" title="JVM参数 - Part 5( 新生代垃圾回收 )">
+                JVM参数 - Part 5( 新生代垃圾回收 ) <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -653,7 +658,7 @@
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -662,19 +667,24 @@
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>

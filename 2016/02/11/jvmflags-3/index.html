@@ -425,6 +425,11 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
           
 
           
+            <span class="post-meta-divider">|</span>
+            <span class="page-pv"><i class="fa fa-file-o"></i>
+            <span class="busuanzi-value" id="busuanzi_value_page_pv" ></span>
+            </span>
+          
 
           
 
@@ -445,18 +450,18 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
 <p>Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时打印所有XX参数的选项。正如很多HotspotJVM的使用者都期盼很久一样，这篇博客着重介绍这一功能。</p>
 <p><strong>-XX:+PrintFlagsFinal 和 -XX:+PrintFlagsInitial</strong></p>
 <p>在ClientVM上使用<code>-XX:+PrintFlagsFinal</code>参数可以打印出所有按照字母排序的XX参数（不同的JVM版本数目有所不同, 这个版本有590个之多）：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ java -client -XX:+PrintFlagsFinal Benchmark</div><div class="line">[Global flags]</div><div class="line">uintx AdaptivePermSizeWeight               = 20               &#123;product&#125;</div><div class="line">uintx AdaptiveSizeDecrementScaleFactor     = 4                &#123;product&#125;</div><div class="line">uintx AdaptiveSizeMajorGCDecayTimeScale    = 10               &#123;product&#125;</div><div class="line">uintx AdaptiveSizePausePolicy              = 0                &#123;product&#125;</div><div class="line">[...]</div><div class="line">uintx YoungGenerationSizeSupplementDecay   = 8                &#123;product&#125;</div><div class="line">uintx YoungPLABSize                        = 4096             &#123;product&#125;</div><div class="line"> bool ZeroTLAB                             = false            &#123;product&#125;</div><div class="line"> intx hashCode                             = 0                &#123;product&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight maxima"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">$ java -client -XX:+PrintFlagsFinal Benchmark</div><div class="line">[Global flags]</div><div class="line">uintx AdaptivePermSizeWeight               = <span class="number">20</span>               &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx AdaptiveSizeDecrementScaleFactor     = <span class="number">4</span>                &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx AdaptiveSizeMajorGCDecayTimeScale    = <span class="number">10</span>               &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx AdaptiveSizePausePolicy              = <span class="number">0</span>                &#123;<span class="built_in">product</span>&#125;</div><div class="line">[...]</div><div class="line">uintx YoungGenerationSizeSupplementDecay   = <span class="number">8</span>                &#123;<span class="built_in">product</span>&#125;</div><div class="line">uintx YoungPLABSize                        = <span class="number">4096</span>             &#123;<span class="built_in">product</span>&#125;</div><div class="line"> bool ZeroTLAB                             = <span class="literal">false</span>            &#123;<span class="built_in">product</span>&#125;</div><div class="line"> intx hashCode                             = <span class="number">0</span>                &#123;<span class="built_in">product</span>&#125;</div></pre></td></tr></table></figure>
 <p>输出的每一行的XX参数都有5列，第一列表示参数类型，第二列为参数名称，第四列是值，第五列为参数类别。第三列如果为”=”表示是默认值，为”:=”表示为非默认值（由用户或者JVM添加）。</p>
 <p>在Server VM 上需要添加<code>-XX:+UnlockExperimentalVMOptions</code>和<code>-XX:+UnlockDiagnosticVMOptions</code>来解锁所有的附加隐藏的参数。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ java -server -<span class="string">XX:</span>+UnlockExperimentalVMOptions -<span class="string">XX:</span>+UnlockDiagnosticVMOptions -<span class="string">XX:</span>+PrintFlagsFinal Benchmark</div></pre></td></tr></table></figure>
 <p>结果产生的数目众多，有724个参数。下面可以着重看下非默认值得参数，用<code>:=</code>条件过滤一下。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal Benchmark | grep &quot;:&quot;</div><div class="line">uintx InitialHeapSize                     := 57505088         &#123;product&#125;</div><div class="line">uintx MaxHeapSize                         := 920649728        &#123;product&#125;</div><div class="line">uintx ParallelGCThreads                   := 4                &#123;product&#125;</div><div class="line"> bool PrintFlagsFinal                     := true             &#123;product&#125;</div><div class="line"> bool UseParallelGC                       := true             &#123;product&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ java -server -<span class="string">XX:</span>+UnlockExperimentalVMOptions -<span class="string">XX:</span>+UnlockDiagnosticVMOptions -<span class="string">XX:</span>+PrintFlagsFinal Benchmark | grep <span class="string">":"</span></div><div class="line">uintx <span class="string">InitialHeapSize                     :</span>= <span class="number">57505088</span>         &#123;product&#125;</div><div class="line">uintx <span class="string">MaxHeapSize                         :</span>= <span class="number">920649728</span>        &#123;product&#125;</div><div class="line">uintx <span class="string">ParallelGCThreads                   :</span>= <span class="number">4</span>                &#123;product&#125;</div><div class="line"> bool <span class="string">PrintFlagsFinal                     :</span>= <span class="literal">true</span>             &#123;product&#125;</div><div class="line"> bool <span class="string">UseParallelGC                       :</span>= <span class="literal">true</span>             &#123;product&#125;</div></pre></td></tr></table></figure>
 <p>这其中只有<code>-XX:+PrintFlagsFinal</code>参数是我们添加的，其余的是ServerVM添加的用来选取合适的堆空间以及垃圾回收选项。</p>
 <p><code>-XX:+PrintFlagsInitial</code>参数可以只显示那些默认值的参数。这个参数的输出是第三列为”=”的参数。但是这个列表以<code>-XX:+PrintFlagsFinal</code>的过滤结果要少，因为有些是动态参数的缘故。</p>
 <p>通过这些参数可以很直观的比较Server VM和Client VM的不同，而且哪些参数会影响另外的参数的赋值。<a href="http://q-redux.blogspot.com/2011/01/inspecting-hotspot-jvm-options.html" target="_blank" rel="external">这篇博客</a>值得深入研究，并且这篇文章提到了第五列的参数类别的含义。</p>
 <p><strong>-XX:PrintCommandLineFlags</strong></p>
 <p>作为本文的结束，让我们认识一下另一个存在已久的参数<code>-XX:PrintCommandLineFlags</code>。这个参数可以让JVM显式的打印出所有由用户指定或者JVM自身启动时优化设置的参数。<br>换句话说，它会列举出<code>-XX:+PrintFlagsFinal</code>参数输出的结果中所有第三列为”:=”的参数，这个可以作为一个获取修改的参数的快捷方式。例子如下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ java -server -XX:+PrintCommandLineFlags Benchmark</div><div class="line">-XX:InitialHeapSize=57505088 -XX:MaxHeapSize=920081408 -XX:ParallelGCThreads=4 -XX:+PrintCommandLineFlags -XX:+UseParallelGC</div></pre></td></tr></table></figure>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">$ java -server -<span class="string">XX:</span>+PrintCommandLineFlags Benchmark</div><div class="line">-<span class="string">XX:</span>InitialHeapSize=<span class="number">57505088</span> -<span class="string">XX:</span>MaxHeapSize=<span class="number">920081408</span> -<span class="string">XX:</span>ParallelGCThreads=<span class="number">4</span> -<span class="string">XX:</span>+PrintCommandLineFlags -<span class="string">XX:</span>+UseParallelGC</div></pre></td></tr></table></figure>
 <p>如果我们每次启动JVM时能设置<code>-XX:PrintCommandLineFlags</code>则可以从日志中直观的记录下参数设定对每次性能的影响。所以同<code>-showversion</code>参数一样，笔者建议<code>-XX:PrintCommandLineFlags</code>参数应该总是被启用，这个参数并不复杂，单提供的信息有时候可能非常需要。</p>
 <p>有个奇怪的地方，是这里的参数<code>-XX:PrintCommandLineFlags</code>打印出来的堆空间的最大值比参数<code>-XX:+PrintFlagsFinal</code>的值略小，如果谁知道原因，请告诉我。</p>
 
@@ -495,8 +500,8 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/02/11/jvmflags-4/" rel="next" title="JVM参数 - Part 4（堆调优）">
-                <i class="fa fa-chevron-left"></i> JVM参数 - Part 4（堆调优）
+              <a href="/2016/02/10/jvmflags-1/" rel="next" title="JVM参数 - Part 1( JVM类型和编译器模式 )">
+                <i class="fa fa-chevron-left"></i> JVM参数 - Part 1( JVM类型和编译器模式 )
               </a>
             
           </div>
@@ -505,8 +510,8 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2016/02/12/jvmflags-5/" rel="prev" title="JVM参数 - Part 5( 新生代垃圾回收 )">
-                JVM参数 - Part 5( 新生代垃圾回收 ) <i class="fa fa-chevron-right"></i>
+              <a href="/2016/02/11/jvmflags-4/" rel="prev" title="JVM参数 - Part 4（堆调优）">
+                JVM参数 - Part 4（堆调优） <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -649,7 +654,7 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
       <div class="footer-inner">
         <div class="copyright" >
   
-  &copy; 
+  &copy;  2016 - 
   <span itemprop="copyrightYear">2017</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
@@ -658,19 +663,24 @@ Hotspot JVM版本自Java 6开始(update 20或者21)，添加了在JVM启动时�
 </div>
 
 
-<div class="powered-by">
-  Powered by <a class="theme-link" href="https://hexo.io">Hexo</a>
-</div>
-
-<div class="theme-info">
-  Theme -
-  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
-    NexT.Pisces
-  </a>
-</div>
-
 
         
+
+<div class="busuanzi-count">
+
+  <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+  
+    <span class="site-uv"><i class="fa fa-user"></i><span class="busuanzi-value" id="busuanzi_value_site_uv"></span></span>
+  
+
+  
+    <span class="site-pv"><i class="fa fa-eye"></i><span class="busuanzi-value" id="busuanzi_value_site_pv"></span></span>
+  
+  
+</div>
+
+
 
         
       </div>
