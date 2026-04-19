@@ -5,8 +5,6 @@ categories: [Tech, Agent]
 tags: [Agent, LangGraph, Amazon Bedrock AgentCore]
 ---
 
-# Architecture: LangGraph + Amazon Bedrock AgentCore
-
 ## 1. Overview
 
 This document describes the production architecture for deploying LangGraph-based AI agents on Amazon Bedrock AgentCore Runtime. It covers the concluded design, integration patterns, authentication, streaming, storage, and alternative approaches with trade-offs.
