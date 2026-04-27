@@ -181,9 +181,9 @@ There is no single tool call to write an entire graph of tasks at once.
 **Reference:**
 * **File:** `src/tools/TaskCreateTool/prompt.ts`
 * **Context:**
+
 ```markdown
 ## Tips
-
 - Create tasks with clear, specific subjects that describe the outcome
 - After creating tasks, use TaskUpdate to set up dependencies (blocks/blockedBy) if needed
 ```
