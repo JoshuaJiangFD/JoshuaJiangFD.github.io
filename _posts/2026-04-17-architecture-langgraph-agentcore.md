@@ -1,7 +1,7 @@
 ---
 title: "Architecture: LangGraph + Amazon Bedrock AgentCore"
 date: 2026-04-17 12:00:00 +0000
-categories: [Tech, Agent]
+categories: [Agent, Architecture]
 tags: [Agent, LangGraph, Amazon Bedrock AgentCore]
 ---
 
