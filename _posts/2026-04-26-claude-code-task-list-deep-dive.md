@@ -322,6 +322,7 @@ const teamHint = isAgentSwarmsEnabled()
 The `TeamCreate` prompt then guides the LLM to spawn agents.
 * **File:** `src/tools/TeamCreateTool/prompt.ts`
 * **Context:**
+
 ```markdown
 When spawning teammates via the Agent tool, choose the `subagent_type` based on what tools the agent needs for its task. Each agent type has a different set of available tools — match the agent to the work:
 - **Read-only agents** (e.g., Explore, Plan)
