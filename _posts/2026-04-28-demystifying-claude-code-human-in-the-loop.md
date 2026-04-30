@@ -1,7 +1,7 @@
 ---
 title: "Demystifying Claude Code: Human-in-the-Loop"
 date: 2026-04-28 01:01:42 -0700
-categories: [Claude Code, AI Engineering]
+categories: [Claude Code]
 tags: [Claude Code, HITL, AI Agents, CLI]
 mermaid: true
 ---
