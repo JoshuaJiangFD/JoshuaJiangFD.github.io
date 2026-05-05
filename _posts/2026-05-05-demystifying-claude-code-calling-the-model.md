@@ -1,6 +1,6 @@
 ---
 title: "Demystifying Claude Code: Calling the Model"
-date: 2026-05-05 11:00:00 -0700
+date: 2026-05-04 11:00:00 -0700
 categories: [Claude Code]
 tags: [Claude Code, LLM, API]
 mermaid: true

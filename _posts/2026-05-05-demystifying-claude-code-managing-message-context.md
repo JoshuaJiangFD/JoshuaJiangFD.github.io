@@ -1,6 +1,6 @@
 ---
 title: "Demystifying Claude Code: Managing Message Context"
-date: 2026-05-05 10:00:00 -0700
+date: 2026-05-04 10:00:00 -0700
 categories: [Claude Code]
 tags: [Claude Code, LLM, Context Management]
 mermaid: true
