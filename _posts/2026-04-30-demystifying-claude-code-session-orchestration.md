@@ -8,7 +8,7 @@ mermaid: true
 
 This post explores how Claude Code orchestrates a session — how `QueryEngine.ts` manages conversation state, dispatches work to `query.ts`, receives results via async generators, and persists everything for cross-turn continuity and session resume. We trace the interaction between the stateful session owner and the stateless execution engine, covering how the loop runs, terminates, continues on error, and how messages flow between components.
 
-For the detailed per-step message pipeline, see the companion post [Managing Message Context](/posts/demystifying-claude-code-managing-message-context/). For how the API call is constructed, see [Calling the Model](/posts/demystifying-claude-code-calling-the-model/).
+For the detailed per-step message pipeline, see the companion post Managing Message Context. For how the API call is constructed, see Calling the Model.
 
 ---
 
@@ -48,7 +48,7 @@ query.ts (stateless across turns, stateful within a turn)
 
 ## 2. Message Types
 
-Four message types flow through the system: `UserMessage` (user prompts and tool results), `AssistantMessage` (model responses with text, tool_use, and thinking blocks), `SystemMessage` (internal signals like compact boundaries, filtered before reaching the API), and `AttachmentMessage` (context injections — file contents, memories, notifications — converted to `UserMessage`s at API time). For the full taxonomy and how each type is transformed, see [Managing Message Context](/posts/demystifying-claude-code-managing-message-context/).
+Four message types flow through the system: `UserMessage` (user prompts and tool results), `AssistantMessage` (model responses with text, tool_use, and thinking blocks), `SystemMessage` (internal signals like compact boundaries, filtered before reaching the API), and `AttachmentMessage` (context injections — file contents, memories, notifications — converted to `UserMessage`s at API time). For the full taxonomy and how each type is transformed, see Managing Message Context.
 
 ---
 
@@ -171,7 +171,7 @@ Zooming into what happens inside `query.ts` on each iteration, the loop runs 11 
 +=====================================================+
 ```
 
-Steps 1-6 form the **message pipeline** — a layered compression system that progressively reduces context before the API call. Each step operates on the output of the previous one, from lightweight filtering (slice, budget) to heavyweight summarization (autocompact). For the detailed mechanics of each step, see [Managing Message Context](/posts/demystifying-claude-code-managing-message-context/).
+Steps 1-6 form the **message pipeline** — a layered compression system that progressively reduces context before the API call. Each step operates on the output of the previous one, from lightweight filtering (slice, budget) to heavyweight summarization (autocompact). For the detailed mechanics of each step, see Managing Message Context.
 
 ---
 
@@ -187,7 +187,7 @@ Step 8's `deps.callModel()` delegates to `queryModelWithStreaming()` in `claude.
 
 The model's response streams back as `AssistantMessage`s containing text, `tool_use`, and thinking blocks. Certain error responses (prompt-too-long, max-output-tokens) are withheld from the caller so the loop can attempt recovery before surfacing the error.
 
-For the complete transformation pipeline, see [Calling the Model](/posts/demystifying-claude-code-calling-the-model/).
+For the complete transformation pipeline, see Calling the Model.
 
 ---
 

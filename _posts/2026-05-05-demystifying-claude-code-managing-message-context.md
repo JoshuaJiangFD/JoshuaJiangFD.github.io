@@ -8,7 +8,7 @@ mermaid: true
 
 This post details how Claude Code manages the messages that make up the LLM's context window. Each iteration of the agentic loop runs a pipeline of 11 steps that progressively filter, compress, and transform the message array before sending it to the API. We trace every action that reads, transforms, or replaces the messages — from lightweight slicing to full conversation compaction.
 
-For the broader orchestration architecture (how QueryEngine and query.ts interact, how the loop terminates, cross-turn state), see [Session Orchestration](/posts/demystifying-claude-code-session-orchestration/). For how the API call itself is constructed, see [Calling the Model](/posts/demystifying-claude-code-calling-the-model/).
+For the broader orchestration architecture (how QueryEngine and query.ts interact, how the loop terminates, cross-turn state), see Session Orchestration. For how the API call itself is constructed, see Calling the Model.
 
 ---
 
@@ -150,7 +150,7 @@ This step runs before autocompact so that if collapse alone brings the token cou
 { compactionResult } = deps.autocompact(...)
 ```
 
-This is the most impactful step. For the full decision flow and compact process, see [Compaction Deep Dive](/posts/demystifying-claude-code-compaction/).
+This is the most impactful step. For the full decision flow and compact process, see Compaction Deep Dive.
 
 When `deps.autocompact()` returns a successful `compactionResult`, query.ts does three things before building the final message array. First, it logs a telemetry event with metrics about the compaction — original vs compacted message counts, pre/post token counts, and API usage breakdown. Second, if a `taskBudget` is configured, it captures how many tokens the pre-compact context consumed and decrements `taskBudgetRemaining` accordingly (the server can no longer see the full pre-compact history after compaction, so this tracks cumulative spend). Third, it resets the `autoCompactTracking` state to mark a fresh compaction epoch — new `turnId`, `turnCounter` back to zero, and `consecutiveFailures` reset to zero.
 
@@ -224,7 +224,7 @@ After streaming completes, the loop checks `needsFollowUp` (query.ts:1062). If t
 
 If `needsFollowUp` is `true` (at least one `tool_use` block was present), execution continues to Step 9.
 
-For the full message transformation pipeline inside `claude.ts` (normalization, tool schema building, caching, retry), see [Calling the Model](/posts/demystifying-claude-code-calling-the-model/).
+For the full message transformation pipeline inside `claude.ts` (normalization, tool schema building, caching, retry), see Calling the Model.
 
 ### Step 9: TOOL EXECUTION (query.ts:1380-1408)
 
