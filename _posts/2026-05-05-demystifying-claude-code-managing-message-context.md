@@ -150,7 +150,7 @@ This step runs before autocompact so that if collapse alone brings the token cou
 { compactionResult } = deps.autocompact(...)
 ```
 
-This is the most impactful step. For the full decision flow and compact process, see [Compaction Deep Dive]({% post_url 2026-05-05-demystifying-claude-code-compaction-deep-dive %}).
+This is the most impactful step. For the full decision flow and compact process, see [Message Compaction]({% post_url 2026-05-05-demystifying-claude-code-message-compaction %}).
 
 When `deps.autocompact()` returns a successful `compactionResult`, query.ts does three things before building the final message array. First, it logs a telemetry event with metrics about the compaction — original vs compacted message counts, pre/post token counts, and API usage breakdown. Second, if a `taskBudget` is configured, it captures how many tokens the pre-compact context consumed and decrements `taskBudgetRemaining` accordingly (the server can no longer see the full pre-compact history after compaction, so this tracks cumulative spend). Third, it resets the `autoCompactTracking` state to mark a fresh compaction epoch — new `turnId`, `turnCounter` back to zero, and `consecutiveFailures` reset to zero.
 

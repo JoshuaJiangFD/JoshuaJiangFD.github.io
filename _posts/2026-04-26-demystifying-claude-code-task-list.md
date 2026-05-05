@@ -1,5 +1,5 @@
 ---
-title: "Demystifying Claude Code: TaskList Feature"
+title: "Demystifying Claude Code: Task List"
 date: 2026-04-26 12:00:00 +0000
 categories: [Claude Code]
 tags: [Claude Code, Task List, AI Agents, CLI]

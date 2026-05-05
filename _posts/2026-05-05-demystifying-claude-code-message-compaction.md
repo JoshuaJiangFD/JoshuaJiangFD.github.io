@@ -1,5 +1,5 @@
 ---
-title: "Demystifying Claude Code: Compaction Deep Dive"
+title: "Demystifying Claude Code: Message Compaction"
 date: 2026-05-05 12:00:00 -0700
 categories: [Claude Code]
 tags: [Claude Code, LLM, Context Management, Compaction]
