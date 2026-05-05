@@ -399,7 +399,7 @@ Claude Code trades multi-point checkpointing for a simpler single-marker model a
 
 ### Message Pipeline Steps: Cache-Safe vs Cache-Breaking
 
-The 11-step message pipeline (see Managing Message Context) processes messages before each API call. Each step has different cache implications:
+The 11-step message pipeline (see [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %})) processes messages before each API call. Each step has different cache implications:
 
 **Cache-safe steps (preserve prefix bytes):**
 
