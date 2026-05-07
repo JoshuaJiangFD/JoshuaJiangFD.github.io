@@ -10,46 +10,105 @@ This document provides a comprehensive technical deep dive into the design and i
 
 ---
 
-## 1. High-Level Overview & Generation Logic
+## 1. User Experience
 
-### Is a task list generated for every user request?
-No, a task list is not generated for every request. Claude Code employs two distinct planning mechanisms depending on the complexity of the user's request:
+### What the User Sees
 
-1. **Plan Mode (`EnterPlanModeTool` / `ExitPlanModeTool`)**: Used for "non-trivial" tasks such as implementing new features, making architectural decisions, or changes affecting 3+ files. The output is a standalone Markdown file (`.md`).
-2. **Structured Tasks (TodoV2)**: Encouraged for complex multi-step tasks or when utilizing multi-agent swarms. This is a JSON-backed, graph-based task queue.
+The task list is rendered inline in the terminal via an Ink (React for CLI) component (`src/components/TaskListV2.tsx`). Each task is displayed with a status icon, color, and text style:
 
-**Determining Logic & Reference:**
-The system prompt explicitly instructs the LLM to use structured tasks when appropriate, but specifically warns against using them for trivial tasks. 
+| Status        | Icon | Color | Text Style                |
+| ------------- | ---- | ----- | ------------------------- |
+| `pending`     | □    | none  | normal                    |
+| `in_progress` | ■    | cyan  | **bold**                  |
+| `completed`   | ✓    | green | ~~strikethrough~~, dimmed |
 
-1. **General Guidance:**
-   * **File:** `src/constants/prompts.ts`
-   * **Context:**
+A typical rendering looks like:
 
-```typescript
-    hasAgentTool && hasTodoWriteTool
-      ? `Break down and manage your work with the ${TASK_CREATE_TOOL_NAME} tool. These tools are helpful for planning your work and helping the user track your progress.`
-      : null,
+```
+✓ Setup project configuration
+■ Running tests
+□ Deploy to staging
+  ➜ blocked by #2
+
+3 tasks (1 done, 1 in progress, 1 open)
 ```
 
-2. **The "Trivial Task" Exclusion:**
-   * **File:** `src/tools/TaskCreateTool/prompt.ts`
-   * **Context:**
+Additional visual details:
+* **Blocked tasks** show a pointer: `➜ blocked by #2, #5` (dimmed).
+* **Multi-agent tasks** show the owner: `(@researcher)` and a live activity line (e.g., `Summarizing results…`).
+* **Completed tasks fade out** after a 30-second TTL (`RECENT_COMPLETED_TTL_MS = 30_000`).
+* The entire list **auto-hides 5 seconds** after all tasks are completed.
+* When space is limited (more than ~10 tasks), lower-priority tasks are truncated with a summary: `"… +2 pending, 1 completed"`.
+
+### User Interaction: Read-Only
+
+The task list is **entirely LLM-managed**. Users cannot directly add, remove, reorder, or mark tasks through any keyboard shortcut, slash command, or clickable UI element. The only user interactions are:
+
+* **Ctrl+T** — Toggle task list visibility (display only).
+* **Natural language** — The user can ask Claude to modify the task list (e.g., "remove that last task" or "add a step for linting"), and Claude translates the request into the appropriate `TaskCreate` / `TaskUpdate` tool calls.
+
+There is no special routing for these requests. They work through standard LLM tool-calling: the task tools are in Claude's tool set, prior task creation results (including task IDs) are in the conversation transcript, and the LLM maps the user's natural language intent to the correct tool invocation — no differently than interpreting "delete that file" as a file-delete tool call.
+
+If the user interrupts mid-execution (see Section 7), the queued message is processed on the next turn and Claude adjusts the task list accordingly.
+
+---
+
+## 2. When Is a Task List Created?
+
+A task list is not generated for every request. There are three paths that lead to task list creation:
+
+### Path 1: LLM Autonomous Decision
+
+The system prompt always includes a general instruction to use task tools for tracking work:
+* **File:** `src/constants/prompts.ts`
+
+```typescript
+taskToolName
+  ? `Break down and manage your work with the ${taskToolName} tool. These tools are helpful for planning your work and helping the user track your progress.`
+  : null,
+```
+
+The `TaskCreateTool` prompt then defines when the LLM should and should not use it:
+* **File:** `src/tools/TaskCreateTool/prompt.ts`
 
 ```markdown
+## When to Use This Tool
+
+- Complex multi-step tasks - When a task requires 3 or more distinct steps or actions
+- Non-trivial and complex tasks - Tasks that require careful planning or multiple operations
+- User explicitly requests todo list - When the user directly asks you to use the todo list
+- User provides multiple tasks - When users provide a list of things to be done
+
 ## When NOT to Use This Tool
 
 - There is only a single, straightforward task
 - The task is trivial and tracking it provides no organizational benefit
 - The task can be completed in less than 3 trivial steps
 - The task is purely conversational or informational
-
-NOTE that you should not use this tool if there is only one trivial task to do. In this case you are better off just doing the task directly.
 ```
 
-3. **Bias Toward Immediate Action:**
-   For simpler tasks, the LLM is instructed to bias toward immediate action and execute the changes directly without the overhead of creating a task list.
-   * **File:** `src/constants/prompts.ts`
-   * **Context:**
+### Path 2: Post-Plan Nudge
+
+When the user approves a plan via `ExitPlanMode`, the Harness injects a nudge to create tasks for execution. See [Plan/Act Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %}) for full details on how plans work.
+* **File:** `src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`
+
+```typescript
+content: `User has approved your plan. You can now start coding. Start with updating your todo list if applicable`
+```
+
+### Path 3: Team Creation (Architectural)
+
+When multi-agent swarms are used, the task list is not "encouraged" by a prompt — it is created as a side effect of team creation. Teams and task lists have a 1:1 correspondence: `TeamCreate` automatically provisions a shared task list directory at `~/.claude/tasks/{team-name}/`. You cannot have a swarm without a task list.
+* **File:** `src/tools/TeamCreateTool/prompt.ts`
+
+```markdown
+Teams have a 1:1 correspondence with task lists (Team = TaskList).
+```
+
+### The Counterweight: Bias Toward Immediate Action
+
+For everything that doesn't meet the above criteria, the LLM is instructed to skip the task list overhead and just do the work directly.
+* **File:** `src/constants/prompts.ts`
 
 ```markdown
 ## Bias toward action
@@ -61,7 +120,7 @@ Act on your best judgment rather than asking for confirmation.
 
 ---
 
-## 2. Format, Schema, and Storage
+## 3. Format, Schema, and Storage
 
 ### The Schema
 Claude Code enforces a strict JSON schema for structured tasks using Zod.
@@ -87,7 +146,7 @@ export const TaskSchema = z.object({
 
 ---
 
-## 3. Available Task-Related Tools
+## 4. Available Task-Related Tools
 
 The LLM is exposed to a suite of tools to interact with the task list. 
 
@@ -108,7 +167,7 @@ The LLM is exposed to a suite of tools to interact with the task list.
 
 ---
 
-## 4. The Task Lifecycle
+## 5. The Task Lifecycle
 
 Below is an example of the full task lifecycle for the request: *"Implement a new JWT login endpoint and add tests for it."*
 
@@ -172,7 +231,7 @@ sequenceDiagram
     LLM->>User: "The JWT login feature and tests are fully implemented."
 ```
 
-### 4.1 Two-Step Dependency Linking
+### 5.1 Two-Step Dependency Linking
 There is no single tool call to write an entire graph of tasks at once. 
 1. `TaskCreate` only accepts one task per call and does not accept `blockedBy` arguments.
 2. The LLM makes parallel calls to `TaskCreate` to generate the tasks.
@@ -190,7 +249,7 @@ There is no single tool call to write an entire graph of tasks at once.
 
 ---
 
-## 5. Execution, Looping, and Efficiency
+## 6. Execution, Looping, and Efficiency
 
 ### The "Natural Workflow Bridge" (Phase 1 → 2)
 After the LLM creates the tasks and wires their dependencies, no dynamic nudge tells it to start working. Instead, the LLM transitions to execution autonomously via a "Natural Workflow Bridge" created by intersecting system prompts:
@@ -279,7 +338,7 @@ Here are the specific tool calls and parameters per turn during "Phase 3: Comple
 
 ---
 
-## 6. Handling User Interruptions Mid-Execution
+## 7. Handling User Interruptions Mid-Execution
 
 A critical part of the task list execution loop is how the system handles the user suddenly typing a new request or hitting `Ctrl+C` while the LLM is busy (e.g., "Wait, stop that, use OAuth instead of JWT"). 
 
@@ -308,7 +367,7 @@ Claude Code handles these interruptions gracefully using a combination of queuei
 
 ---
 
-## 7. Multi-Agent Swarms & Team Creation
+## 8. Multi-Agent Swarms & Team Creation
 
 The LLM is nudged to invoke Multi-Agent swarms dynamically. When the LLM exits Plan Mode and the user approves a complex plan, the Harness dynamically injects a hint.
 * **File:** `src/components/permissions/ExitPlanModePermissionRequest/ExitPlanModePermissionRequest.tsx`
@@ -332,7 +391,7 @@ Teams share the same task list directory (`~/.claude/tasks/{team-name}/`), allow
 
 ---
 
-## 8. The Verification Contract
+## 9. The Verification Contract
 
 At the end of a non-trivial task sequence, the Harness enforces an independent verification step.
 
@@ -475,3 +534,11 @@ Below are the detailed Zod input parameter schemas for the tools discussed in th
   cwd?: string
 }
 ```
+
+---
+
+## Appendix: Key UI Files
+
+* **File:** `src/components/TaskListV2.tsx` — Main task list rendering
+* **File:** `src/hooks/useTasksV2.ts` — File watcher and state management (watches `~/.claude/tasks/{taskListId}/` directory)
+* **File:** `src/components/Spinner.tsx` — `activeForm` rendering in collapsed view
