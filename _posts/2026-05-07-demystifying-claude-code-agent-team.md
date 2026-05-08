@@ -67,15 +67,17 @@ When a teammate needs permission (e.g., to edit a file outside the allowed set),
 └────────────────────────────────────────────────────────────┘
 ```
 
-### Idle Notifications
+### Task Completion
 
-When a teammate completes its work, the leader receives a notification:
+When a teammate finishes a task, the user sees the task list update in real time — the status icon changes from `■` (in progress) to `✓` (completed), and previously blocked tasks may become unblocked:
 
 ```
-🔵 researcher is now idle (completed task #1: "Analyze existing auth patterns")
+✓ Analyze existing auth patterns         (@researcher)
+■ Implement new JWT utilities             (@implementer)
+■ Update integration tests                (@researcher)   ← was blocked, now started
 ```
 
-The leader can then assign new work via `SendMessage` or let the agent claim available tasks.
+Behind the scenes, the teammate sends an idle notification to the leader agent (not visible to the user), and the leader either assigns new work or lets the teammate self-select from the available task list.
 
 ---
 
