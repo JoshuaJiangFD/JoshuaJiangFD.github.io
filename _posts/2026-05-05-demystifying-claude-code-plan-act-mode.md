@@ -771,6 +771,8 @@ The most common combined flow:
 When swarms are enabled, the `teamHint` in the tool result pushes toward `TeamCreate` instead, which implicitly creates a shared task list for the team:
 > "If this plan can be broken down into multiple independent tasks, consider using the TeamCreate tool to create a team and parallelize the work."
 
+For a full deep dive into how teams are created, how teammates coordinate via the shared task list, and how `planModeRequired` constrains teammates to plan before implementing, see [Agent Team]({% post_url 2026-05-07-demystifying-claude-code-agent-team %}).
+
 ---
 
 ## 11. Reflection: Why Plan Mode is a Permission Mode, Not a Separate Agent

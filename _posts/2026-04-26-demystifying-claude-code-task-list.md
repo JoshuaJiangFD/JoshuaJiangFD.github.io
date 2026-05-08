@@ -389,6 +389,8 @@ When spawning teammates via the Agent tool, choose the `subagent_type` based on 
 ```
 Teams share the same task list directory (`~/.claude/tasks/{team-name}/`), allowing multiple agents to independently query `TaskList` and claim pending tasks concurrently.
 
+For a full deep dive into how teams are created and managed, how teammates coordinate via the shared task list (file locking, task claiming, auto-owner assignment), and the complete team lifecycle from spawning to teardown, see [Agent Team]({% post_url 2026-05-07-demystifying-claude-code-agent-team %}).
+
 ---
 
 ## 9. The Verification Contract

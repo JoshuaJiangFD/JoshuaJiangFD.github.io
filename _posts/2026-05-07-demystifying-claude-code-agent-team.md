@@ -8,7 +8,46 @@ mermaid: true
 
 This post provides a comprehensive technical deep dive into the Agent Team (also referred to as "agent swarm") feature in Claude Code. An agent team is a coordinated group of autonomous LLM agents — spawned as in-process teammates or external tmux panes — that collaborate via a shared task list and mailbox-based messaging, all orchestrated by a single leader agent. We trace the full lifecycle from team creation through task delegation, permission routing, inter-agent communication, and teardown.
 
-For context on how the task list works, see [Task List]({% post_url 2026-04-26-demystifying-claude-code-task-list %}). For how permissions are checked, see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}). For plan mode's interaction with teams, see [Plan/Act Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %}).
+### How Plan Mode, Task List, and Agent Team Relate
+
+These three features represent increasing levels of coordination complexity in Claude Code:
+
+| Concept | Agents involved | Purpose |
+|---------|----------------|---------|
+| **[Plan Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %})** | Single (the leader) | Constrain the LLM to read-only exploration, produce a plan, get user approval, then execute |
+| **[Task List]({% post_url 2026-04-26-demystifying-claude-code-task-list %})** | Single or multiple | Track structured work items with dependencies, ownership, and status |
+| **Agent Team** (this post) | Multiple (leader + teammates) | Parallel execution of tasks coordinated via a shared task list and mailbox messaging |
+
+They compose together in a natural pipeline:
+
+1. **Plan Mode feeds into Task List** — After the user approves a plan via `ExitPlanMode`, the harness nudges the LLM: `"User has approved your plan. Start with updating your todo list if applicable."` The approved plan becomes the basis for task creation.
+
+2. **Task List is required by Agent Team** — Teams and task lists have a strict 1:1 relationship. `TeamCreate` automatically provisions a shared task list directory. You cannot have a team without a task list — it is the coordination substrate that teammates use to claim work, track progress, and respect dependencies.
+
+3. **Plan Mode can constrain Teammates** — The `planModeRequired` flag on a team member forces that teammate to plan before implementing, with the leader approving the teammate's plan via the `plan_approval_response` protocol message.
+
+A typical complex flow chains all three:
+
+The **common case** skips plan mode — when the task decomposition is straightforward, the leader creates a team and tasks directly:
+
+```
+User request → Leader creates Team + Task List
+→ Teammates execute tasks in parallel
+→ Team deleted, results reported to user
+```
+
+The **maximal case** chains all three — for complex, ambiguous requests where the leader needs to explore before knowing how to decompose the work:
+
+```
+User request → Leader enters Plan Mode → User approves plan
+→ Leader creates Team + Task List from plan
+→ Teammates execute tasks in parallel
+→ Team deleted, results reported to user
+```
+
+The system prompt's "bias toward action" instruction encourages the LLM to skip plan mode overhead when the path is clear. Plan mode is only triggered for genuinely ambiguous or large-scope requests.
+
+These features are also independently useful — a single agent can use a task list without a team (tracking its own multi-step work), or use plan mode without either (just exploring before coding). The agent team feature builds on both but does not require plan mode as a prerequisite.
 
 ---
 
@@ -519,9 +558,27 @@ The leader has two mechanisms to observe what teammates are doing:
 
 **BriefTool / SendUserMessage** (`src/tools/BriefTool/BriefTool.ts`) — The channel for agents to proactively message the user. In team scenarios, the leader uses this to surface progress updates to the user while teammates work in the background. The `status` field distinguishes replies (`'normal'`) from unsolicited updates (`'proactive'`). Feature-gated via `--brief` CLI flag or the KAIROS assistant mode.
 
+### 8.4 Plan-Before-Implement Constraint (`planModeRequired`)
+
+* **Files:** `src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`, `src/hooks/useInboxPoller.ts`
+
+When the leader spawns a teammate with `planModeRequired: true`, that teammate starts in plan mode (`permissionMode: 'plan'`). It can read files and explore but cannot edit or execute until its plan is approved. This enforces a "think before acting" discipline for teammates working on sensitive or complex tasks.
+
+**The flow:**
+
+1. **Spawn** — The leader passes `planModeRequired: true` in the spawn config. The teammate's task state initializes with `permissionMode: 'plan'`.
+2. **Plan** — The teammate explores the codebase in read-only mode and writes a plan file (just like single-agent plan mode described in [Plan/Act Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %})).
+3. **Request approval** — The teammate calls `ExitPlanMode`. Because `isPlanModeRequired()` returns true, the tool does not exit plan mode directly. Instead, it sends a `plan_approval_request` message to the leader's mailbox containing the plan content and file path. The teammate enters `awaitingPlanApproval: true` state and waits.
+4. **Leader approves** — The leader's inbox poller (`useInboxPoller.ts`) detects the `plan_approval_request` and sends back a `plan_approval_response` with `approved: true` and the leader's current permission mode.
+5. **Teammate proceeds** — The teammate's inbox poller receives the response, verifies it came from `'team-lead'` (security check to prevent teammates from forging approvals), transitions out of plan mode, and begins implementing.
+
+**Current behavior:** The leader auto-approves plan requests without showing a dialog to the user. This means `planModeRequired` currently functions as a "plan-first discipline" constraint (forcing the teammate to think before coding) rather than a true human-review gate. The plan content is still passed through to the leader's conversation as a regular message, so the leader LLM has context about what the teammate intends to do.
+
 ---
 
 ## 9. Permission Synchronization
+
+For background on how Claude Code checks permissions for individual tool calls (the `canUseTool` function, permission modes, and the approval UI), see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}). This section covers the additional routing layer needed when **teammates** require permission approval.
 
 ### 9.1 The Problem
 
