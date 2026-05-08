@@ -6,7 +6,7 @@ tags: [Claude Code, Plan Mode, Act Mode, AI Agents, CLI]
 mermaid: true
 ---
 
-This post provides a comprehensive technical deep dive into the Plan/Act Mode feature in Claude Code. Plan mode is a permission-level behavioral override that constrains the LLM to read-only exploration and plan authoring. The user reviews and approves the plan before the system transitions back to "act mode" (normal execution), where full tool access is restored. We trace every component involved — from the Shift+Tab keybinding through state management, system prompt injection, plan file persistence, and the multi-option approval dialog.
+This post provides a comprehensive technical deep dive into the Plan/Act Mode feature in Claude Code. Plan mode is a permission-level behavioral override that constrains the LLM to read-only exploration and plan authoring. The user reviews and approves the plan before the system transitions back to "act mode" (normal execution), where full tool access is restored. We trace every component involved — from the user experience through state management, system prompt injection, plan file persistence, and the multi-option approval dialog.
 
 For context on how tools are executed and permissions checked, see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}). For how attachments are injected into the message pipeline, see [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}).
 
@@ -186,14 +186,14 @@ export type PermissionMode = InternalPermissionMode
 
 When this value is set to `'plan'`, it activates effects across the system:
 
-| Aspect | Effect |
-| :--- | :--- |
-| **System Prompt** | A `plan_mode` attachment is injected into the message context every N turns, instructing the LLM that it "MUST NOT make any edits" except the plan file. |
-| **Permission Evaluation** | The permission system still prompts the user if the LLM attempts non-read-only tools, providing a hard backstop for the soft prompt constraint. |
-| **Tool Availability** | Two plan-specific tools (`EnterPlanMode`, `ExitPlanMode`) become relevant for lifecycle management. The LLM is guided to end its turn with either `AskUserQuestion` or `ExitPlanMode`. |
-| **Plan File** | A Markdown file is created at `~/.claude/plans/{slug}.md` — the one file the LLM *is* allowed to write during plan mode. |
-| **UI Indicator** | The prompt border changes to the `planMode` color (distinct from other modes), signaling to the user that the system is in a read-only state. |
-| **State Stashing** | The previous mode is saved as `prePlanMode` so it can be restored on exit. |
+| Aspect                    | Effect                                                                                                                                                                                 |
+| :------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **System Prompt**         | A `plan_mode` attachment is injected into the message context every N turns, instructing the LLM that it "MUST NOT make any edits" except the plan file.                               |
+| **Permission Evaluation** | The permission system still prompts the user if the LLM attempts non-read-only tools, providing a hard backstop for the soft prompt constraint.                                        |
+| **Tool Availability**     | Two plan-specific tools (`EnterPlanMode`, `ExitPlanMode`) become relevant for lifecycle management. The LLM is guided to end its turn with either `AskUserQuestion` or `ExitPlanMode`. |
+| **Plan File**             | A Markdown file is created at `~/.claude/plans/{slug}.md` — the one file the LLM *is* allowed to write during plan mode.                                                               |
+| **UI Indicator**          | The prompt border changes to the `planMode` color (distinct from other modes), signaling to the user that the system is in a read-only state.                                          |
+| **State Stashing**        | The previous mode is saved as `prePlanMode` so it can be restored on exit.                                                                                                             |
 
 ### B. The Plan File (Disk Persistence)
 
@@ -220,12 +220,12 @@ export function getPlanFilePath(agentId?: AgentId): string {
 
 The system runs an experiment (`tengu_pewter_ledger`) on the Phase 4 instructions controlling plan verbosity:
 
-| Variant | Key Instruction |
-| :--- | :--- |
+| Variant   | Key Instruction                                                                                           |
+| :-------- | :-------------------------------------------------------------------------------------------------------- |
 | `control` | "Ensure that the plan file is concise enough to scan quickly, but detailed enough to execute effectively" |
-| `trim` | "One-line Context: what is being changed and why" |
-| `cut` | "Do NOT write a Context or Background section. Prose is a sign you are padding." |
-| `cap` | "**Hard limit: 40 lines.** If the plan is longer, delete prose — not file paths." |
+| `trim`    | "One-line Context: what is being changed and why"                                                         |
+| `cut`     | "Do NOT write a Context or Background section. Prose is a sign you are padding."                          |
+| `cap`     | "**Hard limit: 40 lines.** If the plan is longer, delete prose — not file paths."                         |
 
 ### C. Transition Flags (`prePlanMode` and Lifecycle State)
 
@@ -246,11 +246,11 @@ export function prepareContextForPlanMode(
 
 Three flags in `src/bootstrap/state.ts` track the plan lifecycle:
 
-| Flag | Purpose |
-| :--- | :--- |
-| `hasExitedPlanMode` | Signals re-entry guidance (plan_mode_reentry attachment) |
+| Flag                          | Purpose                                                       |
+| :---------------------------- | :------------------------------------------------------------ |
+| `hasExitedPlanMode`           | Signals re-entry guidance (plan_mode_reentry attachment)      |
 | `needsPlanModeExitAttachment` | One-time flag to inject a "you have exited plan mode" message |
-| `needsAutoModeExitAttachment` | One-time flag if auto mode was deactivated during plan exit |
+| `needsAutoModeExitAttachment` | One-time flag if auto mode was deactivated during plan exit   |
 
 The `handlePlanModeTransition(fromMode, toMode)` helper manages these flags:
 ```typescript
@@ -294,12 +294,12 @@ The full workflow instructions injected by these attachments are detailed in Sec
 
 When `appState.toolPermissionContext.mode` is set to `'plan'`, these four mechanisms activate simultaneously:
 
-| Mechanism | Role |
-| :--- | :--- |
-| **Permission Mode** (A) | Hard backstop — prompts user on non-read-only tool calls |
-| **Plan File** (B) | Durable artifact — survives compaction, editable externally |
-| **Transition Flags** (C) | Lifecycle management — enables restore, re-entry guidance, exit notifications |
-| **Attachments** (D) | Soft constraint — instructs LLM to stay read-only, provides workflow instructions |
+| Mechanism                | Role                                                                              |
+| :----------------------- | :-------------------------------------------------------------------------------- |
+| **Permission Mode** (A)  | Hard backstop — prompts user on non-read-only tool calls                          |
+| **Plan File** (B)        | Durable artifact — survives compaction, editable externally                       |
+| **Transition Flags** (C) | Lifecycle management — enables restore, re-entry guidance, exit notifications     |
+| **Attachments** (D)      | Soft constraint — instructs LLM to stay read-only, provides workflow instructions |
 
 When the user approves the plan, the system exits plan mode and transitions to an elevated permission mode of the user's choosing (accept edits, bypass permissions, or auto mode for Anthropic-internal users) — this is "act mode."
 
@@ -330,12 +330,12 @@ Shift+Tab    Shift+Tab    Shift+Tab         Shift+Tab
 default ──→ acceptEdits ──→ plan ──→ bypassPermissions ──→ default
 ```
 
-| Mode | Behavior |
-| :--- | :--- |
-| `default` | Every tool call prompts the user for permission |
-| `acceptEdits` | File writes auto-approved; Bash/MCP still prompt |
-| `plan` | LLM constrained to read-only; plan file is the only writable target |
-| `bypassPermissions` | Everything auto-approved (no prompts) |
+| Mode                | Behavior                                                            |
+| :------------------ | :------------------------------------------------------------------ |
+| `default`           | Every tool call prompts the user for permission                     |
+| `acceptEdits`       | File writes auto-approved; Bash/MCP still prompt                    |
+| `plan`              | LLM constrained to read-only; plan file is the only writable target |
+| `bypassPermissions` | Everything auto-approved (no prompts)                               |
 
 Note: `bypassPermissions` is only available if `isBypassPermissionsModeAvailable` is set in the user's config — otherwise the cycle skips it (`plan → default`). Ant users get a different cycle entirely: `default → bypassPermissions → auto → default`.
 
@@ -431,12 +431,12 @@ Key constraints:
 
 ### Key Differences Between Paths
 
-| | Path A: Shift+Tab | Path B: EnterPlanMode Tool |
-| :--- | :--- | :--- |
-| Initiated by | User keypress | LLM tool call |
-| Confirmation dialog | None | "Enter plan mode?" Yes/No |
-| LLM awareness | Learns on next turn (via `plan_mode` attachment) | Immediate (via tool_result) |
-| Can be declined | No (user chose it) | Yes (user can select "No") |
+|                     | Path A: Shift+Tab                                | Path B: EnterPlanMode Tool  |
+| :------------------ | :----------------------------------------------- | :-------------------------- |
+| Initiated by        | User keypress                                    | LLM tool call               |
+| Confirmation dialog | None                                             | "Enter plan mode?" Yes/No   |
+| LLM awareness       | Learns on next turn (via `plan_mode` attachment) | Immediate (via tool_result) |
+| Can be declined     | No (user chose it)                               | Yes (user can select "No")  |
 
 ---
 
@@ -454,13 +454,13 @@ graph LR
     P4 --> P5["Phase 5<br/>ExitPlanMode<br/>(Request approval)"]
 ```
 
-| Phase | Goal | Agents |
-| :--- | :--- | :--- |
-| 1. Initial Understanding | Explore codebase | Up to 3 `explore` agents in parallel |
-| 2. Design | Design implementation | Up to 3 `plan` agents (subscription-dependent) |
-| 3. Review | Validate against requirements | Main agent reads critical files |
-| 4. Final Plan | Write plan to file | Main agent uses FileWrite/FileEdit |
-| 5. ExitPlanMode | Present for approval | Main agent calls `ExitPlanMode` tool |
+| Phase                    | Goal                          | Agents                                         |
+| :----------------------- | :---------------------------- | :--------------------------------------------- |
+| 1. Initial Understanding | Explore codebase              | Up to 3 `explore` agents in parallel           |
+| 2. Design                | Design implementation         | Up to 3 `plan` agents (subscription-dependent) |
+| 3. Review                | Validate against requirements | Main agent reads critical files                |
+| 4. Final Plan            | Write plan to file            | Main agent uses FileWrite/FileEdit             |
+| 5. ExitPlanMode          | Present for approval          | Main agent calls `ExitPlanMode` tool           |
 
 **Agent count is subscription-gated:**
 * **File:** `src/utils/planModeV2.ts`
@@ -516,20 +516,20 @@ The user sees the plan content rendered as Markdown, with a multi-option selecto
 
 The options presented depend on the user's configuration. For a **typical external user**, the baseline options are:
 
-| Option | Action | `ExitPlanMode.call()` runs? |
-| :--- | :--- | :--- |
-| **Yes, auto-accept edits** | Keep context, set mode to `acceptEdits`, `onAllow` | **Yes** |
-| **Yes, manually approve edits** | Keep context, set mode to `default`, `onAllow` | **Yes** |
-| **No, keep planning** (with text input) | Reject, send feedback back to LLM | No |
+| Option                                  | Action                                             | `ExitPlanMode.call()` runs? |
+| :-------------------------------------- | :------------------------------------------------- | :-------------------------- |
+| **Yes, auto-accept edits**              | Keep context, set mode to `acceptEdits`, `onAllow` | **Yes**                     |
+| **Yes, manually approve edits**         | Keep context, set mode to `default`, `onAllow`     | **Yes**                     |
+| **No, keep planning** (with text input) | Reject, send feedback back to LLM                  | No                          |
 
 Additional options appear based on configuration flags:
 
-| Flag | Condition | Extra Option | `call()` runs? |
-| :--- | :--- | :--- | :--- |
-| `showClearContext` | `settings.showClearContextOnPlanAccept` | "Yes, clear context (X% used) and auto-accept edits" | **No** (rejects, REPL handles) |
-| `isBypassPermissionsModeAvailable` | User config | "Yes, and bypass permissions" (replaces auto-accept) | **Yes** |
-| `isAutoModeAvailable` | `TRANSCRIPT_CLASSIFIER` feature flag (Ant-only) | "Yes, and use auto mode" | **Yes** |
-| `showUltraplan` | `ULTRAPLAN` feature flag | "No, refine with Ultraplan on the web" | No |
+| Flag                               | Condition                                       | Extra Option                                         | `call()` runs?                 |
+| :--------------------------------- | :---------------------------------------------- | :--------------------------------------------------- | :----------------------------- |
+| `showClearContext`                 | `settings.showClearContextOnPlanAccept`         | "Yes, clear context (X% used) and auto-accept edits" | **No** (rejects, REPL handles) |
+| `isBypassPermissionsModeAvailable` | User config                                     | "Yes, and bypass permissions" (replaces auto-accept) | **Yes**                        |
+| `isAutoModeAvailable`              | `TRANSCRIPT_CLASSIFIER` feature flag (Ant-only) | "Yes, and use auto mode"                             | **Yes**                        |
+| `showUltraplan`                    | `ULTRAPLAN` feature flag                        | "No, refine with Ultraplan on the web"               | No                             |
 
 The key architectural insight: **"clear context" options reject the tool call** — `ExitPlanMode.call()` never executes. Instead, the dialog sets `appState.initialMessage` and the REPL (`src/screens/REPL.tsx`) handles the transition. **"Keep context" options call `onAllow`** — `ExitPlanMode.call()` executes and the tool result flows back to the LLM in the same conversation.
 
@@ -727,11 +727,11 @@ graph LR
 
 Both tools share overlapping triggering conditions in their prompts:
 
-| Condition | EnterPlanMode Prompt | TaskCreate Prompt |
-| :--- | :--- | :--- |
-| Non-trivial task | Primary gate | Primary gate |
+| Condition          | EnterPlanMode Prompt    | TaskCreate Prompt            |
+| :----------------- | :---------------------- | :--------------------------- |
+| Non-trivial task   | Primary gate            | Primary gate                 |
 | Multi-file changes | Explicit condition (#5) | Implied (complex multi-step) |
-| New feature | Explicit condition (#1) | Suitable (complex task) |
+| New feature        | Explicit condition (#1) | Suitable (complex task)      |
 
 **How the LLM disambiguates:**
 
@@ -799,22 +799,22 @@ Because the plan is a file on disk (Section 3B) rather than locked inside a plan
 
 ## 12. Code Citations
 
-| Component | File |
-| :--- | :--- |
-| EnterPlanMode tool | `src/tools/EnterPlanModeTool/EnterPlanModeTool.ts` |
-| EnterPlanMode prompt | `src/tools/EnterPlanModeTool/prompt.ts` |
-| EnterPlanMode UI | `src/tools/EnterPlanModeTool/UI.tsx` |
-| ExitPlanMode tool | `src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts` |
-| ExitPlanMode prompt | `src/tools/ExitPlanModeTool/prompt.ts` |
-| Entry permission dialog | `src/components/permissions/EnterPlanModePermissionRequest/` |
-| Approval dialog | `src/components/permissions/ExitPlanModePermissionRequest/` |
-| Permission mode definitions | `src/utils/permissions/PermissionMode.ts` |
-| Mode cycling logic | `src/utils/permissions/getNextPermissionMode.ts` |
-| Plan mode configuration | `src/utils/planModeV2.ts` |
-| Plan file management | `src/utils/plans.ts` |
-| Plan mode attachments | `src/utils/attachments.ts` (lines 1186–1273) |
-| Plan mode instructions | `src/utils/messages.ts` (lines 3136–3417) |
-| State flags | `src/bootstrap/state.ts` (lines 156–161, 1333–1370) |
-| Mode transition logic | `src/utils/permissions/permissionSetup.ts` (lines 598–646, 1458–1493) |
-| Shift+Tab handler | `src/components/PromptInput/PromptInput.tsx` (lines 1409–1556) |
-| Keybinding definition | `src/keybindings/defaultBindings.ts` (line 69) |
+| Component                   | File                                                                  |
+| :-------------------------- | :-------------------------------------------------------------------- |
+| EnterPlanMode tool          | `src/tools/EnterPlanModeTool/EnterPlanModeTool.ts`                    |
+| EnterPlanMode prompt        | `src/tools/EnterPlanModeTool/prompt.ts`                               |
+| EnterPlanMode UI            | `src/tools/EnterPlanModeTool/UI.tsx`                                  |
+| ExitPlanMode tool           | `src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`                    |
+| ExitPlanMode prompt         | `src/tools/ExitPlanModeTool/prompt.ts`                                |
+| Entry permission dialog     | `src/components/permissions/EnterPlanModePermissionRequest/`          |
+| Approval dialog             | `src/components/permissions/ExitPlanModePermissionRequest/`           |
+| Permission mode definitions | `src/utils/permissions/PermissionMode.ts`                             |
+| Mode cycling logic          | `src/utils/permissions/getNextPermissionMode.ts`                      |
+| Plan mode configuration     | `src/utils/planModeV2.ts`                                             |
+| Plan file management        | `src/utils/plans.ts`                                                  |
+| Plan mode attachments       | `src/utils/attachments.ts` (lines 1186–1273)                          |
+| Plan mode instructions      | `src/utils/messages.ts` (lines 3136–3417)                             |
+| State flags                 | `src/bootstrap/state.ts` (lines 156–161, 1333–1370)                   |
+| Mode transition logic       | `src/utils/permissions/permissionSetup.ts` (lines 598–646, 1458–1493) |
+| Shift+Tab handler           | `src/components/PromptInput/PromptInput.tsx` (lines 1409–1556)        |
+| Keybinding definition       | `src/keybindings/defaultBindings.ts` (line 69)                        |
