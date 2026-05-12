@@ -135,17 +135,29 @@ anthropic.beta.messages.stream(params)           -- the actual API call
 
 ## 3. System Prompt Serialization
 
-`claude.ts` receives `systemPrompt` as a pre-built `string[]` (see [Appendix A](#appendix-a-upstream-system-prompt-assembly) for how it's assembled upstream). It wraps it with outer layers (line 1358-1368):
+The effective system prompt arrives as a pre-built `string[]` from `query.ts` (see [Appendix A](#appendix-a-upstream-system-prompt-assembly) for how it's assembled upstream — it contains static sections, a boundary marker, and dynamic sections). `claude.ts` prepends headers and appends optional instructions (line 1358-1368), then `buildSystemPromptBlocks()` (line 3213) calls `splitSysPromptPrefix()` to split the combined array into blocks with cache scopes:
 
 ```
-[1] Attribution header (fingerprint)
-[2] CLI sysprompt prefix (interactive vs non-interactive markers)
-[3] Effective system prompt (passed in from query.ts)
-[4] Advisor tool instructions (if advisor model enabled)
-[5] Chrome tool search instructions (if applicable)
+Attribution header            → cacheScope: null    (per-request fingerprint, never cached)
+CLI prefix                    → cacheScope: null    (varies by session type)
+Static sections               → cacheScope: 'global'  (shared fleet-wide)
+─── BOUNDARY MARKER ───
+Dynamic sections              → cacheScope: null    (session-specific)
+Advisor instructions          → cacheScope: null    (appended after boundary, if enabled)
+Chrome tool search instr.     → cacheScope: null    (appended after boundary, if enabled)
 ```
 
-Then `buildSystemPromptBlocks()` (line 3213) converts this into `TextBlockParam[]` with `cache_control` markers for prompt caching. The system prompt is split into segments so that the stable prefix (attribution + CLI markers + main prompt) can be cached independently from the dynamic suffix (advisor, chrome instructions) that may change between requests.
+`splitSysPromptPrefix()` recognizes the attribution header and CLI prefix by content (string prefix matching), then uses `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` to split the rest into static and dynamic. Advisor and chrome instructions land in the uncached tail because they're appended after the boundary — they don't break the global cache for the static prefix.
+
+This is the **normal path**. There's also a fallback path when non-deferred MCP tools are present (`skipGlobalCacheForSystemPrompt = true`): MCP tool schemas are per-user, so the tool section can't be globally cached. In this case, the boundary is ignored and everything gets `cacheScope: 'org'` instead — shared within an organization but not fleet-wide.
+
+| Condition | Static sections | Dynamic sections |
+|-----------|----------------|-----------------|
+| Normal (no MCP tools in schema) | `global` | `null` |
+| MCP tools present (not deferred) | `org` | `org` |
+| Global cache feature off | no scope | no scope |
+
+See [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}) for what the static and dynamic sections contain.
 
 ---
 
