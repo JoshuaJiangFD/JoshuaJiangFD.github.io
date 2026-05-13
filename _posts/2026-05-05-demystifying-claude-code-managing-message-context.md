@@ -232,7 +232,7 @@ For the full message transformation pipeline inside `claude.ts` (normalization, 
 for await (update of toolUpdates)
 ```
 
-This step executes the tool calls that the model requested. Each tool's output becomes a `UserMessage` containing a `tool_result` block (the API requires tool results to be sent as user messages). These are collected into `toolResults[]`. Tools may also produce `AttachmentMessage`s — for example, hook results that signal whether the loop should continue.
+This step executes the tool calls that the model requested. Each tool's output becomes a `UserMessage` containing a `tool_result` block (the API requires tool results to be sent as user messages). These are collected into `toolResults[]`. Tools may also produce `AttachmentMessage`s — for example, hook results that signal whether the loop should continue. For the full tool execution lifecycle — dispatchers, the single-tool pipeline, concurrency, interrupt behavior, and hooks — see [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}).
 
 ### Step 10: ATTACHMENTS (query.ts:1580-1628)
 
