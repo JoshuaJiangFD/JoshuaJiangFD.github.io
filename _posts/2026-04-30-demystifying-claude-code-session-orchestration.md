@@ -191,7 +191,24 @@ For the complete transformation pipeline, see [Calling the Model]({% post_url 20
 
 ---
 
-## 5. Loop Termination
+## 5. Inside Step 9: Tool Execution
+
+If the model's response contains `tool_use` blocks, `needsFollowUp` is set to `true` and the loop enters Step 9. The system has two dispatchers that can execute tools, selected by a feature gate:
+
+- **`StreamingToolExecutor`** — When enabled, tools start executing during Step 8 while the model is still streaming. Each `tool_use` block is handed to the executor the moment its input finishes streaming, overlapping tool execution with the remainder of the API response. Step 9 drains whatever tools haven't finished yet.
+- **`runTools()`** — The batch fallback. Waits until all `tool_use` blocks are collected after Step 8, partitions them into concurrent-safe and non-concurrent batches, and executes them.
+
+Both dispatchers call the same single-tool pipeline (`runToolUse()` in `toolExecution.ts`) for each tool. This pipeline validates the input (Zod schema parse + tool-specific checks), runs PreToolUse hooks, checks permissions (which may show an interactive dialog — see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %})), executes the tool, runs PostToolUse hooks, and maps the result into a `tool_result` block.
+
+Each tool's output becomes a `UserMessage` containing a `tool_result` block, collected into `toolResults[]` and yielded to `QueryEngine` for persistence. Tools may also produce `AttachmentMessage`s — hook results that signal whether the loop should continue (`hook_stopped_continuation`), or structured outputs captured for SDK callers.
+
+After tool execution, two exit checks run: if the user pressed Ctrl+C, the loop returns `{ reason: 'aborted_tools' }`; if a hook signalled to stop, the loop returns `{ reason: 'hook_stopped' }`. Otherwise, execution continues to Step 10 (Attachments) and Step 11 (State Merge).
+
+For the full tool execution lifecycle — dispatchers, the single-tool pipeline, concurrency semantics, interrupt behavior, and the hook lifecycle — see [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}).
+
+---
+
+## 6. Loop Termination
 
 The loop exits when the model responds **without any `tool_use` blocks**. After Step 8 (API streaming) completes, the code checks whether `needsFollowUp` is true. If the model's response contained no tool calls, `needsFollowUp` remains false and the loop returns immediately — **Steps 9, 10, and 11 are skipped entirely**. The model decided the task is done by simply not requesting any tools.
 
@@ -222,7 +239,7 @@ In day-to-day use, the vast majority of exits are `completed`.
 
 ---
 
-## 6. Loop Continuation
+## 7. Loop Continuation
 
 When the model does call tools (`needsFollowUp = true`), the loop executes Steps 9-11 and continues to the next iteration. At Step 11, the full `State` object is rebuilt:
 
@@ -260,7 +277,7 @@ Each recovery path rebuilds `state` with the appropriate modifications and conti
 
 ---
 
-## 7. Cross-Turn Continuity
+## 8. Cross-Turn Continuity
 
 ### How Messages Flow Between query.ts and QueryEngine
 
@@ -329,7 +346,7 @@ This is safe because `query.ts` already uses `getMessagesAfterCompactBoundary()`
 
 ---
 
-## 8. Persistence: From the Loop to Disk and Back
+## 9. Persistence: From the Loop to Disk and Back
 
 Persistence is tightly coupled to the agentic loop — the loop yields messages specifically for persistence, and the loop's input on the next turn comes from persisted state. Understanding how messages survive between turns (and across restarts) is essential to understanding the loop itself.
 
