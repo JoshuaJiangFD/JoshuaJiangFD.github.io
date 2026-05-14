@@ -139,32 +139,13 @@ The function:
 
 #### The Budget System
 
-Skill listings could theoretically fill the context window (hundreds of MCP tools, dozens of plugins). The formatting function enforces a **1% of context window** budget:
+The `<system-reminder>` listing from step 7 above contains skill names and descriptions — and with hundreds of MCP tools and dozens of plugins, it could grow large enough to crowd out actual conversation content. The budget system caps the total listing at **1% of the context window** (about 8,000 characters for a 200k-token context) and degrades gracefully when the listing doesn't fit:
 
-* **File:** `src/tools/SkillTool/prompt.ts`
+1. If all skill descriptions fit within the budget, they're included in full.
+2. If they don't fit, bundled skills (Anthropic-curated, like `init`, `review`, `simplify`) keep their full descriptions, and non-bundled skill descriptions are truncated proportionally to fit the remaining space.
+3. In the extreme case where even truncated descriptions don't fit, non-bundled skills are reduced to names only, while bundled skills still keep their descriptions.
 
-```typescript
-// prompt.ts:21-29
-export const SKILL_BUDGET_CONTEXT_PERCENT = 0.01
-export const CHARS_PER_TOKEN = 4
-export const DEFAULT_CHAR_BUDGET = 8_000    // 1% of 200k * 4
-export const MAX_LISTING_DESC_CHARS = 250
-```
-
-`formatCommandsWithinBudget()` (`prompt.ts:70`) implements progressive degradation:
-
-```
-Full descriptions fit?
-    → yes: return all descriptions
-    → no: partition into bundled (never truncated) vs. rest
-          compute remaining budget after bundled
-          calculate maxDescLen for non-bundled
-          maxDescLen ≥ 20?
-              → yes: truncate non-bundled descriptions to maxDescLen
-              → no (extreme): non-bundled go names-only, bundled keep full
-```
-
-Bundled skills (Anthropic-curated) are never truncated — ensuring core functionality is always visible regardless of how many third-party skills are installed. Telemetry events (`tengu_skill_descriptions_truncated`) log which truncation mode was applied and why.
+This ensures core functionality is always visible regardless of how many third-party skills are installed.
 
 #### Conversion to API Message
 
