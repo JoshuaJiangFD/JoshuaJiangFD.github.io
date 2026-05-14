@@ -231,15 +231,19 @@ When none of the above tiers resolve the decision, the system falls through to `
 
 After validation and permission checks pass, `call()` takes the validated skill name, expands its content, and delivers it to the model. The skill author decides the execution mode by setting `context: 'fork'` in the SKILL.md frontmatter; without it, the default is inline.
 
-#### Both Modes: Content Expansion
+#### Both Modes: Common Steps
 
-Regardless of execution mode, the skill's raw SKILL.md body is not delivered to the model as-is — it goes through a content expansion step first. The markdown body in a SKILL.md file can contain variables and inline commands that must be resolved at invocation time:
+Regardless of execution mode, two things happen before the skill content reaches the model.
+
+**Content expansion.** The skill's raw SKILL.md body is not delivered as-is — it contains variables and inline commands that must be resolved at invocation time:
 
 - **Argument substitution**: `$1`, `$2`, etc. are replaced with the positional arguments the user or model passed when invoking the skill. For example, if the body contains `Review the pull request #$1` and the skill is called with `args: "123"`, the model sees `Review the pull request #123`.
 - **Variable replacement**: `${CLAUDE_SKILL_DIR}` is replaced with the skill's directory path on disk (so the skill can reference sibling files), and `${CLAUDE_SESSION_ID}` with the current session ID.
 - **Inline shell commands**: lines prefixed with `!` are executed as shell commands, and their stdout replaces the line. This lets a skill dynamically include output like `!git log --oneline -5` in its prompt. As a security boundary, this is disabled for MCP skills — preventing a malicious MCP server from executing arbitrary commands via skill content.
 
-After expansion, the content is registered for compaction preservation (so it survives context compression) and skill hooks are activated. What differs between the two modes is where the expanded content goes.
+**Compaction preservation.** After expansion, the full skill content is registered via `addInvokedSkill()` in a persistent store that lives outside the message history. This matters because when the conversation grows long and context compaction runs, all messages — including `tool_result` blocks and injected `newMessages` — are summarized and replaced. Without separate preservation, the model would lose the skill's original instructions after compaction. By registering the content in `addInvokedSkill()`, the harness can re-inject it as an attachment after compaction completes, so the model retains access to the skill's full instructions. This mechanism is the same for both inline and forked execution — both paths register during content expansion.
+
+What differs between the two modes is where the expanded content goes.
 
 #### Inline Execution (Default)
 
