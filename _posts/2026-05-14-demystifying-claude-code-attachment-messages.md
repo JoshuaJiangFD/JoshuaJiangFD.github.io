@@ -83,13 +83,13 @@ All runtime attachment production flows through a single function — `getAttach
 
 The function is called from **two sites** with  different value of the `input` param:
 
-| Call Site                             | `input` param      | When                                                                                        | Includes user input attachments?                          | Includes environment attachments? |
-| ------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
+| Call Site                                             | `input` param      | When                                                                   | Includes user input attachments?                          | Includes environment attachments? |
+| ----------------------------------------------------- | ------------------ | ---------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------- |
 | Turn start (via `QueryEngine` → `processUserInput()`) | User's text string | Before the first API call of the turn, when the user submits a message | Yes                                                       | Yes                               |
-| Inter-turn (via `query.ts`)           | `null`             | After each tool execution cycle (Step 10 of the agentic loop)                               | No (`input` is null, so user input producers are skipped) | Yes                               |
+| Inter-turn (via `query.ts`)                           | `null`             | After each tool execution cycle (Step 10 of the agentic loop)          | No (`input` is null, so user input producers are skipped) | Yes                               |
 
 
-Internally, `getAttachments()` runs in two phases.  At the start of each user turn, it gets result from both phases as it pass a non-null user input: User Input Attachments and Environment Attachments . Every subsequent iteration within the same turn gets only environment attachments, because there's no new user input to parse.
+Internally, `getAttachments()` runs in two phases: user input attachments and environment attachments.  At the start of each user turn, it gets result from both phases as it pass a non-null user input. Every subsequent iteration within the same turn gets only environment attachments, because there's no new user input to parse.
 
 #### User Input Attachments (when `input` is non-null)
 
