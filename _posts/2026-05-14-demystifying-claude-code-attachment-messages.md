@@ -48,7 +48,7 @@ interface AttachmentMessage<A extends Record<string, unknown> = Record<string, u
 The `attachment.type` field is the discriminant that drives the entire lifecycle. The `Attachment` union type (`attachments.ts:440-718`) defines 40+ subtypes — file contents, mode reminders, skill listings, hook results, task notifications, and more. The subtype determines three things:
 
 1. **Where it comes from** — each producer function creates attachments of specific subtypes. `getChangedFiles()` produces `edited_text_file`, `getSkillListingAttachments()` produces `skill_listing`, `getPlanModeAttachments()` produces `plan_mode`, and so on (see [Section 3](#3-the-producer-pipeline)).
-2. **How it reaches the model** — `normalizeAttachmentForAPI()` switches on the type to decide the API conversion: most become `<system-reminder>` text, file attachments become synthetic tool call pairs, and some produce nothing at all (see [Section 5](#5-how-attachments-reach-the-model)).
+2. **How it reaches the model** — `normalizeAttachmentForAPI()` switches on the type to decide the API conversion: most become `<system-reminder>` text, file attachments become synthetic tool call pairs, and some produce nothing at all (see [Section 6](#6-how-attachments-reach-the-model)).
 3. **What data it carries** — each subtype is a typed object with fields specific to its purpose. For example, `edited_text_file` carries a filename and a diff snippet; `skill_listing` carries the formatted content string and a skill count; `queued_command` carries the user's prompt text and origin metadata.
 
 The full subtype reference with API conversion patterns is in [Appendix B](#appendix-b-attachment-subtype-reference).
@@ -75,7 +75,7 @@ This factory stamps each attachment with a unique UUID and timestamp, producing 
 
 ## 3. The Producer Pipeline
 
-During normal operation, all attachment production flows through a single function — `getAttachments()` — called from two different sites with different inputs. At the inter-turn call site, this runs as part of the ATTACHMENTS step (Step 10 of the agentic loop). After `getAttachments()` returns within that same step, prefetch results (memory and skill discovery) that were running concurrently with the turn are also appended. Post-compaction attachment generation is a separate mechanism covered in [Section 4](#4-post-compaction-context-rebuild).
+During normal operation, all attachment production flows through a single function — `getAttachments()` — called from two different sites with different inputs. At the inter-turn call site, this runs as part of the ATTACHMENTS step (Step 10 of the agentic loop). After `getAttachments()` returns within that same step, prefetch results (memory and skill discovery) that were running concurrently with the turn are also appended. Post-compaction attachment generation is a separate mechanism covered in [Section 5](#5-post-compaction-context-rebuild).
 
 ### 3.1 The Core Function: `getAttachments()`
 
