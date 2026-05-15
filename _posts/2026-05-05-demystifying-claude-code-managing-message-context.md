@@ -64,7 +64,7 @@ The conversation is a discriminated union type `Message` defined in `src/types/m
 - **`UserMessage`** contains user prompts and `tool_result` blocks. The Anthropic API requires tool results to be sent as `role: 'user'` messages, so from the pipeline's perspective, tool outputs are user-role responses to the assistant's requests.
 - **`AssistantMessage`** carries the model's response — text blocks, `tool_use` blocks, and thinking blocks.
 - **`SystemMessage`** provides internal signals: compact boundary markers, API error retry notifications, and informational telemetry. These are filtered out by `normalizeMessagesForAPI()` before reaching the API.
-- **`AttachmentMessage`** injects non-conversational context (file contents, memories, plan mode instructions, notifications) into the stream. At API time, these are converted to `UserMessage`s and merged into adjacent user messages. See [Appendix C](#appendix-c-attachment-messages) for the full taxonomy.
+- **`AttachmentMessage`** injects non-conversational context (file contents, memories, plan mode instructions, notifications) into the stream. At API time, these are converted to `UserMessage`s and merged into adjacent user messages. For the full taxonomy, see [Attachment Messages]({% post_url 2026-05-14-demystifying-claude-code-attachment-messages %}).
 
 ---
 
@@ -370,56 +370,3 @@ Committed collapses are persisted as `marble-origami-commit` entries and the sta
 
 The original messages are never deleted — they remain in the REPL array for UI scrollback and in the JSONL for session history. The collapsed view is purely a read-time projection.
 
----
-
-## Appendix C: Attachment Messages
-
-An `AttachmentMessage` is a sideband context injection mechanism — a way to inject information into the conversation that isn't a direct user prompt, model response, or tool result.
-
-### The Type
-
-```typescript
-interface AttachmentMessage {
-  type: 'attachment'
-  attachment: { type: string, ...data }   // the payload (40+ subtypes)
-  uuid: UUID
-  timestamp: string
-  isMeta?: true
-}
-```
-
-It's a thin wrapper around an `Attachment` discriminated union. The `attachment.type` field determines what kind of context is being injected.
-
-### Common Subtypes
-
-The most frequently encountered attachment types in practice are:
-
-- **`edited_text_file`** — a file the model previously read was modified externally (linter auto-fix, user editing in IDE, git hook). Contains a diff snippet of the change.
-- **`queued_command`** — the user submitted a follow-up prompt while the model was mid-turn executing tools. Injected as a mid-turn course correction.
-- **`relevant_memories`** — the memory prefetch system found memories relevant to the current conversation and surfaces them automatically.
-- **`plan_mode`** — when the user is in plan mode, every turn gets a reminder telling the model to only plan, not execute.
-- **`deferred_tools_delta`** — an MCP server finished connecting mid-session or a new deferred tool was discovered. Announces the newly available tools.
-
-Other subtypes cover file content injections (`file`, `directory`, `selected_lines_in_ide`), state signals (`plan_mode_exit`, `auto_mode`, `max_turns_reached`), task notifications (`task_status`), and post-compact context rebuilding (`invoked_skills`, `plan_file_reference`, `agent_listing_delta`, `mcp_instructions_delta`).
-
-### Who Creates Them
-
-Attachment messages are produced in three places:
-
-- **Step 9 (Tool Execution)** — tools can return attachment messages alongside their results. For example, hook results that carry a `hook_stopped_continuation` signal.
-- **Step 10 (Attachments)** — `getAttachmentMessages()` is the main producer. It checks for queued commands, file change notifications, plan mode reminders, memory prefetch results, skill discovery results, diagnostic updates, and date changes.
-- **Compaction** — `compact.ts` creates them for post-compact context rebuilding: re-reads of recently accessed files, the active plan, invoked skills, tool schema announcements, agent listings, and MCP instructions.
-
-### How They Reach the Model
-
-`normalizeMessagesForAPI()` converts each `AttachmentMessage` into one or more `UserMessage`s via `normalizeAttachmentForAPI()`. The conversion is subtype-specific. File attachments become synthetic `tool_use` + `tool_result` pairs (as if the model had called `Read`). Text-based context injections become `UserMessage`s wrapped in `<system-reminder>` tags with `isMeta: true`. The resulting user messages are then merged into the adjacent user message so the API receives clean alternating user/assistant turns.
-
-Some attachment subtypes are **signals** that never reach the model at all. `max_turns_reached` causes QueryEngine to exit the loop. `structured_output` is captured as the return value for SDK callers. `hook_stopped_continuation` sets a flag that prevents the loop from continuing.
-
-### Why They Exist as a Separate Type
-
-Attachments exist as a distinct message type rather than being `UserMessage`s from the start for three reasons. First, the REPL renders them differently — as badges, indicators, or notifications rather than chat bubbles. Second, the selective API conversion means some subtypes are signals that should never reach the model, which is easy to enforce when they have their own type. Third, the structured `attachment` payload persists cleanly to the JSONL, enabling the UI to reconstruct state on resume (which files changed, what mode was active, which tasks completed) without parsing free-form text.
-
-### When They Appear in a Turn
-
-Attachments are produced after tool execution (Steps 9-10) and before the next API call. They represent the system's chance to inject context based on what just happened — files changed, new information became available, mode state shifted — so the model sees this context alongside tool results when it decides what to do next.

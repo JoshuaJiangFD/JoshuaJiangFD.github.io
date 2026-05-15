@@ -24,7 +24,7 @@ Crucially, `QueryEngine` is **stateful across user turns**. The same `mutableMes
 
 ### query.ts — The Execution Harness
 
-`query.ts` is the mechanical core of the system, hosting the `queryLoop()` state machine. It receives a snapshot of the conversation, runs its `while(true)` loop, yields results back to `QueryEngine`, and exits. Its internal `state.messages` is local to that call and dies when `query()` returns.
+`query.ts` is the mechanical core of the system, hosting the `queryLoop()` state machine. It receives a snapshot of the conversation, runs its `while(true)` loop, yields results back to `QueryEngine`, and exits. Its internal `state.messages` is local to that call and dies when `query()` returns. The formal contract between the two — the `QueryParams` input and the async generator yield/return types — is documented in [Appendix A](#appendix-a-the-queryenginequery-contract).
 
 This means `query.ts` is **stateless across user turns** — each user message triggers a fresh `query()` call. But it is **stateful within a turn**, maintaining `state.messages` across loop iterations as the model calls tools and observes results.
 
@@ -457,3 +457,69 @@ sequenceDiagram
 ```
 
 This mechanism ensures that when the user returns to their terminal, the conversation's chronology, summarized boundaries, and runtime state are restored to exactly where they were left off — and the next `query()` call receives a complete, consistent snapshot to work with.
+
+---
+
+## Appendix A: The QueryEngine/query Contract
+
+The boundary between `QueryEngine.ts` and `query.ts` is a single exported async generator function. `QueryEngine` assembles a `QueryParams` object and calls `query()`; `query()` yields messages as it works and returns a terminal result when the turn ends.
+
+### Input: `QueryParams`
+
+`QueryEngine` passes everything the execution harness needs for one turn:
+
+```typescript
+type QueryParams = {
+  messages: Message[]              // snapshot of the conversation so far
+  systemPrompt: SystemPrompt       // pre-built system prompt
+  userContext: { [k: string]: string }  // CLAUDE.md + current date
+  systemContext: { [k: string]: string } // git status, other system context
+  canUseTool: CanUseToolFn         // permission check function
+  toolUseContext: ToolUseContext    // tool state: readFileState, tools, model, MCP clients, etc.
+  fallbackModel?: string           // optional model to fall back to
+  querySource: QuerySource         // where the query came from (e.g., 'repl_main_thread', 'sdk')
+  maxOutputTokensOverride?: number // optional output token limit
+  maxTurns?: number                // optional cap on loop iterations
+  skipCacheWrite?: boolean         // skip writing to prompt cache
+  taskBudget?: { total: number }   // API-level task budget for the agentic turn
+  deps?: QueryDeps                 // injectable dependencies (callModel, autocompact, etc.)
+}
+```
+
+The `deps` field enables testing — production uses `productionDeps()` which wires in the real API client, compaction, and microcompact implementations. Tests can inject mocks.
+
+### Output: Async Generator
+
+`query()` yields a discriminated union of message types as it works:
+
+```typescript
+export async function* query(
+  params: QueryParams,
+): AsyncGenerator<
+  | StreamEvent            // raw API streaming events
+  | RequestStartEvent      // marks the start of each API request
+  | Message                // UserMessage, AssistantMessage, SystemMessage, AttachmentMessage
+  | TombstoneMessage       // UI removal signal (not persisted)
+  | ToolUseSummaryMessage,  // summarized tool use for collapsed display
+  Terminal                 // return value: { reason, ... } explaining why the turn ended
+>
+```
+
+`QueryEngine` consumes this generator in a `for await` loop ([Section 8](#8-cross-turn-continuity)), pushing each yielded message to `mutableMessages` for persistence. When the generator returns, `QueryEngine` reads the `Terminal` value to determine why the turn ended (see [Section 6](#6-loop-termination) for the full list of exit reasons).
+
+### Internal Structure
+
+`query()` is a thin wrapper around the unexported `queryLoop()` function:
+
+```typescript
+export async function* query(params: QueryParams) {
+  const consumedCommandUuids: string[] = []
+  const terminal = yield* queryLoop(params, consumedCommandUuids)
+  for (const uuid of consumedCommandUuids) {
+    notifyCommandLifecycle(uuid, 'completed')
+  }
+  return terminal
+}
+```
+
+The `yield*` delegation means every message that `queryLoop()` yields passes through transparently to `QueryEngine`. The wrapper's only job is post-turn cleanup: notifying the command lifecycle tracker that queued commands consumed during the turn have completed. This notification only fires on normal completion — if `queryLoop()` throws or the generator is closed via `.return()`, the cleanup is skipped, which provides the same "started-without-completed" signal that the REPL uses to detect failed turns.
