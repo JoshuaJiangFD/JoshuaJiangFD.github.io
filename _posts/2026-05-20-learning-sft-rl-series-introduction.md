@@ -1,8 +1,8 @@
 ---
 title: "Learning SFT+RL on a Multimodal LLM: Series Introduction"
 date: 2026-05-20 10:00:00 +0000
-categories: [VideoScore2, SFT+RL Series]
-tags: [VideoScore2, Qwen2.5-VL, SFT, Reinforcement Learning, GRPO, LLaMA-Factory]
+categories: [Post-Training VLM]
+tags: [VideoScore2, Qwen2.5-VL, VLM, Video Evaluation, SFT, Reinforcement Learning, GRPO, LLaMA-Factory]
 ---
 
 This series documents the full post-training pipeline — supervised fine-tuning followed by reinforcement learning — applied to a multimodal large language model. Every concept is grounded in a single real project, VideoScore2, which fine-tunes Qwen2.5-VL-7B-Instruct to evaluate AI-generated videos. The series spans six posts covering model architecture, dataset construction, SFT mechanics, the motivation for RL, GRPO training, and inference deployment.
