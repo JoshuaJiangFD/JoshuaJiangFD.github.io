@@ -220,7 +220,7 @@ The table below summarizes each stage of the pipeline as applied to the running 
 
 Net result: 331,776,000 raw numbers become 3,520 tokens. After this pipeline, the LLM receives a flat sequence of 3584-dim vectors -- some from text embeddings, some from the vision pipeline -- and processes them identically through self-attention. The vision pipeline is entirely frozen; the LLM decoder alone learns to interpret these representations for the scoring task.
 
-Blog 2 covers the training dataset, VideoFeedback2, that provides the target outputs the model learns to generate: chain-of-thought reasoning followed by three integer scores for visual quality, text-to-video alignment, and physical consistency.
+[Blog 2]({% post_url 2026-05-22-the-videofeedback2-dataset %}) covers the training dataset, VideoFeedback2, that provides the target outputs the model learns to generate: chain-of-thought reasoning followed by three integer scores for visual quality, text-to-video alignment, and physical consistency.
 
 ## Appendix: Call Chain Between LLaMA-Factory and HuggingFace Transformers
 

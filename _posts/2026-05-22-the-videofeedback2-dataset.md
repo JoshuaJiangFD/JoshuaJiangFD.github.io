@@ -7,11 +7,13 @@ tags: [VideoScore2, VideoFeedback2, VLM, Video Evaluation, Dataset, SFT]
 
 This post is the third in the Post-Training VLM series. The [previous post (Blog 1)]({% post_url 2026-05-21-from-video-frames-to-tokens %}) described how a raw video is transformed into visual tokens ready for the LLM decoder. This post covers the VideoFeedback2 dataset -- the 26,634 annotated examples that define both the input content (video + evaluation prompt) and the target output (reasoning + scores) for SFT. A running example -- one text prompt and its 10 generated videos -- is threaded throughout to show exactly how the dataset is constructed, annotated, and formatted for supervised fine-tuning.
 
-## 1. The Supervision Problem
+## 1. The Training Signal Design: CoT + Scores
 
-Blog 1 ended with 3,520 visual tokens entering the LLM's input sequence alongside a text prompt. But the LLM does not know what to do with those tokens until it is trained. Supervised fine-tuning requires input-output pairs: given a video and an evaluation prompt (input), produce reasoning and quality scores (output). The VideoFeedback2 dataset provides 26,634 such pairs.
+Blog 1 ended with visual tokens entering the LLM's input sequence alongside a text prompt. But the LLM does not know what to do with those tokens until it is trained. Supervised fine-tuning requires input-output pairs: given a video and an evaluation prompt (input), produce reasoning and quality scores (output). The VideoFeedback2 dataset provides 26,634 such pairs.
 
-The challenge is not just volume. The model must learn to evaluate across three distinct dimensions (visual quality, text-to-video alignment, physical consistency), across videos from 22 different T2V models spanning vastly different quality levels, and produce both a reasoning trace explaining its assessment and integer scores. The dataset's design addresses each of these requirements.
+A naive approach would train the model to predict only the three integer scores (1-5 on each dimension). But that gives just 3 tokens of loss signal per example -- an extremely sparse gradient. VideoScore2's key design choice is to include a chain-of-thought reasoning trace (~620 tokens on average) before the scores. This reasoning trace becomes the dominant training signal: the model receives dense per-token cross-entropy loss across hundreds of tokens that describe *what* it observes and *why* that maps to a particular quality level. The scores alone tell the model the answer; the reasoning teaches it how to arrive at that answer.
+
+The challenge is not just volume. The model must learn to evaluate across three distinct dimensions (visual quality, text-to-video alignment, physical consistency), across videos from 22 different T2V models spanning vastly different quality levels. The following sections describe how the dataset is constructed to provide this coverage.
 
 ## 2. Prompt Collection
 
@@ -67,7 +69,7 @@ The generated videos vary in resolution (256x256 to 1920x982), frame rate (8-30 
 
 ## 4. The Annotation Pipeline
 
-Converting 27,168 raw videos into usable training data requires three stages: human scoring, LLM rationale generation, and alignment reconciliation.
+Converting 27,168 raw videos into usable training data requires four stages: human scoring, LLM rationale generation, score reconciliation, and rationale alignment.
 
 **Stage 1: Human scoring.** 15 trained annotators scored each video on the three dimensions (integer 1-5) and wrote short diagnostic comments describing what they observed. For the treadmill video `004250_a.mp4`, an annotator might write: "running motion present but no visible speed change; treadmill belt speed appears constant throughout." These comments capture the specific evidence behind a score without committing to the score's numerical value.
 
@@ -83,9 +85,15 @@ For `004250_a.mp4`, Claude produced reasoning like:
 >
 > **Physical Consistency:** The static frames suggest a plausible gym workout scene with normal running motion, but there is no demonstrated speed increase or sprint, and some posture appearances could be interpreted as inconsistent with rapid acceleration on a treadmill.
 
-**Stage 3: Score-rationale alignment.** The human scores and LLM-generated scores are reconciled. If the difference between them is <= 1 on a dimension, the human score is kept. If the difference is 2, they are averaged. If any dimension differs by >= 3, the entry is re-scored up to three times, then discarded if still misaligned (this accounts for the gap between 27,168 generated videos and 26,634 training examples).
+**Stage 3: Score reconciliation.** With both human scores and Claude's scores in hand, the final training score is determined by their agreement:
 
-After reconciliation, GPT-5-mini makes minor edits to the rationale text when the final score differs from what the reasoning implies. For instance, if the human score is 3 but the rationale says "very poor resolution," GPT-5-mini might soften it to "moderate resolution" so the reasoning logically supports the final score.
+- Difference <= 1: keep the human score
+- Difference = 2: average the two
+- Difference >= 3: re-generate the rationale (up to three times). Entries that still disagree after three attempts are discarded -- fewer than 10% of the dataset was lost this way.
+
+This produces the final integer scores that appear in the training data.
+
+**Stage 4: Rationale alignment.** The final scores from Stage 3 may no longer match what Claude's reasoning text implies (because the human score was kept or averaged). GPT-5-mini edits the rationale wording to align with the final scores. For instance, if the final score is 3 but the rationale says "very poor resolution," GPT-5-mini softens it to "moderate resolution." The paper describes these as "minor edits, such as softening or intensifying descriptions" -- the overall structure and meaning of the analysis are preserved, only specific phrases are adjusted.
 
 ## 5. The Training Format
 
@@ -144,20 +152,7 @@ could be interpreted as inconsistent with rapid acceleration.
 (3) physical/common-sense consistency: 2
 ```
 
-A video that fails completely on all dimensions may receive a minimal think block:
-
-```
-<think>
-multi-dimensional analysis:
-Visual Quality: 1; Text-to-Video Alignment: 1; Physical Consistency: 1
-</think>
-
-(1) visual quality: 1
-(2) text-to-video alignment: 1
-(3) physical/common-sense consistency: 1
-```
-
-Approximately 35% of examples (9,341 out of 26,634) include explicit ground-truth score labels within the think block -- these are cases where the reconciled scores were injected into the reasoning trace during the alignment stage (Section 4, Stage 3). The remaining 65% contain reasoning that naturally arrives at scores consistent with the final labels.
+One data observation: 35% of examples (9,341 out of 26,634) include explicit ground-truth score labels within the think block, in addition to the full reasoning. These examples contain the same detailed analysis as the other 65%, but also include lines like "ground-truth of Dim-1: 'Visual Quality': 4" appended to or referenced within the reasoning text. The paper does not explain this pattern -- it appears to be an artifact of the rationale alignment stage (Section 4, Stage 4) where the ground-truth scores provided as input to GPT-5-mini were retained in the output.
 
 ## 7. Score Distributions
 
@@ -176,7 +171,27 @@ The means cluster near 3.0 because the tier-stratified video generation (Section
 
 The distributions are roughly bell-shaped with slight left skew (more 2s than 4s), reflecting the fact that three of the four quality tiers (Poor, Moderate, Good) tend to produce videos scoring 2-3, while only the Modern tier regularly produces 4s and 5s.
 
-## 8. The Test Set (VideoScore-Bench-v2)
+## 8. Implications for Training Configuration
+
+The dataset properties constrain several training hyperparameters in the SFT stage (Blog 3 will cover the training loop in detail).
+
+**Sequence length budget.** Each training example consumes approximately:
+
+```
+visual tokens:     ~3,520 (depends on video resolution/duration)
+prompt tokens:     ~500   (fixed template + per-video text prompt)
+reasoning tokens:  ~620   (mean think block length)
+score tokens:      ~3     (three score lines)
+total:             ~4,643 tokens per example
+```
+
+With the context window at 8,192 tokens (`cutoff_len=8192`), each example fits comfortably but leaves no room for batching multiple examples per sequence.
+
+**Effective training duration.** 26,634 examples with per-GPU batch size 1 across 8 GPUs and gradient accumulation of 8 steps means an effective batch size of 64. This gives 26,634 / 64 = ~416 optimization steps per epoch. Two epochs of training means ~832 total weight updates, each computed from 64 examples.
+
+**Loss composition.** Of the ~623 target tokens per example (620 reasoning + 3 scores), over 99% of the per-token cross-entropy loss comes from the reasoning trace. The 3 score tokens contribute negligibly to the gradient. This means the model is overwhelmingly trained to produce good reasoning -- getting the scores right is a byproduct of getting the reasoning right.
+
+## 9. The Test Set (VideoScore-Bench-v2)
 
 500 videos are held out entirely from training and form the evaluation benchmark. The test set has a different format from the training data:
 
@@ -187,11 +202,11 @@ The distributions are roughly bell-shaped with slight left skew (more 2s than 4s
 | `visual_score`, `t2v_score`, `phy_score` | Human-annotated ground-truth scores |
 | `thinking` | Reference reasoning trace |
 
-The test set uses direct human annotations as ground truth, without the LLM rationale generation and reconciliation process applied to training data. This ensures evaluation measures the model's ability to match human judgement rather than its ability to reproduce LLM-generated reasoning.
+The scores (`visual_score`, `t2v_score`, `phy_score`) are direct human annotations used as ground truth for evaluation. The `thinking` field contains an LLM-generated reference reasoning trace (mean ~2500 chars), produced through the same pipeline as the training data. During evaluation, the model's predicted scores are compared against the human scores -- the thinking field serves as a reference but is not used for scoring.
 
 The 500 test videos come from 472 unique prompts (some prompts have multiple test videos). These prompts do not overlap with the 2,933 training prompts.
 
-## 9. The RL Training Format
+## 10. The RL Training Format
 
 The same videos are also formatted for reinforcement learning (GRPO), used in the second training stage after SFT. The RL format strips out the reasoning trace and provides only ground-truth scores as the reward signal:
 
@@ -204,9 +219,9 @@ The same videos are also formatted for reinforcement learning (GRPO), used in th
 }
 ```
 
-During GRPO training, the model generates its own reasoning and scores multiple times (group size = 8), and a rule-based reward function compares the generated scores against the ground-truth in `solution`. The RL data contains 26,669 entries (slightly more than SFT due to 35 duplicated problem_ids). Blog 4 will cover the GRPO training in detail.
+During GRPO training, the model generates its own reasoning and scores multiple times (group size = 8), and a rule-based reward function compares the generated scores against the ground-truth in `solution`. Blog 4 will cover the GRPO training in detail.
 
-## 10. Summary
+## 11. Summary
 
 The VideoFeedback2 dataset translates the abstract task "evaluate video quality" into 26,634 concrete input-output pairs. For any given training step, the model sees:
 
