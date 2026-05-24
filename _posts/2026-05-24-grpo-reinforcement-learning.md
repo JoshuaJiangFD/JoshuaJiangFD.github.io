@@ -49,10 +49,15 @@ $$\mathcal{L} = -\frac{1}{G} \sum_{i=1}^{G} \frac{1}{|c_i|} \sum_{t=1}^{|c_i|} \
 where:
 
 - $G = 8$ is the group size (number of completions per prompt)
+  
 - $|c_i|$ is the length of completion $i$ in tokens
+  
 - $\hat{A}_i$ is the normalized advantage for completion $i$ (from step 4 above)
+  
 - $r_t(\theta) = \exp(\log \pi_\theta(a_t | s_t) - \log \pi_\theta^{\text{old}}(a_t | s_t))$ is the probability ratio at token $t$ between the current policy and the policy at the time of generation
+  
 - $\beta = 0.04$ is the KL penalty coefficient
+  
 - $\text{KL}_t = \exp(\log \pi_{\text{ref}}(a_t | s_t) - \log \pi_\theta(a_t | s_t)) - (\log \pi_{\text{ref}}(a_t | s_t) - \log \pi_\theta(a_t | s_t)) - 1$ is the per-token KL divergence from the reference model (the SFT checkpoint)
 
 The KL penalty prevents the model from drifting too far from the SFT checkpoint. Without it, the model could find degenerate strategies (e.g., always outputting the most common score) that maximize reward but lose reasoning quality.
@@ -101,18 +106,18 @@ The code includes a length bonus for completions that fall within 320-512 tokens
 
 The RL training uses a different framework (Video-R1) on different hardware than SFT:
 
-| Parameter | SFT (Blog 3) | GRPO (this post) |
-| --------- | ------------ | ---------------- |
-| Framework | LLaMA-Factory | Video-R1 |
-| Starting model | Qwen2.5-VL-7B-Instruct | SFT checkpoint |
-| GPUs | 8x A800 | 4x A100 |
-| Learning rate | 5e-5 | 2e-6 |
-| Epochs | 2 | 1 |
-| Effective batch size | 64 | 32 (4 GPUs × 1 × 8 accumulation) |
-| Total steps | 832 | ~300 (best checkpoint) |
-| Frozen modules | ViT + merger | None specified |
-| DeepSpeed | ZeRO-3 | ZeRO-3 |
-| Additional | - | gradient_checkpointing, flash_attention_2 |
+| Parameter            | SFT (Blog 3)           | GRPO (this post)                          |
+| -------------------- | ---------------------- | ----------------------------------------- |
+| Framework            | LLaMA-Factory          | Video-R1                                  |
+| Starting model       | Qwen2.5-VL-7B-Instruct | SFT checkpoint                            |
+| GPUs                 | 8x A800                | 4x A100                                   |
+| Learning rate        | 5e-5                   | 2e-6                                      |
+| Epochs               | 2                      | 1                                         |
+| Effective batch size | 64                     | 32 (4 GPUs × 1 × 8 accumulation)          |
+| Total steps          | 832                    | ~300 (best checkpoint)                    |
+| Frozen modules       | ViT + merger           | None specified                            |
+| DeepSpeed            | ZeRO-3                 | ZeRO-3                                    |
+| Additional           | -                      | gradient_checkpointing, flash_attention_2 |
 
 Key differences from SFT:
 
@@ -170,13 +175,13 @@ advantages = [(1.0-0.7375)/0.235, (0.4-0.7375)/0.235, ...]
 
 The shift from SFT to RL changes what the model is optimized for:
 
-| Aspect | SFT (Blog 3) | GRPO (this post) |
-| ------ | ------------ | ---------------- |
-| Objective | Match target text token-by-token | Produce scores that match ground truth |
-| Reasoning supervision | Every reasoning token has a target | No supervision on reasoning content |
-| What's rewarded | Exact next-token prediction | Score accuracy (±1 tolerance) |
-| Generation | Teacher forcing (sees ground truth) | Free generation (model's own output) |
-| Reference model | None (no KL constraint) | SFT checkpoint (KL penalty prevents drift) |
+| Aspect                | SFT (Blog 3)                        | GRPO (this post)                           |
+| --------------------- | ----------------------------------- | ------------------------------------------ |
+| Objective             | Match target text token-by-token    | Produce scores that match ground truth     |
+| Reasoning supervision | Every reasoning token has a target  | No supervision on reasoning content        |
+| What's rewarded       | Exact next-token prediction         | Score accuracy (±1 tolerance)              |
+| Generation            | Teacher forcing (sees ground truth) | Free generation (model's own output)       |
+| Reference model       | None (no KL constraint)             | SFT checkpoint (KL penalty prevents drift) |
 
 The critical difference is that reasoning is no longer supervised. During SFT, the model is told exactly what reasoning to produce ("The visual quality is moderate because..."). During RL, the model can produce any reasoning it wants, as long as the final scores are correct. This freedom allows the model to discover reasoning patterns not present in the training data.
 
@@ -235,10 +240,10 @@ SFT provides the behavioral foundation. The model learns the format (think block
 
 ## References
 
-| Resource | Link |
-|----------|------|
-| Video-R1 | [github.com/tulerfeng/Video-R1](https://github.com/tulerfeng/Video-R1) |
-| DeepSeekMath (GRPO paper) | [arxiv.org/abs/2402.03300](https://arxiv.org/abs/2402.03300) |
-| TRL (Transformer RL) | [github.com/huggingface/trl](https://github.com/huggingface/trl) |
-| VideoScore2 | [github.com/TIGER-AI-Lab/VideoScore2](https://github.com/TIGER-AI-Lab/VideoScore2) |
-| VideoScore2 paper | [arxiv.org/abs/2509.22799](https://arxiv.org/abs/2509.22799) |
+| Resource                  | Link                                                                               |
+| ------------------------- | ---------------------------------------------------------------------------------- |
+| Video-R1                  | [github.com/tulerfeng/Video-R1](https://github.com/tulerfeng/Video-R1)             |
+| DeepSeekMath (GRPO paper) | [arxiv.org/abs/2402.03300](https://arxiv.org/abs/2402.03300)                       |
+| TRL (Transformer RL)      | [github.com/huggingface/trl](https://github.com/huggingface/trl)                   |
+| VideoScore2               | [github.com/TIGER-AI-Lab/VideoScore2](https://github.com/TIGER-AI-Lab/VideoScore2) |
+| VideoScore2 paper         | [arxiv.org/abs/2509.22799](https://arxiv.org/abs/2509.22799)                       |
