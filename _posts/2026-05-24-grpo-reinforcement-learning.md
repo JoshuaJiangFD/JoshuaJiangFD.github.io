@@ -49,11 +49,11 @@ $$\mathcal{L} = -\frac{1}{G} \sum_{i=1}^{G} \frac{1}{|c_i|} \sum_{t=1}^{|c_i|} \
 where:
 
 - $G = 8$ is the group size (number of completions per prompt)
-- $|c_i|$ is the length of completion $i$ in tokens. Completion $i$ refers to the $i$-th of the 8 generated responses for the same video prompt
+- $\lvert c_i \rvert$ is the length of completion $i$ in tokens. Completion $i$ refers to the $i$-th of the 8 generated responses for the same video prompt
 - $\hat{A}_i$ is the normalized advantage for completion $i$ (from step 4 above)
-- {% raw %}$r_t(\theta) = \exp(\log \pi_\theta(a_t | s_t) - \log \pi_\theta^{\text{old}}(a_t | s_t))${% endraw %} is the probability ratio at token $t$ between the current policy and the policy at the time of generation
+- $r_t(\theta) = \exp(\log \pi\_\theta(a\_t \mid s\_t) - \log \pi\_\theta^{\text{old}}(a\_t \mid s\_t))$ is the probability ratio at token $t$ between the current policy and the policy at the time of generation
 - $\beta = 0.04$ is the KL penalty coefficient
-- {% raw %}$\text{KL}_t = \exp(\log \pi_{\text{ref}}(a_t | s_t) - \log \pi_\theta(a_t | s_t)) - (\log \pi_{\text{ref}}(a_t | s_t) - \log \pi_\theta(a_t | s_t)) - 1${% endraw %} is the per-token KL divergence from the reference model (the SFT checkpoint)
+- $\text{KL}\_t = \exp(\log \pi\_{\text{ref}}(a\_t \mid s\_t) - \log \pi\_\theta(a\_t \mid s\_t)) - (\log \pi\_{\text{ref}}(a\_t \mid s\_t) - \log \pi\_\theta(a\_t \mid s\_t)) - 1$ is the per-token KL divergence from the reference model (the SFT checkpoint)
 
 The KL penalty prevents the model from drifting too far from the SFT checkpoint. Without it, the model could find degenerate strategies (e.g., always outputting the most common score) that maximize reward but lose reasoning quality.
 
