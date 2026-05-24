@@ -4,13 +4,14 @@ date: 2026-05-23 14:00:00 +0000
 categories: [Post-Training VLM]
 tags: [VideoScore2, LLaMA-Factory, SFT, DeepSpeed, Qwen2.5-VL, Fine-Tuning, ZeRO-3]
 mermaid: true
+math: true
 ---
 
 This is Blog 3 in the Post-Training VLM series. Blog 1 described the vision pipeline that converts a video into 3,520 visual tokens. Blog 2 detailed the VideoFeedback2 dataset -- 26,634 examples of chain-of-thought reasoning and scores that define the training signal. This post covers the machinery that converts that dataset into weight updates: the full SFT training loop as implemented by LLaMA-Factory, running on 8x A800 GPUs with DeepSpeed ZeRO-3.
 
 ## 1. The Training Configuration
 
-The entire training run is specified by a single YAML file:
+The entire training run is specified by a single LLaMA-Factory YAML configuration file:
 
 ```yaml
 ### model
@@ -93,13 +94,13 @@ graph TD
     end
 ```
 
-LLaMA-Factory implements the freezing through a model registry (`model/model_utils/visual.py`) that maps `freeze_vision_tower` and `freeze_multi_modal_projector` flags to parameter name prefixes (`visual.patch_embed.*`, `visual.blocks.*`, `visual.merger.*`). The `_setup_full_tuning` function in `model/adapter.py` sets `requires_grad_(False)` on all matching parameters.
+The implementation details of how LLaMA-Factory maps these YAML flags to `requires_grad_(False)` calls are covered in the Appendix.
 
 ## 3. Label Construction: What the Loss Sees
 
-The training objective is standard next-token prediction, but not every token in the sequence contributes to the loss. The data processor in `data/processor/supervised.py` (`_encode_data_example`) constructs a `labels` tensor where prompt tokens are masked with `IGNORE_INDEX = -100` and only assistant-turn tokens carry real token IDs. PyTorch's `CrossEntropyLoss` skips positions with label -100, so the loss is computed exclusively on tokens the model should learn to generate.
+The training objective is next-token prediction, but not every token in the sequence contributes to the loss. The Data Processor (shown in Section 2's diagram) constructs a `labels` tensor alongside `input_ids`. Each position in `labels` is either -100 (meaning "ignore this position during loss computation") or a real token ID (meaning "the model should have predicted this token"). The loss function later uses this tensor to determine which positions generate gradient signal.
 
-For the treadmill video example (from Blog 2), the full input sequence has approximately 4,643 tokens:
+The split follows a simple rule: everything the model receives as context (the video, the system prompt, the evaluation instructions) is masked. Everything the model must learn to generate (the reasoning trace and scores) carries real labels. For the treadmill video example from Blog 2, the sequence looks like this:
 
 ```
 Positions 0-3:        <|im_start|>system\n          → labels: [-100, -100, -100, -100]
@@ -111,21 +112,23 @@ Positions 4021-4640:  <think>...reasoning...</think> → labels: [real IDs x ~62
 Positions 4641-4643:  score tokens (3, 3, 2)         → labels: [real IDs x 3]
 ```
 
-The masking is applied at template boundaries. LLaMA-Factory's `qwen2_vl` template knows where the assistant turn begins, and everything before that boundary -- system prompt, visual placeholders, user instruction, role tags -- gets -100. Everything after the boundary gets the actual token IDs that the model should predict.
+The boundary falls at the start of the assistant turn. Everything before it — system prompt, the 3,520 visual token placeholders, evaluation instructions, role tags — gets -100. Everything after it — the chain-of-thought reasoning and the three integer scores — gets real token IDs that the model must learn to predict.
 
-The key insight: of the ~4,643 tokens in this sequence, only ~623 participate in the loss (620 reasoning tokens + 3 score tokens). The remaining ~4,020 tokens provide context but generate zero gradient signal. This is a 7:1 ratio of context to supervision, which means each training example carries substantial "free" conditioning from the video and instruction without proportional computational cost in the backward pass.
+Of the ~4,643 tokens in this sequence, only ~623 participate in the loss (620 reasoning tokens + 3 score tokens). The remaining ~4,020 tokens provide context but generate zero gradient signal. This 7:1 ratio of context to supervision means each training example carries substantial conditioning from the video and instruction, while the backward pass only needs to compute gradients through the ~623 supervised positions.
+
+The output of this step is the `labels` tensor — one of the five tensors in the batch dictionary (Section 4).
 
 ## 4. The Model Input: Tensor Dictionary
 
 The data collator (`MultiModalDataCollatorForSeq2Seq` in `data/collator.py`) assembles the final tensor dictionary that the model's forward pass receives. For the treadmill example, this dictionary contains:
 
-| Tensor | Shape | Content |
-| ------ | ----- | ------- |
-| `input_ids` | [1, ~4643] | Token IDs for the full sequence (system prompt + visual placeholders + instruction + assistant response) |
-| `labels` | [1, ~4643] | Same length as input_ids; -100 for prompt positions, real token IDs for assistant positions (Section 3) |
-| `attention_mask` | [1, ~4643] | 1 for all real tokens, 0 for padding (no padding needed here since batch_size=1) |
-| `position_ids` | [3, ~4643] | Three-dimensional mRoPE coordinates (temporal, height, width) per token, computed via `model.get_rope_index()` as described in Blog 1, Section 8 |
-| `pixel_values` | [8, 3, 616, 1120] | Raw video frames (8 sampled frames, 3 color channels, resized to 616x1120) for the ViT to process |
+| Tensor           | Shape             | Content                                                                                                                                          |
+| ---------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `input_ids`      | [1, ~4643]        | Token IDs for the full sequence (system prompt + visual placeholders + instruction + assistant response)                                         |
+| `labels`         | [1, ~4643]        | Same length as input_ids; -100 for prompt positions, real token IDs for assistant positions (Section 3)                                          |
+| `attention_mask` | [1, ~4643]        | 1 for all real tokens, 0 for padding (no padding needed here since batch_size=1)                                                                 |
+| `position_ids`   | [3, ~4643]        | Three-dimensional mRoPE coordinates (temporal, height, width) per token, computed via `model.get_rope_index()` as described in Blog 1, Section 8 |
+| `pixel_values`   | [8, 3, 616, 1120] | Raw video frames (8 sampled frames, 3 color channels, resized to 616x1120) for the ViT to process                                                |
 
 These five tensors are everything the model needs. The forward pass (Section 5) consumes `pixel_values`, `input_ids`, `position_ids`, and `attention_mask` to produce logits. The loss computation (Section 6) then uses `labels` to determine which positions contribute.
 
@@ -149,7 +152,7 @@ The 28 transformer layers process the full sequence with causal self-attention (
 
 **Step 5: Output.** The forward pass produces logits at all ~4,643 positions. At position `t`, the logit vector represents the model's unnormalized prediction for what token comes at position `t+1`, conditioned on all tokens at positions 0 through `t`. The `labels` tensor is not used during the forward pass — it is consumed only in the loss computation (Section 6) to determine which positions contribute.
 
-## 5. The Loss Function
+## 6. The Loss Function
 
 The SFT loss is standard next-token-prediction cross-entropy, applied selectively to the unmasked positions from Section 4. The `SupervisedDatasetProcessor._encode_data_example` method constructs the labels:
 
@@ -198,9 +201,9 @@ In practice, PyTorch's `CrossEntropyLoss(ignore_index=-100)` fuses Steps 1 and 2
 An important implication: 620/623 = 99.5% of the per-token loss comes from reasoning tokens. The 3 score tokens contribute only 0.5% of the gradient signal per example. The model is overwhelmingly trained to reason about video quality, not merely to emit scores.
 
 
-## 6. Training Arithmetic
+## 7. Training Arithmetic
 
-The effective batch size and optimization step count determine how much the model trains:
+The effective batch size and optimization step count determine how much the model trains. These numbers are derived from the training parameters in Section 1's YAML (`per_device_train_batch_size`, `gradient_accumulation_steps`, `num_train_epochs`) combined with 8 GPUs and 26,634 dataset examples from Blog 2:
 
 ```
 Dataset size:              26,634 examples
@@ -225,9 +228,31 @@ Total optimization steps:  ~832
 
 For context, 33M tokens is modest by language model standards -- GPT-3 trained on 300B tokens. But this is targeted fine-tuning of an already-capable model on a narrow task. The 832 optimization steps are sufficient because the model starts from a strong initialization (Qwen2.5-VL-7B-Instruct) and the task requires adapting existing capabilities rather than learning them from scratch.
 
-## 7. DeepSpeed ZeRO Stage 3
+## 8. DeepSpeed ZeRO Stage 3
 
-The model has 8.3B parameters. In bf16, that is 16.6 GB for parameters alone. With AdamW optimizer states (two momentum buffers per parameter), training requires ~50 GB per copy. A single A800 (80 GB) cannot hold the full training state. ZeRO-3 solves this by sharding parameters, gradients, and optimizer states across all 8 GPUs.
+DeepSpeed is a distributed training library (from Microsoft) that enables training models too large to fit on a single GPU. ZeRO (Zero Redundancy Optimizer) is its core memory optimization strategy. In standard data-parallel training, every GPU holds a full copy of the model parameters, gradients, and optimizer states. This is redundant and scales poorly. ZeRO eliminates this redundancy by partitioning (sharding) these states across GPUs so each GPU holds only a fraction. ZeRO defines three stages of increasing aggressiveness. Stage 1 shards only optimizer states. Stage 2 adds gradient sharding. Stage 3 shards all three (parameters, gradients, and optimizer states). VideoScore2 uses Stage 3.
+
+### The memory problem
+
+The training config sets `bf16: true`, meaning model weights and computations use bfloat16 (bf16). bf16 is a 16-bit floating point format (2 bytes per number) originally developed by Google Brain. It keeps the same exponent range as fp32 (32-bit, 4 bytes) but reduces decimal precision. For neural network training, the range matters more than precision, so bf16 halves memory with negligible impact on training quality.
+
+The optimizer states use fp32 (4 bytes) rather than bf16 (2 bytes) because the weight update step accumulates many small gradient changes over time. bf16's limited precision would cause these small updates to round to zero, preventing the model from learning. This is a default behavior in DeepSpeed's bf16 optimizer, not an explicit configuration choice.
+
+The memory required for training this model without sharding:
+
+```
+Parameters (full model, bf16):       8.3B × 2 bytes  = 16.6 GB
+Gradients (trainable only, bf16):    7.6B × 2 bytes  = 15.2 GB
+Optimizer states (trainable, fp32):  7.6B × 4 bytes × 2 (Adam m + v) = 60.8 GB
+Activations (per sequence):          ~10-15 GB
+Total:                               ~107 GB
+```
+
+A single A800 has 80 GB of memory. The training state alone (92.6 GB) already exceeds this before activations are counted.
+
+### How ZeRO-3 solves it
+
+Since 92.6 GB cannot fit on a single 80 GB A800, the training state must be distributed. With 8 GPUs available, ZeRO-3 shards parameters, gradients, and optimizer states so each GPU holds only 1/8 of each category (roughly 11.6 GB of model state per GPU, leaving ample room for activations). During the forward and backward pass, each layer's full parameters are temporarily gathered from other GPUs via all-gather, used, then discarded.
 
 The DeepSpeed config:
 
@@ -273,9 +298,23 @@ Overhead (fragmentation, CUDA context):      ~4-6 GB
 Total:                                       ~24-32 GB / 80 GB available
 ```
 
-The per-device batch size of 1 is dictated by activation memory, not model memory. Each example contains up to 8,192 tokens with a 3584-dimensional hidden state across 28 transformer layers -- that is the binding constraint.
+### Why batch size is 1
 
-## 8. Learning Rate Schedule
+ZeRO-3 solves the model state memory problem (parameters, gradients, optimizer states are sharded). But there is a second memory consumer that ZeRO does not shard: **activations**. Activations are the intermediate tensors saved during the forward pass that are needed to compute gradients in the backward pass. At each of the 28 transformer layers, the model must save hidden states, attention scores, and feed-forward intermediates for every token in the sequence.
+
+Activation memory scales with sequence length, hidden dimension, and number of layers:
+
+```
+activations_per_example ≈ seq_len × hidden_dim × num_layers × bytes_per_value
+                        ≈ 8,192 × 3,584 × 28 × ~several tensors
+                        ≈ 10-15 GB per example
+```
+
+With batch_size=1, a single example already consumes 10-15 GB of activation memory. If batch_size were 2, activations would double to 20-30 GB, pushing total per-GPU memory toward 40+ GB. While this might technically fit on an 80 GB A800, it leaves little headroom for memory fragmentation, CUDA context overhead, and communication buffers that DeepSpeed needs for all-gather/reduce-scatter operations.
+
+The binding constraint is the combination of long sequences (up to 8,192 tokens, of which ~4,643 are typical for VideoScore2 examples) and a large hidden dimension (3,584) across many layers (28). This is why the config uses `per_device_train_batch_size: 1` with `gradient_accumulation_steps: 8` to achieve an effective batch size of 64 without increasing per-GPU activation memory.
+
+## 9. Learning Rate Schedule
 
 The learning rate follows a cosine decay schedule with linear warmup:
 
@@ -292,37 +331,8 @@ The choice of lr=5e-5 is relatively aggressive for full fine-tuning of a 7B mode
 
 The 10% warmup (83 steps) prevents large initial updates when the learning rate is applied to a model whose gradients may be poorly calibrated for the new task distribution. After warmup, cosine decay provides a smooth reduction that allows fine-grained convergence in later steps without the abrupt transitions of step-based schedules.
 
-## 9. The Training Workflow
 
-The `run_sft()` function in `train/sft/workflow.py` orchestrates the full pipeline:
-
-```python
-def run_sft(model_args, data_args, training_args, finetuning_args, ...):
-    tokenizer_module = load_tokenizer(model_args)
-    template = get_template_and_fix_tokenizer(tokenizer, data_args)
-    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft")
-    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
-
-    data_collator = SFTDataCollatorWith4DAttentionMask(
-        template=template,
-        model=model,
-        pad_to_multiple_of=8,
-        label_pad_token_id=IGNORE_INDEX,
-    )
-
-    trainer = CustomSeq2SeqTrainer(model=model, args=training_args, ...)
-    train_result = trainer.train()
-    trainer.save_model()
-```
-
-The execution order is:
-
-1. **Tokenizer loading**: Loads the Qwen2.5-VL tokenizer with special tokens for `<video>` placeholders.
-2. **Dataset preprocessing**: Each example is tokenized with label masking applied. Visual tokens are not embedded at this stage -- they are placeholder IDs that will be replaced by ViT outputs during forward pass.
-3. **Model loading**: Loads Qwen2.5-VL-7B-Instruct weights, applies the freezing logic (Section 2), and wraps with DeepSpeed ZeRO-3.
-4. **Training loop**: HuggingFace Trainer with gradient accumulation, bf16 mixed precision, and DeepSpeed handles the optimization loop.
-
-## 10. Gradient Flow Analysis
+## 10. Gradient Flow
 
 During each forward pass, the computation graph is:
 
@@ -343,78 +353,126 @@ Because `requires_grad=False` on all ViT and merger parameters, PyTorch's autogr
 
 Within the LLM decoder, gradients flow through all 28 layers of the standard transformer architecture: self-attention (Q, K, V projections + output projection), feed-forward network (gate, up, down projections), and RMSNorm layers. With 3584 hidden dimension, 28 attention heads, and an intermediate size of 18944, each layer has approximately 270M parameters.
 
-## 11. Loss Landscape Considerations
+## 11. Overfitting Prevention
 
-The training signal per example is dominated by reasoning tokens (620 out of 623). This creates a specific loss landscape:
+Full-parameter fine-tuning of a 7.6B model on only 26,634 examples creates a significant overfitting risk. The model has far more capacity than the dataset can constrain. Common strategies to prevent SFT overfitting include:
 
-- **Early training**: The model's reasoning tokens are initially incoherent for the video evaluation task. The per-token cross-entropy is high across all 620 reasoning positions, providing strong and relatively uniform gradients. The model rapidly learns the structural template of the think block.
-- **Mid training**: Reasoning structure converges (the model learns to produce "multi-dimensional analysis:" headers and per-dimension paragraphs), but fine-grained quality judgments remain imprecise. Gradients concentrate on content words within the reasoning.
-- **Late training**: Reasoning quality plateaus. The remaining gradient signal comes from subtle word choices ("adequate" vs "good" vs "excellent") and the 3 score tokens. The cosine schedule's low learning rate in this phase prevents these small gradients from causing oscillation.
+| Strategy | Used in VideoScore2? | Notes |
+| -------- | -------------------- | ----- |
+| Few epochs (1-3) | Yes (2 epochs) | Primary safeguard. The model already has strong priors from pretraining; too many passes overwrite them. |
+| Low learning rate | Partially (5e-5) | Moderate for full fine-tuning of a 7B model. Typical range is 1e-5 to 5e-5. |
+| Cosine decay to ~0 | Yes | Learning rate diminishes toward the end, making late-training updates tiny. |
+| Early stopping with validation | No | `val_size` is commented out in the config. The model trains blind for 832 steps. |
+| Weight decay | No | Defaults to 0.0. For a 2-epoch run, regularization from weight decay would have minimal effect. |
+| LoRA/adapters (fewer trainable params) | No | Full fine-tuning is used, giving the model maximum freedom to adapt. |
 
-The 2-epoch limit is deliberately short. With no validation set in this configuration (`val_size` is commented out), there is no early stopping mechanism. The two-epoch choice relies on prior empirical evidence that full fine-tuning of instruction-tuned models overfits rapidly on small datasets. Two epochs provides approximately 1.7 passes over the data after warmup (the first 83 steps of epoch 1 have reduced effective learning), which is a common sweet spot for SFT before diminishing returns.
+VideoScore2 relies primarily on the combination of few epochs and cosine decay. The 2-epoch limit means the model sees each example only twice. Combined with the cosine schedule that reduces the learning rate toward zero in the final steps, the model makes progressively smaller updates as training proceeds. This limits how far the parameters can drift from the pretrained state.
 
-## 12. What Training Does NOT Include
+The absence of early stopping means there is no mechanism to detect overfitting during training. Evaluation happens only post-hoc on VideoScore-Bench-v2 (the 500-video test set from Blog 2). If overfitting occurs, it would be caught after training completes, not during.
+
+## 12. What This Training Does Not Include
 
 Several notable absences in this configuration:
 
 - **No gradient clipping specified in YAML**: DeepSpeed's `gradient_clipping: "auto"` defers to the HuggingFace Trainer's default of 1.0. This caps the global gradient norm, preventing explosion from outlier examples.
-- **No evaluation during training**: The eval configuration is commented out. The model trains blind for 832 steps. Evaluation happens post-hoc on VideoScore-Bench-v2.
-- **No data packing**: Each example occupies its own sequence (batch size 1). There is no attempt to pack multiple short examples into a single 8192-token window. Given that most examples use ~4,600 tokens (3,520 visual + 500 prompt + 623 response), approximately 44% of each sequence window is padding.
+- **No evaluation during training**: The YAML contains commented-out eval settings (`val_size: 0.1`, `eval_strategy: steps`, `eval_steps: 500`). Uncommenting these would hold out 10% of training data and evaluate every 500 steps, reporting validation loss. Without this, the model trains blind for 832 steps with no signal about whether it is overfitting. Evaluation happens only post-hoc on VideoScore-Bench-v2 (the 500-video test set from Blog 2). This choice trades the ability to detect overfitting mid-training for simplicity and full use of the training data.
+- **No data packing**: Each example occupies its own sequence. LLaMA-Factory supports packing via `packing: true` (or `neat_packing: true` for block diagonal attention), but VideoScore2 does not enable it. At ~4,643 tokens per typical example, two examples would total ~9,286 tokens, exceeding the 8,192-token window. Only very short videos would be packable, making the optimization impractical for this dataset.
 - **No weight decay specified**: Defaults to 0.0 in HuggingFace Trainer. For a 2-epoch run, regularization from weight decay would have minimal effect.
 
-## 13. From SFT Checkpoint to RL
+## 13. From SFT to RL
 
 The SFT training produces a checkpoint at `saves/vs2_qwen2_5vl_sft_27k_5e-5_2fps_960_720_8192`. This checkpoint is a complete Qwen2.5-VL-7B model with modified language model weights and unchanged vision weights. It serves as the initialization for the subsequent GRPO reinforcement learning stage, where the model generates its own reasoning (no longer supervised) and receives reward signal based solely on score accuracy.
 
 The SFT stage's role is to establish the model's ability to produce structured video quality reasoning. The RL stage then optimizes the policy for score accuracy without constraining the reasoning format. This two-stage approach (SFT then RL) is standard in RLHF pipelines -- SFT provides the behavioral prior, RL sharpens it toward the objective.
 
-## Appendix: Freezing Implementation Call Chain
+## Appendix: Training Loop Call Chain
 
-The sequence diagram below traces the call chain from the YAML configuration through to parameters being frozen:
+The entry point for the entire training loop is `run_sft()` in LLaMA-Factory's `train/sft/workflow.py`. This single function orchestrates initialization, data processing, and the training loop:
+
+```python
+def run_sft(model_args, data_args, training_args, finetuning_args, ...):
+    tokenizer_module = load_tokenizer(model_args)
+    template = get_template_and_fix_tokenizer(tokenizer, data_args)
+    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft")
+    model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
+
+    data_collator = SFTDataCollatorWith4DAttentionMask(
+        template=template,
+        model=model,
+        pad_to_multiple_of=8,
+        label_pad_token_id=IGNORE_INDEX,
+    )
+
+    trainer = CustomSeq2SeqTrainer(model=model, args=training_args, ...)
+    train_result = trainer.train()
+    trainer.save_model()
+```
+
+The sequence diagram below expands what happens inside `run_sft()`, showing which library owns each step:
 
 ```mermaid
 sequenceDiagram
-    participant YAML as Training YAML
-    participant WF as run_sft() in train/sft/workflow.py
-    participant Adapter as model/adapter.py
-    participant Visual as model/model_utils/visual.py
-    participant Model as Qwen2.5-VL Model
+    participant LF as LLaMA-Factory
+    participant HF as HuggingFace Transformers
+    participant DS as DeepSpeed
+    participant Model as Qwen2.5-VL (HF Transformers)
 
-    Note over YAML,Model: Model Loading Phase
-    WF->>Model: load Qwen2.5-VL-7B-Instruct
-    WF->>Adapter: _setup_full_tuning(model, finetuning_args)
+    Note over LF,Model: Initialization
+    LF->>HF: load model (Qwen2.5-VL-7B-Instruct)
+    LF->>LF: freeze vision tower + merger
+    LF->>DS: wrap model with ZeRO Stage 3
+    LF->>HF: create Trainer
 
-    Note over Adapter,Visual: Resolve Frozen Modules
-    Adapter->>Visual: get_forbidden_modules(model.config, finetuning_args)
-    Visual->>Visual: lookup model_type=qwen2_5_vl in registry
-    Visual-->>Adapter: forbidden = [visual.patch_embed, visual.blocks, visual.merger]
+    Note over LF,Model: Per-Step Training Loop
+    LF->>LF: Data Processor: tokenize + label masking
+    LF->>LF: Data Collator: assemble tensor dictionary
+    LF->>Model: get_rope_index (compute mRoPE position_ids)
+    Model-->>LF: position_ids
 
-    Note over Adapter,Model: Apply Freezing
-    Adapter->>Model: for name, param in model.named_parameters()
-    Adapter->>Model: if name matches forbidden: param.requires_grad_(False)
-    Adapter->>Model: else: param remains trainable (requires_grad=True)
+    Note over HF,Model: Forward Pass
+    HF->>Model: model.forward(pixel_values, input_ids, position_ids)
+    Model->>Model: ViT encoding (frozen)
+    Model->>Model: Merger (frozen)
+    Model->>Model: Embedding injection
+    Model->>Model: LLM decoder 28 layers (trainable)
+    Model-->>HF: logits
 
-    Note over Model: Result
-    Note over Model: visual.patch_embed.* -> frozen (675M params)
-    Note over Model: visual.blocks.* -> frozen
-    Note over Model: visual.merger.* -> frozen
-    Note over Model: language_model.* -> trainable (7.6B params)
-    Note over Model: lm_head.* -> trainable
+    Note over HF,DS: Loss and Update
+    HF->>HF: CrossEntropyLoss(logits, labels, ignore_index=-100)
+    HF->>DS: loss.backward()
+    DS->>DS: all-reduce gradients across 8 GPUs
+    DS->>DS: AdamW optimizer step (update LLM params only)
 ```
 
-Key files:
+Ownership summary:
 
-| File | Role |
-| ---- | ---- |
-| `model/model_utils/visual.py` | Registers composite model with key prefixes: `projector_keys=["visual.merger"]`, `vision_model_keys=["visual.patch_embed", "visual.blocks"]` |
-| `model/adapter.py` | `_setup_full_tuning()` iterates parameters, matches against forbidden keys, sets `requires_grad_(False)` |
-| `train/sft/workflow.py` | `run_sft()` orchestrates model loading, freezing, and trainer setup |
+| Step                            | Owner                                 | Notes                                                |
+| ------------------------------- | ------------------------------------- | ---------------------------------------------------- |
+| Data processing + label masking | LLaMA-Factory                         | `data/processor/supervised.py`                       |
+| Data collation + mRoPE          | LLaMA-Factory + Qwen2.5-VL model      | `data/collator.py` calls `model.get_rope_index()`    |
+| Freezing                        | LLaMA-Factory                         | `model/adapter.py` sets `requires_grad_(False)`      |
+| Forward pass (ViT, merger, LLM) | HuggingFace Transformers (Qwen2.5-VL) | Model code in `transformers` package                 |
+| Loss computation                | HuggingFace Transformers              | `Trainer` calls `CrossEntropyLoss`                   |
+| Gradient sync + optimizer       | DeepSpeed                             | ZeRO-3 shards params/gradients/optimizer across GPUs |
+
+## Appendix: Alternatives to DeepSpeed
+
+DeepSpeed is not the only option for distributed training at this scale. The main alternatives are:
+
+| Library              | Approach                                                                   | When to use                                                            |
+| -------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| DeepSpeed ZeRO       | Shards params/gradients/optimizer across GPUs (data-parallel)              | HuggingFace ecosystem, LLaMA-Factory default                           |
+| PyTorch FSDP         | PyTorch's native equivalent of ZeRO-3, built into PyTorch                  | No external dependency, increasingly popular                           |
+| Megatron-LM (NVIDIA) | Tensor parallelism and pipeline parallelism (splits model by layer/tensor) | Very large models (100B+) where data-parallel sharding is insufficient |
+| ColossalAI           | Multiple parallelism strategies                                            | Alternative to DeepSpeed with similar scope                            |
+
+For VideoScore2's use case (7.6B trainable parameters on 8 GPUs), either DeepSpeed ZeRO-3 or PyTorch FSDP would work. DeepSpeed is the default in LLaMA-Factory's configuration templates and has native integration with HuggingFace Trainer (just point to a JSON config file), which is likely why it was chosen here.
 
 ## References
 
-| Resource | Link |
-|----------|------|
-| LLaMA-Factory | [github.com/hiyouga/LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory) |
-| DeepSpeed ZeRO | [deepspeed.ai/tutorials/zero](https://www.deepspeed.ai/tutorials/zero/) |
+| Resource                    | Link                                                                                                                   |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| LLaMA-Factory               | [github.com/hiyouga/LLaMA-Factory](https://github.com/hiyouga/LLaMA-Factory)                                           |
+| DeepSpeed ZeRO              | [deepspeed.ai/tutorials/zero](https://www.deepspeed.ai/tutorials/zero/)                                                |
 | VideoScore2 training config | [github.com/TIGER-AI-Lab/VideoScore2/training/SFT](https://github.com/TIGER-AI-Lab/VideoScore2/tree/main/training/SFT) |
-| Qwen2.5-VL | [github.com/QwenLM/Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL) |
+| Qwen2.5-VL                  | [github.com/QwenLM/Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL)                                                   |
