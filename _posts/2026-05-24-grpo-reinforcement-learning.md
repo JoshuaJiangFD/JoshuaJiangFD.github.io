@@ -11,7 +11,7 @@ This is Blog 4 in the Post-Training VLM series. [Blog 3]({% post_url 2026-05-23-
 
 ## 1. Why RL After SFT
 
-SFT teaches the model to imitate the training data. Given a video, it learns to produce reasoning and scores that match the annotated examples. But imitation has limits. The paper cites research (Chu et al., 2025) arguing that "SFT memorizes, RL generalizes." The SFT-trained model may produce correct-looking reasoning that leads to slightly wrong scores, because it learned the format and style of reasoning without being directly optimized for score accuracy.
+SFT teaches the model to imitate the training data. Given a video, it learns to produce reasoning and scores that match the annotated examples. But imitation has limits. The paper cites research ([Chu et al., 2025](https://arxiv.org/abs/2501.17161)) arguing that "SFT memorizes, RL generalizes." The SFT-trained model may produce correct-looking reasoning that leads to slightly wrong scores, because it learned the format and style of reasoning without being directly optimized for score accuracy.
 
 GRPO adds a second optimization signal. Instead of "produce text that matches this target" (SFT's objective), the RL objective is "produce text that results in correct scores." The model is free to develop whatever reasoning strategy leads to accurate scores. It may discover reasoning patterns not present in the training data, or learn to self-correct when its initial assessment seems inconsistent.
 
@@ -19,7 +19,7 @@ The ablation from the paper quantifies this. SFT alone achieves ~39.81 accuracy 
 
 ## 2. The GRPO Algorithm
 
-GRPO (Group Relative Policy Optimization) was introduced in the DeepSeekMath paper (Shao et al., 2024). It is a simpler alternative to PPO (Proximal Policy Optimization) that eliminates the need for a separate critic/value model.
+GRPO (Group Relative Policy Optimization) was introduced in the [DeepSeekMath paper (Shao et al., 2024)](https://arxiv.org/abs/2402.03300). It is a simpler alternative to PPO (Proximal Policy Optimization) that eliminates the need for a separate critic/value model.
 
 ### The core idea
 
@@ -42,24 +42,65 @@ The advantage normalization (step 4) means the model always has some completions
 
 ### The loss function
 
-The GRPO loss combines the policy gradient with a KL divergence penalty:
+The loss function has three goals. First, increase the probability of tokens that appeared in high-reward completions (reinforce good responses). Second, decrease the probability of tokens from low-reward completions (suppress bad responses). Third, prevent the model from drifting too far from the SFT checkpoint (maintain reasoning quality). The GRPO loss combines these into a single formula using the policy gradient scaled by advantages (goals 1 and 2) and a KL divergence penalty (goal 3):
 
 $$\mathcal{L} = -\frac{1}{G} \sum_{i=1}^{G} \frac{1}{|c_i|} \sum_{t=1}^{|c_i|} \left[ \hat{A}_i \cdot r_t(\theta) - \beta \cdot \text{KL}_t \right]$$
 
-where:
+Reading this formula from outside in:
+
+**Outer layer: average over the group.**
+
+$$-\frac{1}{G} \sum_{i=1}^{G} (\text{...per-completion loss...})$$
+
+The loss averages over all $G = 8$ completions generated for this video. The negative sign converts this into a loss that, when minimized, reinforces high-advantage completions and suppresses low-advantage ones. Specifically:
+
+- When the inner expression is positive (good completion with high advantage), the loss becomes negative. Minimizing the loss means making this more negative, which means making the inner expression more positive. So the model increases probability of tokens in good completions.
+- When the inner expression is negative (bad completion with low advantage), the loss becomes positive. Minimizing the loss means reducing this, which means making the inner expression less negative. So the model suppresses tokens in bad completions.
+
+**Middle layer: average over tokens in one completion.**
+
+$$\frac{1}{|c_i|} \sum_{t=1}^{|c_i|} (\text{...per-token policy objective...})$$
+
+For a single completion $i$ (the $i$-th of the 8 generated responses), the loss computes the policy objective (the combination of policy gradient and KL penalty) at every token position $t$, then averages across all positions. The $\frac{1}{|c_i|}$ normalization ensures short and long completions contribute equally regardless of their token count.
+
+**Inner layer: per-token policy gradient + KL penalty.**
+
+$$\hat{A}_i \cdot r_t(\theta) - \beta \cdot \text{KL}_t$$
+
+Each token contributes two terms:
+
+1. $\hat{A}_i \cdot r_t(\theta)$ — the advantage-weighted policy gradient. The advantage $\hat{A}_i$ is the same for every token in the same completion (the entire response was either good or bad as a unit). If the completion got a high advantage (good reward relative to the group), this term pushes the model to increase the probability of each token in that completion. If low advantage, it pushes to decrease them.
+
+2. $-\beta \cdot \text{KL}_t$ — the KL penalty at this position. This pulls the model back toward the reference model (SFT checkpoint) regardless of the advantage. Even if a token is in a high-reward completion, the penalty discourages drifting too far from SFT behavior.
+
+**Definitions of each element:**
 
 - $G = 8$ is the group size (number of completions per prompt)
-- $\lvert c_i \rvert$ is the length of completion $i$ in tokens. Completion $i$ refers to the $i$-th of the 8 generated responses for the same video prompt
-- $\hat{A}_i$ is the normalized advantage for completion $i$ (from step 4 above)
-- $r_t(\theta) = \exp(\log \pi\_\theta(a\_t \mid s\_t) - \log \pi\_\theta^{\text{old}}(a\_t \mid s\_t))$ is the probability ratio at token $t$ between the current policy and the policy at the time of generation
-- $\beta = 0.04$ is the KL penalty coefficient
-- $\text{KL}\_t = \exp(\log \pi\_{\text{ref}}(a\_t \mid s\_t) - \log \pi\_\theta(a\_t \mid s\_t)) - (\log \pi\_{\text{ref}}(a\_t \mid s\_t) - \log \pi\_\theta(a\_t \mid s\_t)) - 1$ is the per-token KL divergence from the reference model (the SFT checkpoint)
+
+- $|c_i|$ is the length of completion $i$ in tokens. Completion $i$ refers to the $i$-th of the 8 generated responses for the same video prompt.
+
+- $\hat{A}_i$ is the normalized advantage for completion $i$ (from step 4 in the training step overview above). Positive for above-average completions, negative for below-average.
+
+- $r_t(\theta) = \exp(\log \pi_\theta(a_t \mid s_t) - \log \pi_\theta^{\text{old}}(a_t \mid s_t))$ is the probability ratio at token $t$. Same token $a_t$, same context $s_t$ (the prompt + all generated tokens before position $t$), different model weights. The ratio measures how much the weight update changed the model's probability for token $a_t$ given context $s_t$. Breaking this down further:
+  - $\pi_\theta(a_t \mid s_t)$ is the probability the current model (with updated weights) assigns to token $a_t$ at position $t$, given all previous tokens $s_t$. This is the same softmax probability from Blog 3's loss function.
+  - $\pi_\theta^{\text{old}}(a_t \mid s_t)$ is the probability the model assigned to the same token at the time the 8 completions were generated. The weights may have since been updated, so the two probabilities differ.
+  - The ratio $\pi_\theta / \pi_\theta^{\text{old}}$ measures how much the model's behavior has shifted. A ratio > 1 means the current model is more likely to produce this token than before. A ratio < 1 means less likely.
+  - In practice, the code implements this as `exp(logps - logps.detach())`. At the start of each step (before any weight update within this step), the ratio is exactly 1.0, but the `exp(x - x.detach())` form preserves the gradient for backpropagation.
+
+- $\beta = 0.04$ is the KL penalty coefficient, controlling how strongly the model is pulled back toward the SFT checkpoint.
+
+- $\text{KL}_t = \exp(\log \pi_{\text{ref}}(a_t \mid s_t) - \log \pi_\theta(a_t \mid s_t)) - (\log \pi_{\text{ref}}(a_t \mid s_t) - \log \pi_\theta(a_t \mid s_t)) - 1$ is the per-token KL divergence from the reference model. Breaking this down:
+  - $\pi_{\text{ref}}(a_t \mid s_t)$ is the probability the reference model (the frozen SFT checkpoint) assigns to token $a_t$ given context $s_t$. This never changes during RL training.
+  - $\pi_\theta(a_t \mid s_t)$ is the probability the current model (being trained) assigns to the same token in the same context. This changes as weights are updated.
+  - $\log \pi_{\text{ref}} - \log \pi_\theta$ is the log-ratio between the reference and current model. If the current model assigns higher probability to this token than the reference did, this value is negative. If lower, it is positive.
+  - The formula $\exp(x) - x - 1$ (where $x = \log \pi_{\text{ref}} - \log \pi_\theta$) is KL divergence expressed in log-probability space (see Appendix for derivation). It is always >= 0 and equals 0 only when $x = 0$ (i.e., the two models agree perfectly on this token). The further the current model drifts from the reference, the larger $\text{KL}_t$ becomes.
+  - The purpose: multiplied by $\beta = 0.04$ in the loss, this term penalizes every token where the current model's behavior differs from the SFT checkpoint, regardless of whether the completion received high or low reward.
 
 The KL penalty prevents the model from drifting too far from the SFT checkpoint. Without it, the model could find degenerate strategies (e.g., always outputting the most common score) that maximize reward but lose reasoning quality.
 
 ## 3. The Reward Function
 
-The reward function is rule-based, not learned. It compares the model's predicted scores against ground-truth scores from the dataset. No neural reward model is involved.
+This section details Step 2 from Section 2's training step overview. The reward function is rule-based, not learned. It compares the model's predicted scores against ground-truth scores from the dataset. No neural reward model is involved.
 
 ### Accuracy reward
 
@@ -97,7 +138,54 @@ Since VideoScore2 starts RL from the SFT checkpoint (which already produces corr
 
 The code includes a length bonus for completions that fall within 320-512 tokens (when accuracy > 0.1). Correct answers with concise reasoning receive a +0.2 bonus. This encourages the model to be efficient in its reasoning without being too terse.
 
-## 4. The Training Configuration
+## 4. Advantage Computation
+
+This section details Steps 3-4 from Section 2's training step overview. After the reward function (Section 3) assigns a scalar reward to each of the 8 completions, the advantage computation converts these raw rewards into normalized values that the loss function uses to decide which completions to reinforce and which to suppress.
+
+### Why not use raw rewards directly?
+
+Raw rewards are absolute values (e.g., 1.0, 0.7, 0.4). If all 8 completions happen to score high (e.g., all get 1.0), the model has nothing to learn from this example. If all score low (e.g., all get 0.0), there's no signal either. The advantage normalization makes the signal relative within each group. Even if all completions are mediocre, the best among them gets reinforced and the worst gets suppressed.
+
+### The formula
+
+$$\mu = \frac{1}{G} \sum_{i=1}^{G} R_i$$
+
+$$\sigma = \sqrt{\frac{1}{G} \sum_{i=1}^{G} (R_i - \mu)^2}$$
+
+$$\hat{A}_i = \frac{R_i - \mu}{\sigma + \epsilon}$$
+
+Where:
+
+- $R_i$ is the scalar reward for completion $i$ from Section 3's reward function
+- $G = 8$ is the group size
+- $\mu$ is the mean reward across all 8 completions for this video
+- $\sigma$ is the standard deviation of the 8 rewards
+- $\epsilon = 10^{-4}$ is a small constant to prevent division by zero when all rewards are identical
+- $\hat{A}_i$ is the normalized advantage for completion $i$, which enters the loss function (Section 2)
+
+For example, using the treadmill video rewards from Section 6:
+
+```
+rewards     = [1.0, 0.4, 0.7, 0.7, 0.7, 1.0, 0.4, 1.0]
+
+mu          = (1.0 + 0.4 + 0.7 + 0.7 + 0.7 + 1.0 + 0.4 + 1.0) / 8
+            = 0.7375
+
+sigma       = std([1.0, 0.4, 0.7, 0.7, 0.7, 1.0, 0.4, 1.0])
+            = 0.235
+
+advantage_1 = (1.0 - 0.7375) / (0.235 + 1e-4) =  1.12  (reinforce)
+advantage_2 = (0.4 - 0.7375) / (0.235 + 1e-4) = -1.44  (suppress)
+advantage_3 = (0.7 - 0.7375) / (0.235 + 1e-4) = -0.16  (slightly suppress)
+```
+
+### Properties
+
+The advantage is positive for completions scoring above the group mean (these get reinforced) and negative for those scoring below (these get suppressed). The division by standard deviation ensures the magnitude of the advantage is consistent across different examples regardless of the reward scale. An example where rewards spread from 0.0 to 1.0 produces advantages of similar magnitude to one where rewards spread from 0.4 to 0.7.
+
+## 5. SFT vs GRPO
+
+### Configuration differences
 
 The RL training uses a different framework (Video-R1) on different hardware than SFT:
 
@@ -114,7 +202,7 @@ The RL training uses a different framework (Video-R1) on different hardware than
 | DeepSpeed            | ZeRO-3                 | ZeRO-3                                    |
 | Additional           | -                      | gradient_checkpointing, flash_attention_2 |
 
-Key differences from SFT:
+Key differences:
 
 - **Much lower learning rate** (2e-6 vs 5e-5). RL makes smaller updates to avoid catastrophic forgetting of the SFT-learned behavior.
 - **Fewer total steps** (300 vs 832). Performance peaks at 300 steps then degrades.
@@ -122,9 +210,23 @@ Key differences from SFT:
 - **Gradient checkpointing** enabled. Needed because each step generates 8 completions, multiplying activation memory.
 - **Beta = 0.04**. KL penalty coefficient constraining drift from the SFT checkpoint.
 
-## 5. One GRPO Step: The Treadmill Video
+### Conceptual differences
 
-Continuing the running example from Blogs 2-3, here is what happens when `004250_a.mp4` ("A man jogs on a treadmill...") is selected for one GRPO step.
+The shift from SFT to RL changes what the model is optimized for:
+
+| Aspect                | SFT (Blog 3)                        | GRPO (this post)                           |
+| --------------------- | ----------------------------------- | ------------------------------------------ |
+| Objective             | Match target text token-by-token    | Produce scores that match ground truth     |
+| Reasoning supervision | Every reasoning token has a target  | No supervision on reasoning content        |
+| What's rewarded       | Exact next-token prediction         | Score accuracy (±1 tolerance)              |
+| Generation            | Teacher forcing (sees ground truth) | Free generation (model's own output)       |
+| Reference model       | None (no KL constraint)             | SFT checkpoint (KL penalty prevents drift) |
+
+The critical difference is that reasoning is no longer supervised. During SFT, the model is told exactly what reasoning to produce ("The visual quality is moderate because..."). During RL, the model can produce any reasoning it wants, as long as the final scores are correct. This freedom allows the model to discover reasoning patterns not present in the training data.
+
+## 6. One GRPO Step: The Treadmill Video
+
+This section walks through all five steps from Section 2's training step overview with concrete numbers. Continuing the running example from Blogs 2-3, here is what happens when `004250_a.mp4` ("A man jogs on a treadmill...") is selected for one GRPO step.
 
 **Step 1: Generate 8 completions.** The model receives the video + evaluation prompt and generates 8 independent responses. Each response contains a `<think>` block followed by three scores. Because generation is stochastic (temperature sampling), the 8 responses differ:
 
@@ -166,23 +268,9 @@ advantages = [(1.0-0.7375)/0.235, (0.4-0.7375)/0.235, ...]
 
 **Step 4: Update policy.** Completions 1, 6, 8 (exact matches) receive positive advantages and are reinforced. Completions 2, 7 (two dimensions off) receive negative advantages and are suppressed. The model learns that reasoning leading to (3, 3, 2) is better than reasoning leading to (4, 3, 3) for this video.
 
-## 6. What Changes Between SFT and RL
-
-The shift from SFT to RL changes what the model is optimized for:
-
-| Aspect                | SFT (Blog 3)                        | GRPO (this post)                           |
-| --------------------- | ----------------------------------- | ------------------------------------------ |
-| Objective             | Match target text token-by-token    | Produce scores that match ground truth     |
-| Reasoning supervision | Every reasoning token has a target  | No supervision on reasoning content        |
-| What's rewarded       | Exact next-token prediction         | Score accuracy (±1 tolerance)              |
-| Generation            | Teacher forcing (sees ground truth) | Free generation (model's own output)       |
-| Reference model       | None (no KL constraint)             | SFT checkpoint (KL penalty prevents drift) |
-
-The critical difference is that reasoning is no longer supervised. During SFT, the model is told exactly what reasoning to produce ("The visual quality is moderate because..."). During RL, the model can produce any reasoning it wants, as long as the final scores are correct. This freedom allows the model to discover reasoning patterns not present in the training data.
-
 ## 7. The Video-R1 Framework
 
-VideoScore2's GRPO training uses Video-R1 (Feng et al., 2025), an open-source video reinforcement learning framework. Video-R1 is built on top of HuggingFace TRL (Transformer Reinforcement Learning) library and provides multimodal extensions for Qwen2-VL and Qwen2.5-VL models.
+VideoScore2's GRPO training uses [Video-R1 (Feng et al., 2025)](https://github.com/tulerfeng/Video-R1), an open-source video reinforcement learning framework. Video-R1 is built on top of [HuggingFace TRL](https://github.com/huggingface/trl) (Transformer Reinforcement Learning) library and provides multimodal extensions for Qwen2-VL and Qwen2.5-VL models.
 
 The key file is `grpo_trainer.py`, which implements `Qwen2VLGRPOTrainer` extending HuggingFace's `Trainer`. It handles the multimodal-specific complexities that TRL's standard `GRPOTrainer` does not support: processing video inputs during generation, repeating pixel values across the G=8 completions, and managing video_grid_thw tensors.
 
@@ -232,6 +320,75 @@ VideoScore2 (final model)
 ```
 
 SFT provides the behavioral foundation. The model learns the format (think block + scores), the evaluation dimensions, and a baseline level of assessment quality. GRPO then sharpens the model's scoring accuracy by rewarding correct predictions and suppressing incorrect ones, without constraining how the model reasons about video quality.
+
+## Appendix: RL vs SFT Notation
+
+Blog 3 (SFT) and Blog 4 (GRPO) use different notation conventions for the same underlying computation (softmax probability of a token given preceding context). The difference comes from their respective traditions: SFT uses probability/statistics notation, while RL uses policy notation.
+
+| Blog 3 (SFT notation) | Blog 4 (RL notation) | Meaning |
+| ---------------------- | -------------------- | ------- |
+| $P(y_t \mid y_{<t}, x)$ | $\pi_\theta(a_t \mid s_t)$ | Softmax probability of the token at position $t$ |
+| $y_t$ | $a_t$ | The token at position $t$ (RL calls this an "action") |
+| $y_{<t}, x$ | $s_t$ | All preceding context (RL calls this the "state") |
+| (implicit in $P$) | $\theta$ subscript | The model weights. RL makes this explicit because it compares multiple versions of the policy ($\pi_\theta$ vs $\pi_\theta^{\text{old}}$ vs $\pi_{\text{ref}}$) |
+
+The computation is identical in both cases. At position $t$, the model's `lm_head` produces a 152,064-dimensional logit vector. Softmax converts it to a probability distribution over all possible tokens. Both $P(y_t \mid ...)$ and $\pi_\theta(a_t \mid ...)$ look up the probability assigned to one specific token in that distribution. The difference is where that specific token comes from:
+
+- In SFT, the token is the ground-truth label from the training data (the annotated response from Blog 2). The model never generated it.
+- In RL, the token is one the model produced itself during a "rollout" (RL term for letting the model generate freely from a prompt until it stops). In GRPO, each of the 8 completions is one rollout.
+
+## Appendix: KL Divergence in the GRPO Loss
+
+KL divergence measures how different two probability distributions are. In GRPO, it measures how far the current model's token probabilities have drifted from the reference model (the SFT checkpoint).
+
+### The standard definition
+
+For two distributions $P$ and $Q$ over a discrete set of outcomes, KL divergence is defined as:
+
+$$D_{\text{KL}}(P \| Q) = \sum_x P(x) \cdot \log \frac{P(x)}{Q(x)}$$
+
+This is always >= 0 and equals 0 only when $P = Q$ (the distributions are identical).
+
+### Applying it to a single token position
+
+In GRPO, we want to measure how much the current policy $\pi_\theta$ differs from the reference policy $\pi_{\text{ref}}$ at one token position. Let:
+
+```
+x = log(pi_ref(a_t | s_t)) - log(pi_theta(a_t | s_t))
+```
+
+This is the log-ratio between the reference and current model's probability for a specific token $a_t$ in context $s_t$.
+
+### Rewriting KL in terms of x
+
+Starting from the KL definition and rewriting in terms of log-probabilities, KL divergence at a single token can be expressed as:
+
+$$\text{KL}_t = \exp(x) - x - 1$$
+
+This is not an approximation. It is KL divergence expressed in log-probability space. The properties of this form:
+
+- When $x = 0$ (models agree perfectly on this token): $\exp(0) - 0 - 1 = 0$. No penalty.
+- When $x > 0$ (current model assigns lower probability than reference): penalty grows exponentially.
+- When $x < 0$ (current model assigns higher probability than reference): penalty grows, but more gently.
+- For small $|x|$ (slight drift): the function behaves like $x^2/2$ (quadratic, gentle penalty).
+- For large $|x|$ (significant drift): the function grows exponentially (harsh penalty).
+
+### In the code
+
+```python
+x_clamped = torch.clamp(ref_per_token_logps - per_token_logps, min=-10, max=10)
+per_token_kl = torch.exp(x_clamped) - x_clamped - 1
+```
+
+The `clamp` limits $x$ to [-10, 10] for numerical safety (preventing overflow in `exp()`). This is not part of the KL definition, just a practical safeguard.
+
+### Its role in the GRPO loss
+
+In the loss function, $\text{KL}_t$ is multiplied by $\beta = 0.04$ and subtracted from the policy gradient term:
+
+$$\hat{A}_i \cdot r_t(\theta) - \beta \cdot \text{KL}_t$$
+
+The effect: even if a completion receives high reward (positive $\hat{A}_i$), every token in that completion still incurs a KL penalty proportional to how much the model has drifted from SFT. This prevents the model from finding reward-maximizing strategies that completely abandon the SFT-learned reasoning behavior.
 
 ## References
 
