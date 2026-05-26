@@ -9,7 +9,7 @@ math: true
 
 Everyone building RAG systems eventually hits the same wall: how do you know if it's working? The retrieval looks reasonable, the answers sound fluent, users aren't complaining loudly. But you have no quantitative grip on quality. You can't tell if your last change made things better or worse.
 
-Getting that grip requires understanding where quality can break down. A RAG pipeline has a retriever and a generator, and quality can degrade at either stage or in the relationship between them. This creates three evaluation surfaces (Section 1). For each surface, there are metrics with different tradeoffs in annotation cost, correlation with downstream quality, and production feasibility (Sections 2-5). Even with the right metrics in place, certain failure modes remain invisible to all current automated approaches (Section 6). The question of *who does the judging* (LLMs, trained classifiers, or humans) is covered in [Part 2]({% post_url 2026-05-25-rag-evaluation-llm-judges %}).
+Getting that grip requires understanding where quality can break down. A RAG pipeline has a retriever and a generator, and quality can degrade at either stage or in the relationship between them. This creates three evaluation surfaces (Section 1). For each surface, there are metrics with different tradeoffs in annotation cost, correlation with downstream quality, and production feasibility (Sections 2-5). Even with the right metrics in place, certain failure modes remain invisible to all current automated approaches (Section 6). 
 
 ---
 
