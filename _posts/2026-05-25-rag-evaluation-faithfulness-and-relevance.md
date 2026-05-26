@@ -17,7 +17,7 @@ Faithfulness measures whether the generated response is supported by the retriev
 
 Two families of approaches exist: LLM-based (prompt a general-purpose LLM to verify claims) and classifier-based (use a trained model specifically for entailment detection). They trade off flexibility against cost and determinism.
 
-### 1.1 RAGAS Faithfulness
+### 1.1 [RAGAS](https://arxiv.org/abs/2309.15217) Faithfulness
 
 $$\text{Faithfulness} = \frac{\text{Claims in response supported by context}}{\text{Total claims in response}}$$
 
@@ -77,7 +77,7 @@ Natural Language Inference (NLI) is a classification task where a model determin
 
 Applied to faithfulness: the retrieved context is the premise, the generated response (or individual sentences from it) is the hypothesis. If the context entails the response, the response is grounded. If not, it may be hallucinated.
 
-The TRUE benchmark (Honovich et al., arXiv:2204.04991) validated this approach, finding that "large-scale NLI and question generation-and-answering-based approaches achieve strong and complementary results."
+The [TRUE benchmark (Honovich et al., 2022)](https://arxiv.org/abs/2204.04991) validated this approach, finding that "large-scale NLI and question generation-and-answering-based approaches achieve strong and complementary results."
 
 Production-oriented classifiers in this category:
 
@@ -226,14 +226,5 @@ Sections 1-2 (and Part 1's retrieval metrics) introduced metrics for each evalua
 
 These undetectable failures require either human review or task-specific validation logic (e.g., timestamp checks for freshness, arithmetic verification for reasoning).
 
-Beyond blind spots, metrics can also be actively gamed. A system that copies context verbatim scores perfect faithfulness but produces useless answers. LLM judges prefer longer responses (Dubois et al., COLM 2024), so systems optimized against them drift toward verbosity. Optimizing for comprehensiveness produces padded answers that technically cover everything but bury the useful signal. Evaluation scores should be used as diagnostics for identifying where quality degrades, not as optimization targets.
+Beyond blind spots, metrics can also be actively gamed. A system that copies context verbatim scores perfect faithfulness but produces useless answers. LLM judges prefer longer responses ([Dubois et al., COLM 2024](https://arxiv.org/abs/2404.04475)), so systems optimized against them drift toward verbosity. Optimizing for comprehensiveness produces padded answers that technically cover everything but bury the useful signal. Evaluation scores should be used as diagnostics for identifying where quality degrades, not as optimization targets.
 
----
-
-## References
-
-| Paper | Venue/Year | Key Contribution |
-|---|---|---|
-| Es et al., "RAGAS" | arXiv:2309.15217, 2023 | Reference-free RAG evaluation framework |
-| Honovich et al., "TRUE" | arXiv:2204.04991, 2022 | NLI-based faithfulness benchmark |
-| Dubois et al., "Length-Controlled AlpacaEval" | COLM 2024 | Verbosity debiasing, LLM judges prefer longer responses |

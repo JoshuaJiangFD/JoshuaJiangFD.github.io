@@ -201,8 +201,8 @@ Annotation cost: the highest of the five metrics. Requires (1) exhaustive identi
 
 However, practical approximations exist that make NDCG feasible without exhaustive annotation:
 
-- **Shallow pooling.** Instead of labeling the entire corpus, pool only the top-10 results from 2-5 candidate retrieval configurations, then judge that combined set. For NDCG@10, this works well because the top positions are well-covered by the pool. Buckley et al. (2007) showed that pooling error is less severe for NDCG@K with small K.
-- **LLM-as-judge for graded relevance.** Use an LLM to assign relevance grades (0-3 scale) to pooled documents instead of human annotators. Thomas et al. (SIGIR 2024) showed LLM-based NDCG correlates with human-NDCG at Kendall's tau > 0.9. The UMBRELA benchmark (Upadhyay et al., 2024) confirmed this at scale on the TREC Deep Learning track. This is now the dominant approach for reducing evaluation cost.
+- **Shallow pooling.** Instead of labeling the entire corpus, pool only the top-10 results from 2-5 candidate retrieval configurations, then judge that combined set. For NDCG@10, this works well because the top positions are well-covered by the pool. [Buckley et al. (2007)](https://dl.acm.org/doi/10.1145/1277741.1277902) showed that pooling error is less severe for NDCG@K with small K.
+- **LLM-as-judge for graded relevance.** Use an LLM to assign relevance grades (0-3 scale) to pooled documents instead of human annotators. [Thomas et al. (SIGIR 2024)](https://dl.acm.org/doi/10.1145/3626772.3657707) showed LLM-based NDCG correlates with human-NDCG at Kendall's tau > 0.9. The [UMBRELA benchmark (Upadhyay et al., 2024)](https://arxiv.org/abs/2406.06519) confirmed this at scale on the TREC Deep Learning track. This is now the dominant approach for reducing evaluation cost.
 - **Inferred NDCG (Yilmaz & Aslam, 2006).** Sample documents at different rank strata, judge only the sample, then statistically infer the full metric. Still used in some TREC tracks (Product Search 2023, Deep Learning document task), but the field's attention has shifted toward LLM-as-judge as the primary cost-reduction method.
 
 The common production pattern combines the first two: pool top-10 from the current system plus a baseline, have an LLM assign graded relevance to all pooled documents, compute NDCG@10. This costs a few cents per query and produces system rankings that correlate strongly with full human evaluation.
@@ -219,7 +219,7 @@ The annotation cost of each metric largely determines where it is used in practi
 | Recall@K | All relevant docs in corpus | Rarely (too expensive) | Yes (BEIR) |
 | NDCG@K | Graded labels on all relevant docs | Rarely (too expensive) | Yes (primary metric in BEIR, MTEB) |
 
-Academic benchmarks (BEIR, MTEB) can use NDCG@10 as their primary metric because they build on existing exhaustively-annotated datasets (TREC, MS MARCO) where the annotation work was done once and reused. Production teams cannot afford this for their proprietary corpora.
+Academic benchmarks ([BEIR](https://arxiv.org/abs/2104.08663), MTEB) can use NDCG@10 as their primary metric because they build on existing exhaustively-annotated datasets (TREC, MS MARCO) where the annotation work was done once and reused. Production teams cannot afford this for their proprietary corpora.
 
 The common production pattern for retrieval evaluation:
 
@@ -233,7 +233,7 @@ The common production pattern for retrieval evaluation:
 
 ## 3. RAGAS Retrieval Metrics
 
-RAGAS (Retrieval Augmented Generation Assessment; Es et al., arXiv:2309.15217) is an open-source evaluation framework designed to reduce the annotation cost of RAG evaluation. Classical IR metrics require human annotators to label relevance. RAGAS replaces human annotators with LLM judges, enabling automated evaluation that requires at most a reference answer per query rather than exhaustive corpus-level annotation.
+RAGAS (Retrieval Augmented Generation Assessment; [Es et al., 2023](https://arxiv.org/abs/2309.15217)) is an open-source evaluation framework designed to reduce the annotation cost of RAG evaluation. Classical IR metrics require human annotators to label relevance. RAGAS replaces human annotators with LLM judges, enabling automated evaluation that requires at most a reference answer per query rather than exhaustive corpus-level annotation.
 
 RAGAS introduces a conceptual shift from classical IR metrics: instead of measuring relevance to **the query**, it measures relevance to **the known correct answer**. It has two retrieval metrics, Context Precision and Context Recall, to evaluate edge 1 (retrieval quality). Both require a reference (ground truth) answer as input.
 
@@ -398,14 +398,3 @@ $$\text{Contextual Recall} = \frac{\text{Sentences in expected output attributed
 
 DeepEval's unique contribution to retrieval evaluation is **Contextual Relevancy**: a metric that requires no reference answer and no human annotation, making it the lowest-cost automated retrieval metric available. It answers "is the retrieved context relevant to what the user asked?" using only the query and the retrieval output.
 
----
-
-## References
-
-| Paper | Venue/Year | Key Contribution |
-|---|---|---|
-| Es et al., "RAGAS" | arXiv:2309.15217, 2023 | Reference-free RAG evaluation framework |
-| Thomas et al., "LLMs can Accurately Predict Searcher Preferences" | SIGIR 2024 | LLM-based NDCG correlates with human at tau > 0.9 |
-| Upadhyay et al., "UMBRELA" | 2024 | Large-scale LLM assessor benchmark for TREC |
-| Buckley et al., "Bias and the Limits of Pooling" | 2007 | Shallow pooling error analysis for NDCG |
-| Thakur et al., "BEIR" | NeurIPS 2021 | Zero-shot retrieval benchmark, 18 datasets |
