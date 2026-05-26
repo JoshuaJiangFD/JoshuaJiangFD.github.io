@@ -89,7 +89,7 @@ The `TaskCreateTool` prompt then defines when the LLM should and should not use 
 
 ### Path 2: Post-Plan Nudge
 
-When the user approves a plan via `ExitPlanMode`, the Harness injects a nudge to create tasks for execution. See [Plan/Act Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %}) for full details on how plans work.
+When the user approves a plan via `ExitPlanMode`, the Harness injects a nudge to create tasks for execution. See [Plan/Act Mode]({% post_url claude-code/2026-05-05-demystifying-claude-code-plan-act-mode %}) for full details on how plans work.
 * **File:** `src/tools/ExitPlanModeTool/ExitPlanModeV2Tool.ts`
 
 ```typescript
@@ -389,7 +389,7 @@ When spawning teammates via the Agent tool, choose the `subagent_type` based on 
 ```
 Teams share the same task list directory (`~/.claude/tasks/{team-name}/`), allowing multiple agents to independently query `TaskList` and claim pending tasks concurrently.
 
-For a full deep dive into how teams are created and managed, how teammates coordinate via the shared task list (file locking, task claiming, auto-owner assignment), and the complete team lifecycle from spawning to teardown, see [Agent Team]({% post_url 2026-05-07-demystifying-claude-code-agent-team %}).
+For a full deep dive into how teams are created and managed, how teammates coordinate via the shared task list (file locking, task claiming, auto-owner assignment), and the complete team lifecycle from spawning to teardown, see [Agent Team]({% post_url claude-code/2026-05-07-demystifying-claude-code-agent-team %}).
 
 ---
 

@@ -7,7 +7,7 @@ mermaid: true
 math: true
 ---
 
-This is Blog 5 in the Post-Training VLM series. [Blog 4]({% post_url 2026-05-24-grpo-reinforcement-learning %}) described the GRPO reinforcement learning stage that produces the final trained model. This post covers what happens after training. How does the trained model process a new video and produce quality scores? How are those scores evaluated against human judgments? The post traces the treadmill video one final time through the inference pipeline, then examines the evaluation methodology and results.
+This is Blog 5 in the Post-Training VLM series. [Blog 4]({% post_url post-training-vlm/2026-05-24-grpo-reinforcement-learning %}) described the GRPO reinforcement learning stage that produces the final trained model. This post covers what happens after training. How does the trained model process a new video and produce quality scores? How are those scores evaluated against human judgments? The post traces the treadmill video one final time through the inference pipeline, then examines the evaluation methodology and results.
 
 ## 1. Training vs Inference
 

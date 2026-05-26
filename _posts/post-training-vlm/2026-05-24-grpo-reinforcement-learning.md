@@ -7,7 +7,7 @@ mermaid: true
 math: true
 ---
 
-This is Blog 4 in the Post-Training VLM series. [Blog 3]({% post_url 2026-05-23-the-sft-training-loop %}) described the SFT training loop that teaches the model to produce structured reasoning and scores. This post covers the second training stage: Group Relative Policy Optimization (GRPO), where the model generates its own responses and receives reward signal based on score accuracy. The SFT checkpoint from Blog 3 serves as the starting point.
+This is Blog 4 in the Post-Training VLM series. [Blog 3]({% post_url post-training-vlm/2026-05-23-the-sft-training-loop %}) described the SFT training loop that teaches the model to produce structured reasoning and scores. This post covers the second training stage: Group Relative Policy Optimization (GRPO), where the model generates its own responses and receives reward signal based on score accuracy. The SFT checkpoint from Blog 3 serves as the starting point.
 
 ## 1. Why RL After SFT
 

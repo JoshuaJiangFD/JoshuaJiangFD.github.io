@@ -8,7 +8,7 @@ mermaid: true
 
 This post details how Claude Code tracks performance through its metrics and telemetry infrastructure. The system operates across four layers: local tracing (Perfetto), distributed tracing (OpenTelemetry), analytics event logging (Datadog + first-party BigQuery), and session-level aggregation (stats and cost tracking). We trace how a single user interaction — an API call, a tool execution, a permission dialog — becomes a measurable event across all four layers, and how those measurements flow from client to backend.
 
-This post complements the execution pipeline described in [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}) and the API call lifecycle in [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}). Those posts reference telemetry events at specific phases; this post explains the systems that produce them.
+This post complements the execution pipeline described in [Tool Execution]({% post_url claude-code/2026-05-12-demystifying-claude-code-tool-execution %}) and the API call lifecycle in [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}). Those posts reference telemetry events at specific phases; this post explains the systems that produce them.
 
 ---
 

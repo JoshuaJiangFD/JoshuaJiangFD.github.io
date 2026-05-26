@@ -8,7 +8,7 @@ mermaid: true
 
 What happens when your Claude Code session crosses 167K tokens? A dedicated summarizer agent is forked, your entire conversation is condensed into a structured 9-section summary, and the model continues with a rebuilt context — carrying forward what matters, discarding what's recoverable via tools. This post traces the full lifecycle: the decision to compact, the summarization process, the context rebuild, and what gets lost along the way.
 
-This is the companion deep-dive to [Demystifying Claude Code: Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}), expanding on Step 6 (AUTOCOMPACT) of the 11-step message pipeline.
+This is the companion deep-dive to [Demystifying Claude Code: Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}), expanding on Step 6 (AUTOCOMPACT) of the 11-step message pipeline.
 
 ---
 

@@ -8,7 +8,7 @@ mermaid: true
 
 This post provides a comprehensive technical deep dive into how Claude Code remembers things across conversations. We trace the full lifecycle of a memory — from the moment a user says "remember this" or the system silently detects something worth saving, through storage on disk, to recall in a future session. We cover the storage format, the four-type taxonomy, the background extraction agent that automatically captures insights, the Sonnet-based relevance selector that retrieves them, and the prompt-engineering and security decisions that hold the system together.
 
-For how memory instructions enter the system prompt, see [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}). For how attachments flow through the query loop, see [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}).
+For how memory instructions enter the system prompt, see [The System Prompt]({% post_url claude-code/2026-05-07-demystifying-claude-code-system-prompt %}). For how attachments flow through the query loop, see [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}).
 
 ---
 

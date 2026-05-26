@@ -5,7 +5,7 @@ categories: [Post-Training VLM]
 tags: [VideoScore2, VideoFeedback2, VLM, Video Evaluation, Dataset, SFT]
 ---
 
-This post is the third in the Post-Training VLM series. The [previous post (Blog 1)]({% post_url 2026-05-21-from-video-frames-to-tokens %}) described how a raw video is transformed into visual tokens ready for the LLM decoder. This post covers the VideoFeedback2 dataset -- the 26,634 annotated examples that define both the input content (video + evaluation prompt) and the target output (reasoning + scores) for SFT. A running example -- one text prompt and its 10 generated videos -- is threaded throughout to show exactly how the dataset is constructed, annotated, and formatted for supervised fine-tuning.
+This post is the third in the Post-Training VLM series. The [previous post (Blog 1)]({% post_url post-training-vlm/2026-05-21-from-video-frames-to-tokens %}) described how a raw video is transformed into visual tokens ready for the LLM decoder. This post covers the VideoFeedback2 dataset -- the 26,634 annotated examples that define both the input content (video + evaluation prompt) and the target output (reasoning + scores) for SFT. A running example -- one text prompt and its 10 generated videos -- is threaded throughout to show exactly how the dataset is constructed, annotated, and formatted for supervised fine-tuning.
 
 ## 1. The Training Signal Design: CoT + Scores
 

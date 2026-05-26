@@ -8,7 +8,7 @@ mermaid: true
 
 This post covers how Claude Code discovers, loads, lists, and executes skills — the prompt-based extensibility mechanism that lets users, plugins, and MCP servers teach the model new behaviors. We trace the full lifecycle from SKILL.md files on disk to the `<system-reminder>` that announces them to the model, through the SkillTool's validation, permission, and execution pipeline, to the context modification that constrains the model's subsequent behavior.
 
-For how the SkillTool's prompt integrates into the system prompt, see [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}), Section 6. For the tool execution pipeline that wraps the SkillTool (validation, hooks, permissions), see [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}). For how forked skills spawn sub-agents, see [Spawned Agents]({% post_url 2026-05-07-demystifying-claude-code-spawned-agents %}).
+For how the SkillTool's prompt integrates into the system prompt, see [The System Prompt]({% post_url claude-code/2026-05-07-demystifying-claude-code-system-prompt %}), Section 6. For the tool execution pipeline that wraps the SkillTool (validation, hooks, permissions), see [Tool Execution]({% post_url claude-code/2026-05-12-demystifying-claude-code-tool-execution %}). For how forked skills spawn sub-agents, see [Spawned Agents]({% post_url claude-code/2026-05-07-demystifying-claude-code-spawned-agents %}).
 
 ---
 
@@ -108,7 +108,7 @@ Most skills only need a handful of frontmatter fields — the example above uses
 
 ## 4. How Skills Reach the Model
 
-The model learns about available skills through three layers, split across two API channels with different caching properties (for background on the prompt caching mechanism, see [Prompt Caching]({% post_url 2026-05-05-demystifying-claude-code-prompt-caching %}) and [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}), Section 7):
+The model learns about available skills through three layers, split across two API channels with different caching properties (for background on the prompt caching mechanism, see [Prompt Caching]({% post_url claude-code/2026-05-05-demystifying-claude-code-prompt-caching %}) and [The System Prompt]({% post_url claude-code/2026-05-07-demystifying-claude-code-system-prompt %}), Section 7):
 
 1. **System prompt** — says skills exist and references system-reminders. This text is identical for all users and lives in the globally-cached portion of the system prompt (before the cache boundary). It never changes between turns.
 2. **SkillTool description** — says how to call skills; points the model to system-reminders for the actual list. This lives in the tools array, which is also cached across turns within a session.
@@ -192,7 +192,7 @@ The SkillTool sits in the model's tool set alongside Bash, Read, Edit, and the o
 
 ### 5.2 Permission System
 
-Every tool goes through the general permission system described in [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}), Section 6. The SkillTool implements its own `checkPermissions` on top of that because skills are user-authored content with varying levels of risk. A skill that only declares a name and description is harmless — it just injects text. But a skill that declares `allowed-tools` (changes what tools the model can use), `hooks` (runs shell commands), or `shell` (configures the execution environment) alters the security posture of the session. The SkillTool's permission system distinguishes between these cases, auto-allowing safe skills while prompting the user for skills with security-relevant properties.
+Every tool goes through the general permission system described in [Tool Execution]({% post_url claude-code/2026-05-12-demystifying-claude-code-tool-execution %}), Section 6. The SkillTool implements its own `checkPermissions` on top of that because skills are user-authored content with varying levels of risk. A skill that only declares a name and description is harmless — it just injects text. But a skill that declares `allowed-tools` (changes what tools the model can use), `hooks` (runs shell commands), or `shell` (configures the execution environment) alters the security posture of the session. The SkillTool's permission system distinguishes between these cases, auto-allowing safe skills while prompting the user for skills with security-relevant properties.
 
 The check (`SkillTool.ts:432-578`) follows a three-tier decision protocol:
 

@@ -8,7 +8,7 @@ mermaid: true
 
 This post details how Claude Code executes the tool calls that the model requests. When the model's response contains `tool_use` blocks, the system must look up each tool, validate its input, check permissions, run hooks, execute the tool, map the result, and feed it back as a `UserMessage` for the next iteration. We trace the full lifecycle from the moment a `tool_use` block arrives to the moment its `tool_result` is ready for the API.
 
-This is the deep dive into Step 9 (TOOL EXECUTION) of the message pipeline described in [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}). For how the model's response is streamed and how tool_use blocks are collected, see [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}). For the permission system's interactive UI path, see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}).
+This is the deep dive into Step 9 (TOOL EXECUTION) of the message pipeline described in [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}). For how the model's response is streamed and how tool_use blocks are collected, see [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}). For the permission system's interactive UI path, see [Human-in-the-Loop]({% post_url claude-code/2026-04-28-demystifying-claude-code-human-in-the-loop %}).
 
 ---
 
@@ -788,7 +788,7 @@ Progress messages bypass this ordering — they are yielded immediately regardle
 
 ### Discard on Streaming Fallback
 
-When a streaming connection fails and `claude.ts` falls back to a non-streaming request (see [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %})), the executor is discarded and recreated:
+When a streaming connection fails and `claude.ts` falls back to a non-streaming request (see [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %})), the executor is discarded and recreated:
 
 ```
 query.ts:912-919

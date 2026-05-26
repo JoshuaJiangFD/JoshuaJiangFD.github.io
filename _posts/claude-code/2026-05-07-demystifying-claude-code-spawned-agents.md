@@ -6,7 +6,7 @@ tags: [Claude Code, Spawned Agents, Sub-Agents, Fork, AI Agents, CLI]
 mermaid: true
 ---
 
-This post covers how spawned agents (sub-agents and teammates) are defined, configured, and specialized in Claude Code. A spawned agent is any agent created by the `Agent` tool — whether a one-shot sub-agent like Explore or Plan, a fork that inherits the parent's full context, or a long-lived teammate in an agent team. This post focuses on the definition and configuration layer; for how agents coordinate as a team, see [Agent Team]({% post_url 2026-05-07-demystifying-claude-code-agent-team %}).
+This post covers how spawned agents (sub-agents and teammates) are defined, configured, and specialized in Claude Code. A spawned agent is any agent created by the `Agent` tool — whether a one-shot sub-agent like Explore or Plan, a fork that inherits the parent's full context, or a long-lived teammate in an agent team. This post focuses on the definition and configuration layer; for how agents coordinate as a team, see [Agent Team]({% post_url claude-code/2026-05-07-demystifying-claude-code-agent-team %}).
 
 ---
 
@@ -117,7 +117,7 @@ Any spawned agent — whether a one-shot sub-agent or a long-lived teammate — 
 3. **Work** — All file operations (Read, Edit, Write, Bash) happen in the isolated copy.
 4. **Exit** — On completion, the worktree is either kept (path and branch returned in the result for the parent to merge) or automatically removed if the agent made no changes.
 
-**In agent teams**, worktree isolation is particularly useful when multiple teammates edit overlapping files. The leader can spawn each teammate with `isolation: "worktree"` and later merge their branches. Worktrees are cleaned up during team deletion (see [Agent Team]({% post_url 2026-05-07-demystifying-claude-code-agent-team %}), Section 11.3).
+**In agent teams**, worktree isolation is particularly useful when multiple teammates edit overlapping files. The leader can spawn each teammate with `isolation: "worktree"` and later merge their branches. Worktrees are cleaned up during team deletion (see [Agent Team]({% post_url claude-code/2026-05-07-demystifying-claude-code-agent-team %}), Section 11.3).
 
 ---
 

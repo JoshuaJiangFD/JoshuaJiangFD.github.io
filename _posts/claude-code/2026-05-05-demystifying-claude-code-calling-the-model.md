@@ -42,7 +42,7 @@ Today's date is 2026-05-05.
 
 The model sees this as the first user message in the conversation. Everything else happens inside `claude.ts`.
 
-The `systemPrompt` argument arrives already assembled — `getSystemPrompt()` builds the default content, then `buildEffectiveSystemPrompt()` decides whether to use it or substitute an override/agent/custom prompt. This upstream assembly is covered in [Appendix A](#appendix-a-upstream-system-prompt-assembly). For what the prompt contains, see [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}).
+The `systemPrompt` argument arrives already assembled — `getSystemPrompt()` builds the default content, then `buildEffectiveSystemPrompt()` decides whether to use it or substitute an override/agent/custom prompt. This upstream assembly is covered in [Appendix A](#appendix-a-upstream-system-prompt-assembly). For what the prompt contains, see [The System Prompt]({% post_url claude-code/2026-05-07-demystifying-claude-code-system-prompt %}).
 
 ---
 
@@ -157,7 +157,7 @@ This is the **normal path**. There's also a fallback path when non-deferred MCP 
 | MCP tools present (not deferred) | `org` | `org` |
 | Global cache feature off | no scope | no scope |
 
-See [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}) for what the static and dynamic sections contain.
+See [The System Prompt]({% post_url claude-code/2026-05-07-demystifying-claude-code-system-prompt %}) for what the static and dynamic sections contain.
 
 ---
 
@@ -369,7 +369,7 @@ flowchart TD
     D -->|No| F["Build standard<br/>prompt (static + dynamic)"]
 ```
 
-The standard path returns a `string[]` of static sections (identity, behavioral guidelines, tool usage, tone) followed by a cache boundary marker, followed by dynamic sections (session guidance, auto-memory, environment info, MCP instructions). See [The System Prompt]({% post_url 2026-05-07-demystifying-claude-code-system-prompt %}) for full details on what each section contains.
+The standard path returns a `string[]` of static sections (identity, behavioral guidelines, tool usage, tone) followed by a cache boundary marker, followed by dynamic sections (session guidance, auto-memory, environment info, MCP instructions). See [The System Prompt]({% post_url claude-code/2026-05-07-demystifying-claude-code-system-prompt %}) for full details on what each section contains.
 
 ### Priority Resolution (`buildEffectiveSystemPrompt`)
 

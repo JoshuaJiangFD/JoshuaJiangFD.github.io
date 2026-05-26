@@ -14,8 +14,8 @@ These three features represent increasing levels of coordination complexity in C
 
 | Concept | Agents involved | Purpose |
 |---------|----------------|---------|
-| **[Plan Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %})** | Single (the leader) | Constrain the LLM to read-only exploration, produce a plan, get user approval, then execute |
-| **[Task List]({% post_url 2026-04-26-demystifying-claude-code-task-list %})** | Single or multiple | Track structured work items with dependencies, ownership, and status |
+| **[Plan Mode]({% post_url claude-code/2026-05-05-demystifying-claude-code-plan-act-mode %})** | Single (the leader) | Constrain the LLM to read-only exploration, produce a plan, get user approval, then execute |
+| **[Task List]({% post_url claude-code/2026-04-26-demystifying-claude-code-task-list %})** | Single or multiple | Track structured work items with dependencies, ownership, and status |
 | **Agent Team** (this post) | Multiple (leader + teammates) | Parallel execution of tasks coordinated via a shared task list and mailbox messaging |
 
 They compose together in a natural pipeline:
@@ -378,7 +378,7 @@ Team creation is triggered when the LLM determines that a user request benefits 
 
 ## 6. Task Planning (Phase 2)
 
-Once the team is created, the leader breaks the user's request into discrete tasks and wires their dependencies. This uses the same `TaskCreate` and `TaskUpdate` tools described in [Task List]({% post_url 2026-04-26-demystifying-claude-code-task-list %}), but writing to the team's shared task list directory (`~/.claude/tasks/{team-name}/`).
+Once the team is created, the leader breaks the user's request into discrete tasks and wires their dependencies. This uses the same `TaskCreate` and `TaskUpdate` tools described in [Task List]({% post_url claude-code/2026-04-26-demystifying-claude-code-task-list %}), but writing to the team's shared task list directory (`~/.claude/tasks/{team-name}/`).
 
 The leader typically:
 
@@ -392,7 +392,7 @@ At this point no teammates exist yet — the task list is a plan waiting for wor
 
 ## 7. Teammate Spawning (Phase 3)
 
-With the team created and tasks planned, the leader spawns teammates to execute work in parallel. The leader calls the `Agent` tool with both a `name` and `team_name` parameter — this combination signals the system to route to the teammate spawning path rather than the standard one-shot sub-agent path. Each teammate receives a directive prompt describing its role and scope. The leader can optionally specify a `subagent_type` to use a pre-defined agent definition (a markdown file with YAML frontmatter) that determines the teammate's available tools, model, permission mode, and system prompt — see [Spawned Agents]({% post_url 2026-05-07-demystifying-claude-code-spawned-agents %}) for details. The system then decides how to execute the teammate based on backend availability: either as a concurrent async loop within the same Node.js process (in-process mode) or as a separate CLI instance in a tmux/iTerm2 pane (external mode).
+With the team created and tasks planned, the leader spawns teammates to execute work in parallel. The leader calls the `Agent` tool with both a `name` and `team_name` parameter — this combination signals the system to route to the teammate spawning path rather than the standard one-shot sub-agent path. Each teammate receives a directive prompt describing its role and scope. The leader can optionally specify a `subagent_type` to use a pre-defined agent definition (a markdown file with YAML frontmatter) that determines the teammate's available tools, model, permission mode, and system prompt — see [Spawned Agents]({% post_url claude-code/2026-05-07-demystifying-claude-code-spawned-agents %}) for details. The system then decides how to execute the teammate based on backend availability: either as a concurrent async loop within the same Node.js process (in-process mode) or as a separate CLI instance in a tmux/iTerm2 pane (external mode).
 
 ### 7.1 Spawn Decision Tree
 
@@ -567,7 +567,7 @@ When the leader spawns a teammate with `planModeRequired: true`, that teammate s
 **The flow:**
 
 1. **Spawn** — The leader passes `planModeRequired: true` in the spawn config. The teammate's task state initializes with `permissionMode: 'plan'`.
-2. **Plan** — The teammate explores the codebase in read-only mode and writes a plan file (just like single-agent plan mode described in [Plan/Act Mode]({% post_url 2026-05-05-demystifying-claude-code-plan-act-mode %})).
+2. **Plan** — The teammate explores the codebase in read-only mode and writes a plan file (just like single-agent plan mode described in [Plan/Act Mode]({% post_url claude-code/2026-05-05-demystifying-claude-code-plan-act-mode %})).
 3. **Request approval** — The teammate calls `ExitPlanMode`. Because `isPlanModeRequired()` returns true, the tool does not exit plan mode directly. Instead, it sends a `plan_approval_request` message to the leader's mailbox containing the plan content and file path. The teammate enters `awaitingPlanApproval: true` state and waits.
 4. **Leader approves** — The leader's inbox poller (`useInboxPoller.ts`) detects the `plan_approval_request` and sends back a `plan_approval_response` with `approved: true` and the leader's current permission mode.
 5. **Teammate proceeds** — The teammate's inbox poller receives the response, verifies it came from `'team-lead'` (security check to prevent teammates from forging approvals), transitions out of plan mode, and begins implementing.
@@ -578,7 +578,7 @@ When the leader spawns a teammate with `planModeRequired: true`, that teammate s
 
 ## 9. Permission Synchronization
 
-For background on how Claude Code checks permissions for individual tool calls (the `canUseTool` function, permission modes, and the approval UI), see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}). This section covers the additional routing layer needed when **teammates** require permission approval.
+For background on how Claude Code checks permissions for individual tool calls (the `canUseTool` function, permission modes, and the approval UI), see [Human-in-the-Loop]({% post_url claude-code/2026-04-28-demystifying-claude-code-human-in-the-loop %}). This section covers the additional routing layer needed when **teammates** require permission approval.
 
 ### 9.1 The Problem
 
@@ -851,7 +851,7 @@ If the leader's session exits unexpectedly (e.g., the user closes the terminal),
 
 ### TaskCreate / TaskUpdate
 
-See [Task List]({% post_url 2026-04-26-demystifying-claude-code-task-list %}) for full schemas of these tools.
+See [Task List]({% post_url claude-code/2026-04-26-demystifying-claude-code-task-list %}) for full schemas of these tools.
 
 ---
 

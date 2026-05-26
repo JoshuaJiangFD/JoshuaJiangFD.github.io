@@ -8,7 +8,7 @@ mermaid: true
 
 This post explores how Claude Code orchestrates a session — how `QueryEngine.ts` manages conversation state, dispatches work to `query.ts`, receives results via async generators, and persists everything for cross-turn continuity and session resume. We trace the interaction between the stateful session owner and the stateless execution engine, covering how the loop runs, terminates, continues on error, and how messages flow between components.
 
-For the detailed per-step message pipeline, see the companion post [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}). For how the API call is constructed, see [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}).
+For the detailed per-step message pipeline, see the companion post [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}). For how the API call is constructed, see [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}).
 
 ---
 
@@ -48,7 +48,7 @@ query.ts (stateless across turns, stateful within a turn)
 
 ## 2. Message Types
 
-Four message types flow through the system: `UserMessage` (user prompts and tool results), `AssistantMessage` (model responses with text, tool_use, and thinking blocks), `SystemMessage` (internal signals like compact boundaries, filtered before reaching the API), and `AttachmentMessage` (context injections — file contents, memories, notifications — converted to `UserMessage`s at API time). For the full taxonomy and how each type is transformed, see [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}).
+Four message types flow through the system: `UserMessage` (user prompts and tool results), `AssistantMessage` (model responses with text, tool_use, and thinking blocks), `SystemMessage` (internal signals like compact boundaries, filtered before reaching the API), and `AttachmentMessage` (context injections — file contents, memories, notifications — converted to `UserMessage`s at API time). For the full taxonomy and how each type is transformed, see [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}).
 
 ---
 
@@ -171,7 +171,7 @@ Zooming into what happens inside `query.ts` on each iteration, the loop runs 11 
 +=====================================================+
 ```
 
-Steps 1-6 form the **message pipeline** — a layered compression system that progressively reduces context before the API call. Each step operates on the output of the previous one, from lightweight filtering (slice, budget) to heavyweight summarization (autocompact). For the detailed mechanics of each step, see [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}).
+Steps 1-6 form the **message pipeline** — a layered compression system that progressively reduces context before the API call. Each step operates on the output of the previous one, from lightweight filtering (slice, budget) to heavyweight summarization (autocompact). For the detailed mechanics of each step, see [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}).
 
 ---
 
@@ -187,7 +187,7 @@ Step 8's `deps.callModel()` delegates to `queryModelWithStreaming()` in `claude.
 
 The model's response streams back as `AssistantMessage`s containing text, `tool_use`, and thinking blocks. Certain error responses (prompt-too-long, max-output-tokens) are withheld from the caller so the loop can attempt recovery before surfacing the error.
 
-For the complete transformation pipeline, see [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}).
+For the complete transformation pipeline, see [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}).
 
 ---
 
@@ -198,13 +198,13 @@ If the model's response contains `tool_use` blocks, `needsFollowUp` is set to `t
 - **`StreamingToolExecutor`** — When enabled, tools start executing during Step 8 while the model is still streaming. Each `tool_use` block is handed to the executor the moment its input finishes streaming, overlapping tool execution with the remainder of the API response. Step 9 drains whatever tools haven't finished yet.
 - **`runTools()`** — The batch fallback. Waits until all `tool_use` blocks are collected after Step 8, partitions them into concurrent-safe and non-concurrent batches, and executes them.
 
-Both dispatchers call the same single-tool pipeline (`runToolUse()` in `toolExecution.ts`) for each tool. This pipeline validates the input (Zod schema parse + tool-specific checks), runs PreToolUse hooks, checks permissions (which may show an interactive dialog — see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %})), executes the tool, runs PostToolUse hooks, and maps the result into a `tool_result` block.
+Both dispatchers call the same single-tool pipeline (`runToolUse()` in `toolExecution.ts`) for each tool. This pipeline validates the input (Zod schema parse + tool-specific checks), runs PreToolUse hooks, checks permissions (which may show an interactive dialog — see [Human-in-the-Loop]({% post_url claude-code/2026-04-28-demystifying-claude-code-human-in-the-loop %})), executes the tool, runs PostToolUse hooks, and maps the result into a `tool_result` block.
 
 Each tool's output becomes a `UserMessage` containing a `tool_result` block, collected into `toolResults[]` and yielded to `QueryEngine` for persistence. Tools may also produce `AttachmentMessage`s — hook results that signal whether the loop should continue (`hook_stopped_continuation`), or structured outputs captured for SDK callers.
 
 After tool execution, two exit checks run: if the user pressed Ctrl+C, the loop returns `{ reason: 'aborted_tools' }`; if a hook signalled to stop, the loop returns `{ reason: 'hook_stopped' }`. Otherwise, execution continues to Step 10 (Attachments) and Step 11 (State Merge).
 
-For the full tool execution lifecycle — dispatchers, the single-tool pipeline, concurrency semantics, interrupt behavior, and the hook lifecycle — see [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}).
+For the full tool execution lifecycle — dispatchers, the single-tool pipeline, concurrency semantics, interrupt behavior, and the hook lifecycle — see [Tool Execution]({% post_url claude-code/2026-05-12-demystifying-claude-code-tool-execution %}).
 
 ---
 

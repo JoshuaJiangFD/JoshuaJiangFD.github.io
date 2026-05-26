@@ -8,7 +8,7 @@ mermaid: true
 
 This post provides a comprehensive technical deep dive into the Plan/Act Mode feature in Claude Code. Plan mode is a permission-level behavioral override that constrains the LLM to read-only exploration and plan authoring. The user reviews and approves the plan before the system transitions back to "act mode" (normal execution), where full tool access is restored. We trace every component involved — from the user experience through state management, system prompt injection, plan file persistence, and the multi-option approval dialog.
 
-For context on how tools are executed and permissions checked, see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}). For how attachments are injected into the message pipeline, see [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}).
+For context on how tools are executed and permissions checked, see [Human-in-the-Loop]({% post_url claude-code/2026-04-28-demystifying-claude-code-human-in-the-loop %}). For how attachments are injected into the message pipeline, see [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}).
 
 ---
 
@@ -391,7 +391,7 @@ Both prompts define explicit "When NOT to Use" sections:
 Once the LLM decides to plan, the flow is:
 
 1. **LLM emits** `tool_use: EnterPlanMode({})` (no parameters).
-2. **Permission check** — `toolExecution.ts` runs the tool through `canUseTool()` (see [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}), Section 6), which returns `{ behavior: 'ask' }`. This pushes the tool call onto the `ToolUseConfirm` queue, suspending the execution loop.
+2. **Permission check** — `toolExecution.ts` runs the tool through `canUseTool()` (see [Human-in-the-Loop]({% post_url claude-code/2026-04-28-demystifying-claude-code-human-in-the-loop %}), Section 6), which returns `{ behavior: 'ask' }`. This pushes the tool call onto the `ToolUseConfirm` queue, suspending the execution loop.
 3. **Dialog renders** — `PermissionRequest.tsx` looks up the tool in its registry and mounts `EnterPlanModePermissionRequest`, rendering the "Enter plan mode?" overlay (illustrated in Section 1, Path B).
 
     * **File:** `src/components/permissions/PermissionRequest.tsx` (line 65)
@@ -493,7 +493,7 @@ Key difference: instead of front-loading exploration, the LLM iteratively builds
 
 ## 6. Phase 3: Approval
 
-When the LLM finishes writing the plan, it calls `ExitPlanMode`. This tool has `requiresUserInteraction: true` (for non-teammates), which triggers the full HITL flow described in [Human-in-the-Loop]({% post_url 2026-04-28-demystifying-claude-code-human-in-the-loop %}).
+When the LLM finishes writing the plan, it calls `ExitPlanMode`. This tool has `requiresUserInteraction: true` (for non-teammates), which triggers the full HITL flow described in [Human-in-the-Loop]({% post_url claude-code/2026-04-28-demystifying-claude-code-human-in-the-loop %}).
 
 ### Validation Gate
 
@@ -612,7 +612,7 @@ After the user approves the plan, the system transitions to "act mode" — full 
 
 ### The Plan Mode Exit Attachment
 
-Within the same agentic loop iteration where `ExitPlanMode` executes (Step 9), the attachment system at Step 10 (`getAttachmentMessages()`) detects that `needsPlanModeExitAttachment` is `true` and generates a one-time `plan_mode_exit` attachment. The LLM sees it on the next API call (Step 8 of the following iteration). See [Managing Message Context]({% post_url 2026-05-05-demystifying-claude-code-managing-message-context %}), Section 1 for the full step numbering.
+Within the same agentic loop iteration where `ExitPlanMode` executes (Step 9), the attachment system at Step 10 (`getAttachmentMessages()`) detects that `needsPlanModeExitAttachment` is `true` and generates a one-time `plan_mode_exit` attachment. The LLM sees it on the next API call (Step 8 of the following iteration). See [Managing Message Context]({% post_url claude-code/2026-05-05-demystifying-claude-code-managing-message-context %}), Section 1 for the full step numbering.
 
 * **File:** `src/utils/messages.ts` (line 3848)
 
@@ -693,7 +693,7 @@ This prevents multiple agents from simultaneously presenting approval dialogs in
 
 ## 10. Reflection: Relationship Between Plan Mode and the Task List
 
-Plan mode and the Task List (TodoV2) are **sequential but independent** features (see [Task List]({% post_url 2026-04-26-demystifying-claude-code-task-list %}) for full details on the task system). They are connected by a single soft nudge, but neither requires the other.
+Plan mode and the Task List (TodoV2) are **sequential but independent** features (see [Task List]({% post_url claude-code/2026-04-26-demystifying-claude-code-task-list %}) for full details on the task system). They are connected by a single soft nudge, but neither requires the other.
 
 An important distinction: plan mode produces a **plan file** — a Markdown document describing the implementation approach (what to change, which files, how to verify). This is not a task list. The task list is a separate JSON-backed graph of executable steps with status tracking (`pending` → `in_progress` → `completed`). The plan describes *what to do*; the task list tracks *doing it*.
 
@@ -771,7 +771,7 @@ The most common combined flow:
 When swarms are enabled, the `teamHint` in the tool result pushes toward `TeamCreate` instead, which implicitly creates a shared task list for the team:
 > "If this plan can be broken down into multiple independent tasks, consider using the TeamCreate tool to create a team and parallelize the work."
 
-For a full deep dive into how teams are created, how teammates coordinate via the shared task list, and how `planModeRequired` constrains teammates to plan before implementing, see [Agent Team]({% post_url 2026-05-07-demystifying-claude-code-agent-team %}).
+For a full deep dive into how teams are created, how teammates coordinate via the shared task list, and how `planModeRequired` constrains teammates to plan before implementing, see [Agent Team]({% post_url claude-code/2026-05-07-demystifying-claude-code-agent-team %}).
 
 ---
 

@@ -7,7 +7,7 @@ mermaid: true
 math: true
 ---
 
-The [previous post]({% post_url 2026-05-25-rag-evaluation-what-works %}) defined the three evaluation surfaces of a RAG pipeline and the metrics for each. Every metric in that post requires someone or something to make a judgment: is this chunk relevant? Is this claim supported? Is the answer correct? The metrics are only as reliable as whoever is making those judgments. This post examines how LLMs are used as judges in RAG evaluation (Section 1), where they systematically fail (Section 2), and whether training dedicated judge models closes the remaining gap with humans (Section 3).
+The [previous post]({% post_url rag-evaluation/2026-05-25-rag-evaluation-faithfulness-and-relevance %}) defined the three evaluation surfaces of a RAG pipeline and the metrics for each. Every metric in that post requires someone or something to make a judgment: is this chunk relevant? Is this claim supported? Is the answer correct? The metrics are only as reliable as whoever is making those judgments. This post examines how LLMs are used as judges in RAG evaluation (Section 1), where they systematically fail (Section 2), and whether training dedicated judge models closes the remaining gap with humans (Section 3).
 
 ---
 
@@ -15,7 +15,7 @@ The [previous post]({% post_url 2026-05-25-rag-evaluation-what-works %}) defined
 
 ### 1.1 Where LLM Judges Appear
 
-In the metrics described in [Part 1]({% post_url 2026-05-25-rag-evaluation-what-works %}), an LLM replaces a human annotator at multiple points:
+In the metrics described in [Part 1]({% post_url rag-evaluation/2026-05-25-rag-evaluation-retrieval-metrics %}), an LLM replaces a human annotator at multiple points:
 
 | Evaluation Task | What the LLM Judges | Output |
 |----------------|--------------------|---------| 

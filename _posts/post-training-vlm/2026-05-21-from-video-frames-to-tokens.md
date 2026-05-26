@@ -6,7 +6,7 @@ tags: [VideoScore2, Qwen2.5-VL, VLM, Video Evaluation, Vision Transformer, mRoPE
 mermaid: true
 ---
 
-This post is the second post of the Post-Training VLM series. The [previous post (Blog 0)]({% post_url 2026-05-20-learning-sft-rl-series-introduction %}) introduced VideoScore2 and its training pipeline of using Qwen2.5-VL model with frozen vision tower and full-parameter LLM training. The Qwen2.5-VL model has three-component architecture -- ViT, merger, LLM. This post covers the preprocessing steps that feed into ViT (frame sampling, resizing, patching — Sections 3-5), ViT (Section 6), merger (Section 7) and the handoff point where merged tokens enter the LLM's input sequence (Sections 8-10: token injection, mRoPE, context budget). It stops at the LLM's door. A running example is carried throughout: a 4-second video at 1280x720 native resolution encoded at 30fps.
+This post is the second post of the Post-Training VLM series. The [previous post (Blog 0)]({% post_url post-training-vlm/2026-05-20-learning-sft-rl-series-introduction %}) introduced VideoScore2 and its training pipeline of using Qwen2.5-VL model with frozen vision tower and full-parameter LLM training. The Qwen2.5-VL model has three-component architecture -- ViT, merger, LLM. This post covers the preprocessing steps that feed into ViT (frame sampling, resizing, patching — Sections 3-5), ViT (Section 6), merger (Section 7) and the handoff point where merged tokens enter the LLM's input sequence (Sections 8-10: token injection, mRoPE, context budget). It stops at the LLM's door. A running example is carried throughout: a 4-second video at 1280x720 native resolution encoded at 30fps.
 
 ## 1. The Compression Problem
 
@@ -220,7 +220,7 @@ The table below summarizes each stage of the pipeline as applied to the running 
 
 Net result: 331,776,000 raw numbers become 3,520 tokens. After this pipeline, the LLM receives a flat sequence of 3584-dim vectors -- some from text embeddings, some from the vision pipeline -- and processes them identically through self-attention. The vision pipeline is entirely frozen; the LLM decoder alone learns to interpret these representations for the scoring task.
 
-[Blog 2]({% post_url 2026-05-22-the-videofeedback2-dataset %}) covers the training dataset, VideoFeedback2, that provides the target outputs the model learns to generate: chain-of-thought reasoning followed by three integer scores for visual quality, text-to-video alignment, and physical consistency.
+[Blog 2]({% post_url post-training-vlm/2026-05-22-the-videofeedback2-dataset %}) covers the training dataset, VideoFeedback2, that provides the target outputs the model learns to generate: chain-of-thought reasoning followed by three integer scores for visual quality, text-to-video alignment, and physical consistency.
 
 ## Appendix: Call Chain Between LLaMA-Factory and HuggingFace Transformers
 

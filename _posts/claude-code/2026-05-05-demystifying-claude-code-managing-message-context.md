@@ -8,7 +8,7 @@ mermaid: true
 
 This post details how Claude Code manages the messages that make up the LLM's context window. Each iteration of the agentic loop runs a pipeline of 11 steps that progressively filter, compress, and transform the message array before sending it to the API. We trace every action that reads, transforms, or replaces the messages — from lightweight slicing to full conversation compaction.
 
-For the broader orchestration architecture (how QueryEngine and query.ts interact, how the loop terminates, cross-turn state), see [Session Orchestration]({% post_url 2026-04-30-demystifying-claude-code-session-orchestration %}). For how the API call itself is constructed, see [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}).
+For the broader orchestration architecture (how QueryEngine and query.ts interact, how the loop terminates, cross-turn state), see [Session Orchestration]({% post_url claude-code/2026-04-30-demystifying-claude-code-session-orchestration %}). For how the API call itself is constructed, see [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}).
 
 ---
 
@@ -64,7 +64,7 @@ The conversation is a discriminated union type `Message` defined in `src/types/m
 - **`UserMessage`** contains user prompts and `tool_result` blocks. The Anthropic API requires tool results to be sent as `role: 'user'` messages, so from the pipeline's perspective, tool outputs are user-role responses to the assistant's requests.
 - **`AssistantMessage`** carries the model's response — text blocks, `tool_use` blocks, and thinking blocks.
 - **`SystemMessage`** provides internal signals: compact boundary markers, API error retry notifications, and informational telemetry. These are filtered out by `normalizeMessagesForAPI()` before reaching the API.
-- **`AttachmentMessage`** injects non-conversational context (file contents, memories, plan mode instructions, notifications) into the stream. At API time, these are converted to `UserMessage`s and merged into adjacent user messages. For the full taxonomy, see [Attachment Messages]({% post_url 2026-05-14-demystifying-claude-code-attachment-messages %}).
+- **`AttachmentMessage`** injects non-conversational context (file contents, memories, plan mode instructions, notifications) into the stream. At API time, these are converted to `UserMessage`s and merged into adjacent user messages. For the full taxonomy, see [Attachment Messages]({% post_url claude-code/2026-05-14-demystifying-claude-code-attachment-messages %}).
 
 ---
 
@@ -150,7 +150,7 @@ This step runs before autocompact so that if collapse alone brings the token cou
 { compactionResult } = deps.autocompact(...)
 ```
 
-This is the most impactful step. For the full decision flow and compact process, see [Message Compaction]({% post_url 2026-05-05-demystifying-claude-code-message-compaction %}).
+This is the most impactful step. For the full decision flow and compact process, see [Message Compaction]({% post_url claude-code/2026-05-05-demystifying-claude-code-message-compaction %}).
 
 When `deps.autocompact()` returns a successful `compactionResult`, query.ts does three things before building the final message array. First, it logs a telemetry event with metrics about the compaction — original vs compacted message counts, pre/post token counts, and API usage breakdown. Second, if a `taskBudget` is configured, it captures how many tokens the pre-compact context consumed and decrements `taskBudgetRemaining` accordingly (the server can no longer see the full pre-compact history after compaction, so this tracks cumulative spend). Third, it resets the `autoCompactTracking` state to mark a fresh compaction epoch — new `turnId`, `turnCounter` back to zero, and `consecutiveFailures` reset to zero.
 
@@ -224,7 +224,7 @@ After streaming completes, the loop checks `needsFollowUp` (query.ts:1062). If t
 
 If `needsFollowUp` is `true` (at least one `tool_use` block was present), execution continues to Step 9.
 
-For the full message transformation pipeline inside `claude.ts` (normalization, tool schema building, caching, retry), see [Calling the Model]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}).
+For the full message transformation pipeline inside `claude.ts` (normalization, tool schema building, caching, retry), see [Calling the Model]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}).
 
 ### Step 9: TOOL EXECUTION (query.ts:1380-1408)
 
@@ -232,7 +232,7 @@ For the full message transformation pipeline inside `claude.ts` (normalization, 
 for await (update of toolUpdates)
 ```
 
-This step executes the tool calls that the model requested. Each tool's output becomes a `UserMessage` containing a `tool_result` block (the API requires tool results to be sent as user messages). These are collected into `toolResults[]`. Tools may also produce `AttachmentMessage`s — for example, hook results that signal whether the loop should continue. For the full tool execution lifecycle — dispatchers, the single-tool pipeline, concurrency, interrupt behavior, and hooks — see [Tool Execution]({% post_url 2026-05-12-demystifying-claude-code-tool-execution %}).
+This step executes the tool calls that the model requested. Each tool's output becomes a `UserMessage` containing a `tool_result` block (the API requires tool results to be sent as user messages). These are collected into `toolResults[]`. Tools may also produce `AttachmentMessage`s — for example, hook results that signal whether the loop should continue. For the full tool execution lifecycle — dispatchers, the single-tool pipeline, concurrency, interrupt behavior, and hooks — see [Tool Execution]({% post_url claude-code/2026-05-12-demystifying-claude-code-tool-execution %}).
 
 ### Step 10: ATTACHMENTS (query.ts:1580-1628)
 

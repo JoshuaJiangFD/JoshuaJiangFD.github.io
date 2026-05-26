@@ -60,7 +60,7 @@ The system prompt itself is split into cacheable and non-cacheable sections to o
 
 ## 2. System Prompt: The Static Sections
 
-The system prompt is built by `getSystemPrompt()` (`prompts.ts:444`), which produces an array of text blocks. The standard path assembles static sections first, then a cache boundary marker, then dynamic sections. Before reaching the API, it passes through `buildEffectiveSystemPrompt()` (which may replace it with an override, agent, or custom prompt) and `claude.ts` (which wraps it with attribution headers and cache markers). The full assembly pipeline is covered in [Calling the Model, Appendix A]({% post_url 2026-05-05-demystifying-claude-code-calling-the-model %}#appendix-a-upstream-system-prompt-assembly).
+The system prompt is built by `getSystemPrompt()` (`prompts.ts:444`), which produces an array of text blocks. The standard path assembles static sections first, then a cache boundary marker, then dynamic sections. Before reaching the API, it passes through `buildEffectiveSystemPrompt()` (which may replace it with an override, agent, or custom prompt) and `claude.ts` (which wraps it with attribution headers and cache markers). The full assembly pipeline is covered in [Calling the Model, Appendix A]({% post_url claude-code/2026-05-05-demystifying-claude-code-calling-the-model %}#appendix-a-upstream-system-prompt-assembly).
 
 The static sections — "Identity & role framing" and "Behavioral guidelines" in the diagram above — appear before the cache boundary marker. They are identical across all Claude Code users, which means the Anthropic API can reuse the same KV cache for these blocks across organizations.
 
@@ -195,7 +195,7 @@ export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY_
 
 When processed by `splitSysPromptPrefix()` in `claude.ts`, everything before this marker gets `cache_control: { scope: 'global' }` — meaning any Claude Code user's request with the same static prefix hits the same server-side KV cache entry. Everything after is session-scoped.
 
-This is the same mechanism described in [Prompt Caching]({% post_url 2026-05-05-demystifying-claude-code-prompt-caching %}), section 3.
+This is the same mechanism described in [Prompt Caching]({% post_url claude-code/2026-05-05-demystifying-claude-code-prompt-caching %}), section 3.
 
 ---
 

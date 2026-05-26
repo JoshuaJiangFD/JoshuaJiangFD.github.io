@@ -7,7 +7,7 @@ mermaid: true
 math: true
 ---
 
-The [previous post]({% post_url 2026-05-25-rag-evaluation-what-works %}) covered how to evaluate a single RAG interaction: retrieval quality metrics, faithfulness detection, answer relevance, and LLM-as-judge methodology. All of those metrics assume a single turn: one query, one retrieval, one generation. This post addresses what happens when RAG systems operate over multiple turns, make autonomous decisions about when and what to retrieve, and must maintain coherence across an extended interaction.
+The [previous post]({% post_url rag-evaluation/2026-05-25-rag-evaluation-llm-judges %}) covered how to evaluate a single RAG interaction: retrieval quality metrics, faithfulness detection, answer relevance, and LLM-as-judge methodology. All of those metrics assume a single turn: one query, one retrieval, one generation. This post addresses what happens when RAG systems operate over multiple turns, make autonomous decisions about when and what to retrieve, and must maintain coherence across an extended interaction.
 
 Multi-turn RAG evaluation is largely unsolved. The metrics from Part 1 do not extend cleanly to trajectories. This post surveys what benchmarks exist, what they reveal about current system capabilities, and what evaluation gaps remain open.
 

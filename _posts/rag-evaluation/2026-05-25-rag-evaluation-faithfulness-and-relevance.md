@@ -7,7 +7,7 @@ mermaid: true
 math: true
 ---
 
-[Part 1]({% post_url 2026-05-25-rag-evaluation-retrieval-metrics %}) covered the RAG pipeline structure and retrieval metrics (edge 1: did the retriever find relevant passages?). This post covers the remaining two edges: faithfulness (edge 2: did the generator stay faithful to the evidence?) and answer relevance (edge 3: does the output address the user's question?). It explains how RAGAS and DeepEval implement each, how NLI-based classifiers offer a cheaper alternative for faithfulness, and where all current metrics have blind spots.
+[Part 1]({% post_url rag-evaluation/2026-05-25-rag-evaluation-retrieval-metrics %}) covered the RAG pipeline structure and retrieval metrics (edge 1: did the retriever find relevant passages?). This post covers the remaining two edges: faithfulness (edge 2: did the generator stay faithful to the evidence?) and answer relevance (edge 3: does the output address the user's question?). It explains how RAGAS and DeepEval implement each, how NLI-based classifiers offer a cheaper alternative for faithfulness, and where all current metrics have blind spots.
 
 ---
 
