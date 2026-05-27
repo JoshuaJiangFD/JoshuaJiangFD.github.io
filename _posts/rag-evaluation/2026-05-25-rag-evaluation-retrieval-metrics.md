@@ -57,11 +57,11 @@ Multiple evaluation frameworks have independently operationalized these three ed
 
 | Framework | Edge 1: Retrieval Quality | Edge 2: Faithfulness | Edge 3: End-to-End Relevance | Notes |
 |---|---|---|---|---|
+| **[DeepEval](https://deepeval.com/docs/getting-started)** (2023) | [Contextual Relevancy](https://deepeval.com/docs/metrics-contextual-relevancy)<br>[Contextual Precision](https://deepeval.com/docs/metrics-contextual-precision)<br>[Contextual Recall](https://deepeval.com/docs/metrics-contextual-recall) | [Faithfulness](https://deepeval.com/docs/metrics-faithfulness) | [Answer Relevancy](https://deepeval.com/docs/metrics-answer-relevancy) | Most downloaded open-source RAG eval library (3M+ monthly) |
+| **[RAGAS](https://docs.ragas.io)** (Es et al., 2023) | [Context Precision](https://docs.ragas.io/en/stable/concepts/metrics/context_precision/)<br>[Context Recall](https://docs.ragas.io/en/stable/concepts/metrics/context_recall/) | [Faithfulness](https://docs.ragas.io/en/stable/concepts/metrics/faithfulness/)<br>[Noise Sensitivity](https://docs.ragas.io/en/stable/concepts/metrics/noise_sensitivity/) | [Answer Relevance](https://docs.ragas.io/en/stable/concepts/metrics/answer_relevance/) | Foundational RAG eval paper; metrics require reference answers |
 | **[TruLens](https://www.trulens.org/getting_started/core_concepts/rag_triad/)** (2023) | [Context Relevance](https://www.trulens.org/getting_started/core_concepts/rag_triad/#context-relevance) | [Groundedness](https://www.trulens.org/getting_started/core_concepts/rag_triad/#groundedness) | [Answer Relevance](https://www.trulens.org/getting_started/core_concepts/rag_triad/#answer-relevance) | Branded as "RAG Triad" |
-| **[RAGAS](https://docs.ragas.io)** (Es et al., 2023) | [Context Precision](https://docs.ragas.io/en/stable/concepts/metrics/context_precision/), [Context Recall](https://docs.ragas.io/en/stable/concepts/metrics/context_recall/) | [Faithfulness](https://docs.ragas.io/en/stable/concepts/metrics/faithfulness/) | [Answer Relevance](https://docs.ragas.io/en/stable/concepts/metrics/answer_relevance/) | Also includes Noise Sensitivity (edge 2 diagnostic) |
-| **[DeepEval](https://deepeval.com/docs)** | [Contextual Relevancy](https://deepeval.com/docs/metrics-contextual-relevancy), [Contextual Precision](https://deepeval.com/docs/metrics-contextual-precision), [Contextual Recall](https://deepeval.com/docs/metrics-contextual-recall) | [Faithfulness](https://deepeval.com/docs/metrics-faithfulness) | [Answer Relevancy](https://deepeval.com/docs/metrics-answer-relevancy) | Separates retriever vs. generator metric groups |
-| **[Google Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates)** | — | [Groundedness](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates) | [Text Quality](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates), [Instruction Following](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates), Fluency | Adds Safety (no edge equivalent); no explicit retrieval metric |
-| **[Databricks](https://www.databricks.com/blog/LLM-auto-eval-best-practices-RAG)** | — | — | [Correctness](https://docs.databricks.com/en/generative-ai/agent-evaluation/llm-judge-metrics.html) (60%), Comprehensiveness (20%), Readability (20%) | Evaluates answer only; retrieval and faithfulness not separately measured |
+| **[Google Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates)** | — | [Groundedness](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates) | [Text Quality](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates)<br>[Instruction Following](https://cloud.google.com/vertex-ai/generative-ai/docs/models/metrics-templates)<br>Fluency | General LLM evaluation; not RAG-specific |
+| **[Databricks](https://www.databricks.com/blog/LLM-auto-eval-best-practices-RAG)** | — | — | [Correctness](https://docs.databricks.com/en/generative-ai/agent-evaluation/llm-judge-metrics.html) (60%)<br>Comprehensiveness (20%)<br>Readability (20%) | General LLM evaluation; not RAG-specific |
 
 The convergence across frameworks is natural. It follows from the pipeline topology. The differences are in emphasis: evaluation tool vendors (TruLens, RAGAS, DeepEval) measure all three edges explicitly, while platform companies (Google, Databricks) collapse edges 1 and 2 into the answer-level evaluation and add dimensions the triad does not cover (safety, fluency, instruction-following).
 
@@ -77,7 +77,7 @@ Retrieval quality ultimately determines what the LLM sees. A bad retrieval means
 - How much noise is mixed in with the relevant results? (Precision)
 - Did we miss important sources? (Recall)
 - How quickly does the first useful result appear? (MRR)
-- Are the best results ranked above the mediocre ones? (NDCG)
+- Are the best results ranked above the less relevant ones? (NDCG)
 
 Each metric answers a different question and requires a different level of annotation effort. Hit Rate needs only one known-relevant document per query. NDCG needs graded relevance labels across the entire corpus. This tradeoff between diagnostic power and annotation cost determines which metrics are feasible in practice.
 
@@ -91,15 +91,15 @@ Hit Rate@K (also called Hit@K) measures whether *any* relevant document appears 
 
 $$\text{Hit Rate@K} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \mathbb{1}[\text{at least one relevant doc in top-K for query } i]$$
 
-Example: the retriever returns 5 chunks. At least one of them is relevant, so the hit for this query is 1. Averaged across a set of 100 evaluation queries where 85 have at least one relevant chunk in top-5:
+**Example:** the retriever returns 5 chunks. At least one of them is relevant, so the hit for this query is 1. Averaged across a set of 100 evaluation queries where 85 have at least one relevant chunk in top-5:
 
 $$\text{Hit Rate@5} = \frac{85}{100} = 0.85$$
 
-Strength: the simplest retrieval metric. Answers the most basic question: did the retriever find *anything* useful?
+**Strength:** the simplest retrieval metric. Answers the most basic question: did the retriever find *anything* useful?
 
-Weakness: does not distinguish between retrieving 1 relevant chunk and retrieving 5. A system that returns 5 highly relevant passages scores the same as one that returns 1 relevant passage buried among 4 irrelevant ones. Also insensitive to rank position.
+**Weakness:** does not distinguish between retrieving 1 relevant chunk and retrieving 5. A system that returns 5 highly relevant passages scores the same as one that returns 1 relevant passage buried among 4 irrelevant ones. Also insensitive to rank position.
 
-Annotation cost: requires only one known-relevant document per query. This can be generated synthetically (ask an LLM to produce a question from a chunk; that chunk is the relevant document).
+**Annotation cost:** requires only one known-relevant document per query. This can be generated synthetically (ask an LLM to produce a question from a chunk; that chunk is the relevant document).
 
 ### 2.2 Precision@K
 
@@ -113,15 +113,15 @@ Averaged across the evaluation set:
 
 $$\text{Precision@K} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \text{Precision@K}_i$$
 
-Example: the retriever returns 5 chunks, of which 3 are relevant.
+**Example:** for a single query *i*, the retriever returns 5 chunks, of which 3 are relevant.
 
-$$\text{Precision@5} = \frac{3}{5} = 0.6$$
+$$\text{Precision@5}_i = \frac{3}{5} = 0.6$$
 
-Strength: simple and interpretable. Directly answers "how much noise is in the retrieval?"
+**Strength:** simple and interpretable. Directly answers "how much noise is in the retrieval?"
 
-Weakness: treats all positions equally. A relevant chunk buried at rank 5 counts the same as one at rank 1. In RAG, this matters because LLMs attend more strongly to context at the beginning and end of the window ("lost in the middle" phenomenon), so rank position affects downstream generation quality.
+**Weakness:** treats all positions equally. A relevant chunk buried at rank 5 counts the same as one at rank 1. In RAG, this matters because LLMs attend more strongly to context at the beginning and end of the window ("lost in the middle" phenomenon), so rank position affects downstream generation quality.
 
-Annotation cost: binary relevance labels on the K retrieved chunks only. No corpus-level annotation needed.
+**Annotation cost:** binary relevance labels on the K retrieved chunks only. No corpus-level annotation needed.
 
 ### 2.3 Recall@K
 
@@ -135,15 +135,15 @@ Averaged across the evaluation set:
 
 $$\text{Recall@K} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \text{Recall@K}_i$$
 
-Example: same retrieval (3 relevant in top-5), but the corpus contains 4 relevant chunks total.
+**Example:** for a single query *i*, the retriever returns 3 relevant chunks in top-5, but the corpus contains 4 relevant chunks total.
 
-$$\text{Recall@5} = \frac{3}{4} = 0.75$$
+$$\text{Recall@5}_i = \frac{3}{4} = 0.75$$
 
-Strength: ensures the retriever does not miss important information. For multi-hop questions that require evidence from multiple documents, high recall is essential because missing even one source can make the question unanswerable.
+**Strength:** ensures the retriever does not miss important information. For multi-hop questions that require evidence from multiple documents, high recall is essential because missing even one source can make the question unanswerable.
 
-Weakness: the denominator requires knowing every relevant document in the entire corpus. This makes the metric impossible to compute exactly without exhaustive annotation.
+**Weakness:** the denominator requires knowing every relevant document in the entire corpus. This makes the metric impossible to compute exactly without exhaustive annotation.
 
-Annotation cost: exhaustive corpus-level annotation. Every document must be labeled for relevance against each query. For a corpus of 100K chunks and 500 evaluation queries, this means 50M judgments in the worst case. In practice, pooling strategies reduce this (e.g., only label documents surfaced by any retrieval method), but the cost remains fundamentally higher than per-retrieval metrics.
+**Annotation cost:** exhaustive corpus-level annotation. Every document must be labeled for relevance against each query. For a corpus of 100K chunks and 500 evaluation queries, this means 50M judgments in the worst case. In practice, pooling strategies reduce this (e.g., only label documents surfaced by any retrieval method), but the cost remains fundamentally higher than per-retrieval metrics.
 
 ### 2.4 MRR (Mean Reciprocal Rank)
 
@@ -153,15 +153,15 @@ $$\text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}$$
 
 where $\text{rank}_i$ is the position of the first relevant document for query $i$.
 
-Example: for a single query, the first relevant chunk appears at position 2.
+**Example:** for a single query, the first relevant chunk appears at position 2.
 
 $$\text{RR} = \frac{1}{2} = 0.5$$
 
-Strength: captures whether the retriever surfaces relevant material immediately. In RAG, the first relevant chunk often determines whether the LLM can begin generating a correct answer.
+**Strength:** captures whether the retriever surfaces relevant material immediately. In RAG, the first relevant chunk often determines whether the LLM can begin generating a correct answer.
 
-Weakness: only considers the first relevant document. A retriever that places one relevant chunk at rank 1 but misses the other three still scores perfectly. For questions requiring synthesis across multiple sources, MRR gives no signal about whether all necessary evidence was retrieved.
+**Weakness:** only considers the first relevant document. A retriever that places one relevant chunk at rank 1 but misses the other three still scores perfectly. For questions requiring synthesis across multiple sources, MRR gives no signal about whether all necessary evidence was retrieved.
 
-Annotation cost: minimal. Requires identifying at least one relevant document per query. An annotator can stop labeling as soon as the first relevant document is found in the ranked list.
+**Annotation cost:** minimal. Requires identifying at least one relevant document per query. An annotator can stop labeling as soon as the first relevant document is found in the ranked list.
 
 ### 2.5 NDCG (Normalized Discounted Cumulative Gain)
 
@@ -183,7 +183,7 @@ Averaged across the evaluation set:
 
 $$\text{NDCG@K} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \text{NDCG@K}_i$$
 
-Example: retriever returns 5 chunks with relevance grades [2, 0, 1, 0, 1]:
+**Example:** retriever returns 5 chunks with relevance grades [2, 0, 1, 0, 1]:
 
 $$\text{DCG@5} = \frac{2^2-1}{\log_2 2} + \frac{2^0-1}{\log_2 3} + \frac{2^1-1}{\log_2 4} + \frac{2^0-1}{\log_2 5} + \frac{2^1-1}{\log_2 6} = 3.0 + 0 + 0.5 + 0 + 0.39 = 3.89$$
 
@@ -193,15 +193,15 @@ $$\text{IDCG@5} = \frac{2^2-1}{\log_2 2} + \frac{2^2-1}{\log_2 3} + \frac{2^1-1}
 
 $$\text{NDCG@5} = \frac{3.89}{5.82} = 0.67$$
 
-Strength: the most informative single metric. Respects rank position (via log discount) and relevance magnitude (via grading). A highly relevant document at rank 1 contributes far more than a marginally relevant document at rank 5. This aligns well with RAG, where the most relevant passage should appear first in the context window.
+**Strength:** the most informative single metric. Respects rank position (via log discount) and relevance magnitude (via grading). A highly relevant document at rank 1 contributes far more than a marginally relevant document at rank 5. This aligns well with RAG, where the most relevant passage should appear first in the context window.
 
-Weakness: the IDCG normalization requires knowing the ideal ranking, which means all relevant documents in the corpus must be identified and graded. Without exhaustive annotation, IDCG cannot be computed exactly, and the metric is undefined.
+**Weakness:** the IDCG normalization requires knowing the ideal ranking, which means all relevant documents in the corpus must be identified and graded. Without exhaustive annotation, IDCG cannot be computed exactly, and the metric is undefined.
 
-Annotation cost: the highest of the five metrics. Requires (1) exhaustive identification of all relevant documents in the corpus (same as Recall@K), and (2) graded relevance labels rather than binary (e.g., distinguishing "partially relevant" from "highly relevant"). This demands more annotator cognitive effort per judgment.
+**Annotation cost:** the highest of the five metrics. Requires (1) exhaustive identification of all relevant documents in the corpus (same as Recall@K), and (2) graded relevance labels rather than binary (e.g., distinguishing "partially relevant" from "highly relevant"). This demands more annotator cognitive effort per judgment.
 
 However, practical approximations exist that make NDCG feasible without exhaustive annotation:
 
-- **Shallow pooling.** Instead of labeling the entire corpus, pool only the top-10 results from 2-5 candidate retrieval configurations, then judge that combined set. For NDCG@10, this works well because the top positions are well-covered by the pool. [Buckley et al. (2007)](https://dl.acm.org/doi/10.1145/1277741.1277902) showed that pooling error is less severe for NDCG@K with small K.
+- **Shallow pooling.** Instead of labeling the entire corpus, pool only the top-10 results from 2-5 candidate retrieval configurations, then have human annotators grade relevance for the pooled documents. For NDCG@10, this works well because the top positions are well-covered by the pool. [Buckley et al. (2007)](https://dl.acm.org/doi/10.1145/1277741.1277902) showed that pooling error is less severe for NDCG@K with small K.
 - **LLM-as-judge for graded relevance.** Use an LLM to assign relevance grades (0-3 scale) to pooled documents instead of human annotators. [Thomas et al. (SIGIR 2024)](https://dl.acm.org/doi/10.1145/3626772.3657707) showed LLM-based NDCG correlates with human-NDCG at Kendall's tau > 0.9. The [UMBRELA benchmark (Upadhyay et al., 2024)](https://arxiv.org/abs/2406.06519) confirmed this at scale on the TREC Deep Learning track. This is now the dominant approach for reducing evaluation cost.
 - **Inferred NDCG (Yilmaz & Aslam, 2006).** Sample documents at different rank strata, judge only the sample, then statistically infer the full metric. Still used in some TREC tracks (Product Search 2023, Deep Learning document task), but the field's attention has shifted toward LLM-as-judge as the primary cost-reduction method.
 
@@ -223,11 +223,11 @@ Academic benchmarks ([BEIR](https://arxiv.org/abs/2104.08663), MTEB) can use NDC
 
 The common production pattern for retrieval evaluation:
 
-1. **Offline evaluation (low annotation).** Generate synthetic question-answer pairs from the corpus using an LLM. The source chunk becomes the known-relevant document. Compute Hit Rate@K and MRR against these synthetic pairs. This requires zero human annotation and is sufficient for comparing embedding models, chunk sizes, and retrieval strategies.
+1. **Offline evaluation (low annotation).** Generate synthetic question-answer pairs from the corpus using an LLM. The source chunk becomes the known-relevant document. Compute Hit Rate@K as a baseline pass/fail check, and MRR to measure rank quality. Both require the same annotation (one relevant document per query), but MRR additionally captures whether the relevant chunk appears at rank 1 or rank 5. This requires zero human annotation and is sufficient for comparing embedding models, chunk sizes, and retrieval strategies.
 
-2. **Online monitoring (zero annotation).** Use LLM-as-judge to score context relevance per query at inference time. TruLens, RAGAS, and DeepEval all support this. No pre-labeled dataset needed.
+2. **Online monitoring (zero annotation).** Use LLM-as-judge to score retrieval quality per query at inference time. The metrics are DeepEval's Contextual Relevancy, RAGAS's Context Precision, and TruLens's Context Relevance. No pre-labeled dataset needed.
 
-3. **Higher investment (small labeled set).** Create 50-100 human-labeled (query, relevant passages) pairs. Compute Precision@K or NDCG@K on this set. Calibrate an LLM judge against the human labels, then use the LLM judge to scale evaluation to thousands of queries.
+3. **Higher investment (small labeled set).** Create 50-100 human-labeled (query, relevant passages) pairs. Compute Precision@K or NDCG@K on this set. Calibrate an LLM judge against the human labels, then use the judge to scale evaluation to thousands of queries. This differs from the LLM-as-judge approach in Section 2.5, which trusts the LLM directly. Here, human labels serve as ground truth to verify and correct the judge's reliability before scaling. This is a custom pipeline pattern, not a built-in feature of the frameworks above. [ARES](https://arxiv.org/abs/2311.09476) (Saad-Falcon et al., 2023) implements this with statistical calibration via Prediction-Powered Inference.
 
 ---
 
@@ -251,7 +251,7 @@ $$\text{Context Precision@K} = \frac{\sum_{k=1}^{K} \text{Precision@k} \times v_
 
 where $\text{Precision@k} = \frac{\sum_{j=1}^{k} v_j}{k}$ is the cumulative precision at position $k$.
 
-**Example:**
+****Example:****
 
 Query: "Where is the Eiffel Tower?"
 Reference answer: "The Eiffel Tower is located in Paris, France."
@@ -282,7 +282,7 @@ Context Recall measures whether the retrieved context covers all the information
 
 $$\text{Context Recall} = \frac{\text{Number of reference sentences attributed to context}}{\text{Total sentences in reference answer}}$$
 
-**Example:**
+****Example:****
 
 Query: "What is the capital of France and its population?"
 Reference answer: "Paris is the capital of France. It has a population of approximately 2.1 million."
@@ -312,13 +312,13 @@ $$\text{Context Recall} = \frac{1}{2} = 0.5$$
 
 The denominators in recall are fundamentally different. Classical recall measures "what fraction of all relevant documents did we retrieve?" RAGAS Context Recall measures "what fraction of the ground truth information is supported by what we retrieved?" A system can score 1.0 on RAGAS Context Recall while missing many relevant documents in the corpus, as long as the retrieved chunks happen to cover all claims in the reference answer.
 
-**Annotation cost:** Both RAGAS context metrics require a reference answer per query, which is cheaper than corpus-level annotation but more expensive than the zero-annotation approaches (Hit Rate on synthetic data, LLM-as-judge without reference). They are suitable for offline evaluation on curated test sets, not for online monitoring of production traffic.
+****Annotation cost:**** The human effort required is one reference answer per query. This is cheaper than corpus-level annotation but more expensive than zero-annotation approaches (Hit Rate on synthetic data, LLM-as-judge without reference). The per-chunk relevance grading itself is automated by the LLM at runtime. These metrics are suitable for offline evaluation on curated test sets, not for online monitoring of production traffic.
 
 ---
 
 ## 4. DeepEval Retrieval Metrics
 
-[DeepEval](https://github.com/confident-ai/deepeval) (open-source, by Confident AI) is the most widely adopted RAG evaluation framework by PyPI downloads. It provides three retrieval metrics that map to edge 1. Unlike RAGAS, DeepEval's Contextual Relevancy metric does not require a reference answer, making it usable for online monitoring.
+[DeepEval](https://github.com/confident-ai/deepeval) (open-source, by Confident AI) is the most widely adopted RAG evaluation framework by PyPI downloads. It provides three retrieval metrics that map to edge 1. Unlike RAGAS, DeepEval's Contextual Relevancy metric does not require a reference answer, making it usable for online monitoring. Contextual Precision and Contextual Recall still require a human-written reference answer (`expected_output`), so they are limited to offline evaluation on curated test sets.
 
 ### 4.1 Contextual Relevancy
 
@@ -333,7 +333,7 @@ The denominators in recall are fundamentally different. Classical recall measure
 
 $$\text{Contextual Relevancy} = \frac{\text{Number of relevant statements across all chunks}}{\text{Total statements extracted across all chunks}}$$
 
-**Example:**
+****Example:****
 
 Query: "What year was the Eiffel Tower built?"
 Retrieved chunks:
