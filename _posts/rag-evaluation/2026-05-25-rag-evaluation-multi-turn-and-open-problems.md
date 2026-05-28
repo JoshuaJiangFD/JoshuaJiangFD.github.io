@@ -1,5 +1,5 @@
 ---
-title: "RAG Evaluation Part 2: Multi-Turn, Agentic Systems, and What Remains Unsolved"
+title: "RAG Evaluation Part 4: Multi-Turn, Agentic Systems, and What Remains Unsolved"
 date: 2026-05-25 14:00:00 +0000
 categories: [RAG Evaluation]
 tags: [RAG, Evaluation, Multi-Turn, Agentic RAG, Benchmarks]
