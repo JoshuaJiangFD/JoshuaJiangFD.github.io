@@ -1,207 +1,162 @@
 ---
-title: "RAG Evaluation Part 2: LLM Judges and Training Better Evaluators"
+title: "RAG Evaluation Part 3: Training Reliable Faithfulness Judges"
 date: 2026-05-25 12:00:00 +0000
 categories: [RAG Evaluation]
-tags: [RAG, Evaluation, LLM-as-Judge, Prometheus, ARES, DPO, Fine-Tuning]
+tags: [RAG, Evaluation, Faithfulness, Hallucination Detection, MiniCheck, FaithLens, RAGognizer]
 mermaid: true
 math: true
 ---
 
-The [previous post]({% post_url rag-evaluation/2026-05-25-rag-evaluation-faithfulness-and-relevance %}) defined the three evaluation surfaces of a RAG pipeline and the metrics for each. Every metric in that post requires someone or something to make a judgment: is this chunk relevant? Is this claim supported? Is the answer correct? The metrics are only as reliable as whoever is making those judgments. This post examines how LLMs are used as judges in RAG evaluation (Section 1), where they systematically fail (Section 2), and whether training dedicated judge models closes the remaining gap with humans (Section 3).
+LLM judges are used throughout RAG evaluation: grading retrieval relevance, scoring answer quality, verifying faithfulness. Not all of these tasks need dedicated training. For retrieval relevance grading, zero-shot LLM judges already correlate with human annotators at [Kendall's tau > 0.9](https://dl.acm.org/doi/10.1145/3626772.3657707) (Thomas et al., SIGIR 2024). Training barely improves on that. Faithfulness detection is different. Zero-shot frontier LLMs achieve only ~76% balanced accuracy here ([LLM-AggreFact](https://arxiv.org/abs/2404.10774)), while specialized fine-tuned models reach 84%. On adversarially hard cases ([FaithBench](https://arxiv.org/abs/2410.13210)), even the best approaches hit ~50%. This is also where research is most active: 20+ papers in the last 18 months focused specifically on training better faithfulness detectors.
+
+RAG makes this problem uniquely tractable. Unlike open-domain hallucination detection (where you'd need to verify claims against all of world knowledge), RAG faithfulness has a *closed* grounding set: the retrieved chunks. Every claim in the response can be checked against a finite, known context. This constraint is what makes training effective.
+
+This post examines how researchers are closing the accuracy gap by training dedicated faithfulness judges. The field has evolved through three paradigms: detect cheaply with supervised fine-tuning (MiniCheck), detect accurately with reinforcement learning (FaithLens), and prevent hallucination during generation rather than detecting it after the fact (RAGognizer). Each represents a different philosophy about where faithfulness enforcement belongs in the pipeline.
 
 ---
 
-## 1. How LLM-as-Judge Is Used in RAG Evaluation
+## 1. Why Zero-Shot Judges Are Not Enough
 
-### 1.1 Where LLM Judges Appear
+A zero-shot LLM judge receives a prompt like "Is this claim supported by the context?" and returns a verdict. GPT-4o achieves ~75.9% balanced accuracy on [LLM-AggreFact](https://arxiv.org/abs/2404.10774) this way. That sounds reasonable until you consider what 24% error means in production: roughly 1 in 4 hallucinated claims goes undetected.
 
-In the metrics described in [Part 1]({% post_url rag-evaluation/2026-05-25-rag-evaluation-retrieval-metrics %}), an LLM replaces a human annotator at multiple points:
+The failure modes are specific:
 
-| Evaluation Task | What the LLM Judges | Output |
-|----------------|--------------------|---------| 
-| RAGAS Context Precision | "Was this chunk useful for producing the reference answer?" | Binary verdict per chunk (0 or 1) |
-| RAGAS Context Recall | "Can this sentence in the reference be attributed to the retrieved context?" | Binary verdict per sentence |
-| RAGAS Faithfulness | "Is this claim in the response supported by the context?" | Binary verdict per claim |
-| NDCG approximation | "How relevant is this document to the query?" | Graded score (0-3) |
-| Databricks answer evaluation | "Is this answer correct, comprehensive, and readable?" | Integer scores per dimension |
+- **Subtle contradictions.** The context says "revenue grew 12% year-over-year" and the response says "revenue grew steadily." A zero-shot judge marks this as supported because the sentiment aligns, but "steadily" implies multi-year consistency that the context does not establish.
+- **Unsupported inferences.** The context provides two facts that *could* imply a conclusion, but never states it. Zero-shot judges frequently accept plausible-sounding inferences as grounded.
+- **Long-context dilution.** As retrieval context grows (5+ chunks), judges become less reliable at tracking which specific passage supports which claim. [HalluMix](https://arxiv.org/abs/2505.00506) (May 2025) quantified this: detection accuracy drops substantially on long-context inputs.
 
-In each case, the LLM receives a structured prompt with the inputs (query, context, response, reference) and returns a judgment. The format of that judgment varies: binary verdicts, Likert scores, or chain-of-thought reasoning followed by a score.
-
-### 1.2 Judging Modes
-
-LLM judges operate in two modes:
-
-**Pointwise scoring.** The LLM evaluates a single item in isolation. Given a query and a retrieved chunk, it scores the chunk's relevance. Given a response and its context, it scores faithfulness. Most RAG evaluation metrics use this mode because each chunk or claim is evaluated independently.
-
-**Pairwise comparison.** The LLM receives two responses and picks the better one (or declares a tie). This mode is common in general LLM evaluation (MT-Bench, Chatbot Arena) but less common in RAG evaluation, where the question is usually "how good is this response?" rather than "which of these two responses is better?"
-
-### 1.3 Why It Works (and How Well)
-
-The MT-Bench paper (Zheng et al., NeurIPS 2023) established the empirical foundation: GPT-4 as a judge achieves >80% agreement with human preferences, matching the rate at which humans agree with each other (~80%). A strong LLM is statistically indistinguishable from a third human annotator, at over 100x lower cost (~$30 per 1000 queries via RAGAS zero-shot vs. ~$3,500 for human pairwise annotation).
-
-However, >80% agreement is an average across tasks. On specific RAG evaluation tasks (graded relevance, faithfulness detection), agreement can be lower: Cohen's kappa of 0.4-0.6, compared to human-human at 0.4-0.7. The next section examines why.
+These are not random errors. They are systematic patterns that training can address.
 
 ---
 
-## 2. Failure Modes, Mitigations, and Calibration
+## 2. Paradigm 1: Supervised Fine-Tuning (MiniCheck)
 
-LLM judges have systematic biases. These are not theoretical concerns. They are quantified in peer-reviewed work.
+[MiniCheck](https://arxiv.org/abs/2404.10774) (Tang et al., EMNLP 2024) demonstrated that a 770M parameter model can match GPT-4 on faithfulness detection at 400x lower cost.
 
-### 2.1 Position Bias
+### 2.1 How It Works
 
-"Large Language Models are not Fair Evaluators" (Wang et al., 2023) demonstrated that in pairwise evaluation (judge picks the better of two responses), the presentation order can determine the outcome:
+MiniCheck frames faithfulness as sentence-level fact-checking: given a document (the retrieval context) and a claim (one sentence from the response), classify whether the document supports the claim.
 
-- Vicuna-13B could "beat" ChatGPT on 66/80 queries (82.5%) simply by being presented first
-- The judge's preference can be entirely determined by which response appears in position A vs. position B
+The training pipeline:
+1. Use GPT-4 to generate synthetic (document, claim) pairs with controlled factual errors. The generation procedure produces five error types: entity substitution, relation swapping, negation insertion, number modification, and sentence-level fabrication.
+2. Fine-tune a Flan-T5-large (770M) encoder-decoder model on this synthetic data as a binary classification task.
+3. At inference, decompose the response into individual sentences and check each against the full retrieval context.
 
-**Mitigation:** Evaluate in both orders, average the results. This doubles evaluation cost but removes order dependence.
+### 2.2 Why It Works
 
-### 2.2 Verbosity Bias
+The synthetic data strategy is the key insight. Human-annotated faithfulness data is scarce and expensive. By using GPT-4 to generate realistic errors (not random corruptions), MiniCheck's training distribution matches the actual error patterns of production LLMs.
 
-"Length-Controlled AlpacaEval" (Dubois et al., COLM 2024) showed that auto-annotators systematically prefer longer responses regardless of quality:
+### 2.3 Results and Tradeoffs
 
-- Longer responses receive higher scores even when content quality is equivalent
-- After applying length debiasing (a GLM-based regression that computes counterfactual preference if outputs had equal length): Spearman correlation with Chatbot Arena improves from 0.94 to 0.98
+- **84.0% balanced accuracy** on the RAGTruth subset of LLM-AggreFact, matching GPT-4o's performance on the full benchmark
+- **400x lower cost** per evaluation (CPU-runnable, no API calls)
+- **Deterministic:** same input always produces same output, unlike LLM judges
 
-**Mitigation:** Length-controlled scoring. Penalize padding explicitly in the judge prompt, or apply statistical debiasing post-hoc.
-
-### 2.3 Self-Enhancement Bias
-
-Panickssery, Bowman, and Feng (2024) demonstrated that LLMs recognize and prefer their own outputs:
-
-- GPT-4 and Llama 2 can distinguish their own outputs from other models' outputs with non-trivial accuracy
-- There is a linear correlation between self-recognition capability and strength of self-preference
-- This bias occurs "even when human annotators consider outputs of equal quality"
-
-**Mitigation:** Use a different model family as judge than as generator. If your RAG system uses GPT-4 for generation, use Claude or an open-source model for judging.
-
-### 2.4 Cross-Dataset Variance
-
-JUDGE-BENCH (Bavaresco et al., ACL 2025) tested 11 LLMs as judges across 20 NLP datasets and found:
-
-- "Substantial variance across models and datasets"
-- Performance varies based on the property being evaluated, the expertise level of reference human judges, and whether the text is human-generated or model-generated
-- Conclusion: "LLMs should be carefully validated against human judgments before being used as evaluators"
-
-**Mitigation:** Validate your LLM judge against human labels on your specific task before trusting it. An LLM judge calibrated on one domain cannot be assumed to work on another without recalibration.
-
-### 2.5 Non-Determinism
-
-LLM outputs vary across runs even at low temperature. The same query can receive different evaluation scores on different days.
-
-**Mitigation:** Low temperature (0.1), structured output format (JSON with constrained fields), and averaging across multiple runs.
-
-### 2.6 Few-Shot Calibration
-
-Including human-labeled examples in the judge prompt improves alignment without any model training:
-
-- **UMBRELA** (used in TREC RAG 2024) supports few-shot prompting with human-graded examples alongside zero-shot evaluation
-- **TALEC** (2024) found that "fine-tuning can be replaced by in-context learning" for teaching evaluation criteria, achieving >80% correlation with human judgments
-- Thomas et al. (SIGIR 2024) found that prompt selection calibrated against gold labels significantly affects accuracy, but also that "simple paraphrases" cause unpredictable variance
-
-Few-shot calibration requires only 5-20 labeled examples, making it the most accessible improvement over zero-shot judging. However, the sensitivity to prompt phrasing means results may not be reproducible across prompt versions.
-
-### 2.7 Summary of Mitigations
-
-| Bias | Mitigation | Cost | Source |
-|------|-----------|------|--------|
-| Position | Evaluate in both orders, average | 2x evaluation cost | Wang et al. (2023) |
-| Verbosity | Length-controlled scoring or statistical debiasing | Moderate complexity | Dubois et al. (2024) |
-| Self-enhancement | Use different model family as judge | Introduces different biases | Panickssery et al. (2024) |
-| Cross-dataset | Validate on your specific task with human labels | 20-50 human annotations | JUDGE-BENCH (2025) |
-| Non-determinism | Low temperature, structured output, multiple runs | 3-5x evaluation cost | MT-Bench (2023) |
-| General misalignment | Few-shot calibration with 5-20 examples | Minimal | UMBRELA, TALEC (2024) |
-
-These mitigations reduce bias but do not eliminate it. Even with all mitigations applied, zero-shot and few-shot LLM judges achieve moderate agreement with humans (Cohen's kappa 0.4-0.6 for graded relevance, compared to human-human at 0.4-0.7). This remaining gap motivates training dedicated judge models.
+**Limitation:** MiniCheck is trained on English data with specific error types. It may not generalize well to domain-specific jargon, multilingual content, or error patterns not represented in the synthetic training set. The model also operates at the sentence level, which means it cannot catch errors that span multiple sentences (e.g., contradictions that emerge only when two individually-supported claims are considered together).
 
 ---
 
-## 3. Training Better Judges
+## 3. Paradigm 2: SFT + Reinforcement Learning (FaithLens)
 
-### 3.1 Statistical Calibration (ARES)
+[FaithLens](https://arxiv.org/abs/2512.20182) (Si et al., ACL 2026 Findings) pushes beyond SFT by adding rule-based reinforcement learning. The result: an 8B model that outperforms GPT-5.2 and o3 across 12 faithfulness tasks.
 
-ARES (Saad-Falcon et al., NAACL 2024, arXiv:2311.09476) does not improve the judge model itself. Instead, it corrects for the judge's systematic bias using a statistical layer:
+### 3.1 How It Works
 
-1. **Generate synthetic training data** for evaluating context relevance, answer faithfulness, and answer relevance
-2. **Fine-tune lightweight classifiers** (DeBERTa-v3-large, 437M parameters) on synthetic data
-3. **Apply Prediction-Powered Inference (PPI)**: use a small set (~150-300) of human annotations to produce confidence intervals that correct for systematic bias in model predictions
+FaithLens uses a two-stage training pipeline:
 
-PPI characterizes the relationship between model predictions and human labels on the small labeled set, then debiases estimates across the full unlabeled evaluation set. The result: statistical confidence intervals for RAG quality metrics without exhaustive human annotation.
+**Stage 1: SFT Cold Start.** Fine-tune the base model on synthesized faithfulness detection examples. Each training example includes the context, the response, the correct verdict (faithful or not), and an explanation of *why*. This gives the model basic detection capability and teaches it to produce structured explanations.
 
-Validated on 8 knowledge-intensive tasks in KILT, SuperGLUE, and AIS. "ARES judges remain effective across domain shifts." The tradeoff: PPI confidence intervals widen when model predictions are poorly calibrated, and the ~150-300 human annotations must be representative of the query distribution.
+**Stage 2: Rule-Based Reinforcement Learning.** Apply RL with rewards based on two criteria:
+- **Prediction correctness:** Did the model get the verdict right?
+- **Explanation quality:** Is the explanation specific, citing relevant passages and identifying the exact point of contradiction or support?
 
-### 3.2 Fine-Tuned Judge Models
+The rule-based reward avoids the instability of learned reward models. The rules are deterministic: correct verdict = positive reward, correct verdict with a specific citation = higher reward, wrong verdict = negative reward.
 
-Multiple research groups have fine-tuned LLMs specifically for evaluation tasks. These models target the gap between zero-shot performance and human agreement.
+### 3.2 Why RL Helps Beyond SFT
 
-**General-purpose evaluation judges (trained on LLM output quality data):**
+SFT teaches the model to imitate correct judgments. RL teaches it to *reason* about why a judgment is correct. The distinction matters for edge cases:
 
-| Model | Scale | Training Data | Key Result | Venue |
-|-------|-------|--------------|-----------|-------|
-| **Prometheus** (Kim et al.) | 13B | 100K responses with GPT-4-generated feedback + 1000 custom rubrics (SFT) | Pearson 0.897 with humans (GPT-4: 0.882) | ICLR 2024 |
-| **Prometheus 2** (Kim et al.) | 13B | Extended dataset for both assessment modes (SFT) | Handles direct assessment + pairwise ranking | EMNLP 2024 |
-| **JudgeLM** (Zhu et al.) | 7B/13B/33B | GPT-4-generated judgments with swap augmentation (SFT) | >90% agreement with GPT-4; 7B judges 5K samples in 3 min on 8 A100s | ICLR 2025 |
+- SFT learns to classify based on surface patterns in the training data
+- RL incentivizes the model to develop internal verification strategies (comparing specific claims against specific passages) because the reward structure requires both correct verdicts and correct explanations
 
-These make LLM-as-judge feasible without per-query API costs. The tradeoff: they require GPU infrastructure and may not generalize to domains far from their training distribution.
+This is analogous to the difference between training a student on answer keys (SFT) versus requiring them to show their work and grading the reasoning (RL).
 
-**IR relevance-specific judges (trained on retrieval relevance data):**
+### 3.3 Results and Tradeoffs
 
-| Paper | Venue | Approach | Key Finding |
-|-------|-------|----------|-------------|
-| Fitte-Rey et al. | WSDM LLM4EVAL 2025 | Fine-tune small LLMs on augmented relevance datasets | Fine-tuned small models "outperform certain closed source models" for relevance labeling |
-| Wang et al. (Pinterest) | RecSys EARL 2025 | Fine-tune open-source LLMs with relevance prediction objective | Validates alignment between LLM judgments and human annotations at production scale |
-| Self-Taught Evaluators (Meta) | 2024 | Iteratively train on synthetic contrastive pairs, no human annotations | Improves Llama3-70B from 75.4 to 88.3 on RewardBench, outperforming GPT-4 |
+- **Outperforms GPT-5.2 and o3** across 12 diverse faithfulness tasks
+- **8B parameters:** deployable on a single GPU
+- **Produces explanations:** not just a binary verdict but a cited rationale, useful for debugging
 
-The trajectory is clear: fine-tuned small models (8B-13B) are approaching or exceeding zero-shot GPT-4 performance for evaluation tasks, at a fraction of the inference cost.
-
-### 3.3 Preference Optimization (DPO) for Judge Consistency
-
-**ConsJudge** (Liu et al., ACL 2025 Findings) uses Direct Preference Optimization to train more consistent judges without human annotation:
-
-1. Prompt an LLM to generate judgments across different combinations of evaluation dimensions (e.g., relevance + faithfulness, relevance + completeness)
-2. Measure judge-consistency: does the LLM arrive at the same verdict regardless of which dimension combination is used?
-3. Consistent judgments become "chosen" examples, inconsistent ones become "rejected"
-4. Apply DPO training on these preference pairs
-
-The key insight: consistency across prompting variations is a proxy for correctness, eliminating the need for human preference data. Results show "judgments generated by ConsJudge have a high agreement with the superior LLM."
+**Limitation:** Two-stage training is more complex than pure SFT. Requires careful reward design and RL hyperparameter tuning. The explanation quality reward assumes you can automatically evaluate explanation quality, which itself requires defining what a "good" explanation looks like.
 
 ---
 
-## 4. Choosing an Approach
+## 4. Paradigm 3: Integrated Detection (RAGognizer)
 
-| Approach | Human Annotation | Model Training | Agreement with Humans | Cost per 1K Queries |
-|----------|-----------------|---------------|----------------------|-------------------|
-| Zero-shot GPT-4 | None | No | Kappa 0.4-0.6 | ~$30-150 |
-| Few-shot calibration | 5-20 examples | No | Moderate improvement (fragile) | ~$30-150 |
-| Statistical calibration (ARES) | 150-300 labels | Classifier only | Confidence intervals, debiased | ~$1 |
-| Fine-tuned SFT model | 1K+ labels (or synthetic) | Yes | Matches or exceeds GPT-4 | ~$1 |
-| DPO judge (ConsJudge) | None (self-supervised) | Yes | Improved consistency | ~$1 |
+[RAGognizer](https://arxiv.org/abs/2604.15945) (Ridder et al., IJCNN 2026) takes a fundamentally different approach. Instead of building a separate detector that runs after generation, it integrates a detection head directly into the language model. The model learns to generate and detect simultaneously.
 
-For IR relevance assessment specifically, zero-shot GPT-4/GPT-4o remains the dominant approach in practice (Thomas et al., UMBRELA, TREC RAG 2024). But the 2025 fine-tuning results suggest a transition: teams that need high-volume, low-cost evaluation are beginning to replace API-based judges with fine-tuned open-source models.
+### 4.1 How It Works
 
-The choice depends on volume and maturity:
+RAGognizer adds a lightweight detection head on top of the LLM's internal representations:
 
-**Low volume, starting out.** Zero-shot GPT-4 with few-shot calibration against 20 human-labeled examples. Validate agreement on your specific task before trusting the scores. This is sufficient for comparing retrieval strategies, chunk sizes, and prompt variations during development.
+1. During fine-tuning, the model receives (query, context) pairs and generates responses.
+2. The detection head is trained on token-level hallucination annotations: for each generated token, is it faithful to the context or not?
+3. The detection loss is backpropagated into the LLM alongside the standard language modeling loss. This means the LLM's representations are shaped by *both* objectives.
 
-**Medium volume, need reliability.** ARES-style statistical calibration with ~200 human annotations for confidence bounds. This gives you statistical guarantees on your evaluation accuracy without requiring a large annotation budget. Suitable for regular regression testing and model selection.
+The result is a model that "knows" when it is about to hallucinate, because the same internal representations that drive generation also drive detection.
 
-**High volume, cost-sensitive.** Fine-tuned open-source judge (Prometheus, JudgeLM, or domain-specific) deployed on owned infrastructure. The upfront investment in training data and GPU infrastructure pays off at scale through ~$1 per 1000 queries and deterministic, reproducible scores.
+### 4.2 Why Integration Matters
+
+Separate detectors have a fundamental limitation: they operate on the final text output and must reconstruct the reasoning that produced it. The detector sees "The Eiffel Tower was built in 1887" and must determine if this contradicts "completed in 1889" in the context. But the *generating* model had direct access to the context when it produced "1887." It had the information and still got it wrong.
+
+By integrating detection into generation, RAGognizer can catch hallucinations *at the representation level* before they are committed to text. The detection head sees the same hidden states that are about to produce the next token, giving it access to the model's "intention" rather than just its output.
+
+### 4.3 Results and Tradeoffs
+
+- **State-of-the-art token-level hallucination detection** while also reducing hallucination rates during generation
+- **No separate inference pass:** detection happens during generation at negligible additional cost
+- **Dual benefit:** both detects and prevents
+
+**Limitation:** Requires access to model internals (cannot be applied to a black-box API). The detection head is specific to the model it was trained with. Changing the generation model requires retraining the detection head. This makes it unsuitable for teams using closed-source LLMs (GPT-4, Claude) as their RAG generator.
 
 ---
 
-## References
+## 5. Other Approaches Worth Knowing
 
-| Paper | Venue/Year | Key Contribution |
-|---|---|---|
-| Zheng et al., "Judging LLM-as-a-Judge" (MT-Bench) | NeurIPS 2023 | GPT-4 judge matches human agreement at >80% |
-| Saad-Falcon et al., "ARES" | NAACL 2024 | Lightweight judges + PPI with ~150 human labels |
-| Kim et al., "Prometheus" | ICLR 2024 | Open-source 13B evaluator, Pearson 0.897 with humans |
-| Kim et al., "Prometheus 2" | EMNLP 2024 | Direct assessment + pairwise ranking |
-| Zhu et al., "JudgeLM" | ICLR 2025 | Fine-tuned 7B-33B judges, >90% GPT-4 agreement |
-| Wang et al., "Large Language Models are not Fair Evaluators" | 2023 | Position bias quantification |
-| Dubois et al., "Length-Controlled AlpacaEval" | COLM 2024 | Verbosity debiasing, correlation 0.94→0.98 |
-| Panickssery et al., "Self-Enhancement Bias" | 2024 | LLMs recognize and favor own outputs |
-| Bavaresco et al., "JUDGE-BENCH" | ACL 2025 | Variance across judge models and datasets |
-| Thomas et al., "LLMs can Accurately Predict Searcher Preferences" | SIGIR 2024 | LLM-based NDCG correlates with human at tau > 0.9 |
-| Upadhyay et al., "UMBRELA" | 2024 | Large-scale LLM assessor benchmark for TREC |
-| Liu et al., "ConsJudge" | ACL 2025 Findings | DPO-trained judge using consistency signal |
+The three paradigms above represent the main trajectory. Several other approaches fill specific niches:
+
+| Model | Approach | Key Property |
+|-------|----------|-------------|
+| [HalluGuard](https://arxiv.org/abs/2510.00880) (4B) | SFT + ORPO preference optimization | 84% BAcc, reasoning-based verdicts |
+| [LettuceDetect](https://arxiv.org/abs/2502.17125) (~150M) | Token-classification on ModernBERT | 30-60 examples/sec, production-grade speed |
+| [RL4HS](https://arxiv.org/abs/2510.02173) | RL with span-level rewards | Localizes hallucinated spans, not just binary verdict |
+| [RAGLens](https://arxiv.org/abs/2512.08892) (ICLR 2026) | Sparse autoencoders on frozen LLM states | No training of the LLM itself, interpretable features |
+| [Granite Guardian 3.3](https://arxiv.org/abs/2412.07724) (8B) | SFT on safety + faithfulness data | Covers both hallucination and harmful content |
+
+---
+
+## 6. Choosing an Approach
+
+| Scenario | Recommended Approach | Why |
+|----------|---------------------|-----|
+| Black-box LLM (GPT-4, Claude) as generator | MiniCheck or LettuceDetect as external detector | Cannot access model internals |
+| Open-source LLM as generator, need best accuracy | FaithLens-style SFT + RL | Strongest detection results |
+| Open-source LLM, want prevention not just detection | RAGognizer-style integrated head | Reduces hallucination at source |
+| High throughput, cost-sensitive | LettuceDetect (~150M) or HHEM 2.1-Open (~100M) | CPU-runnable, deterministic |
+| Need statistical guarantees | [ARES](https://arxiv.org/abs/2311.09476) + any detector | PPI confidence intervals on ~150 human labels |
+
+The trajectory of the field suggests that detection and generation will continue to merge. As open-source RAG models improve, the separate "generate then check" pipeline will increasingly give way to models that are trained to be faithful from the start. RAGognizer is an early example of this direction. But for teams using closed-source generators today, external detectors (MiniCheck, LettuceDetect, HalluGuard) remain the practical choice.
+
+---
+
+## 7. Open Questions
+
+Several problems remain unsolved:
+
+**Hard cases.** [FaithBench](https://arxiv.org/abs/2410.13210) showed that adversarially difficult examples defeat all current detectors (~50% accuracy). These are cases where the hallucination is subtle enough that multiple detection systems disagree. No current training approach has cracked this tier.
+
+**Long-context faithfulness.** [HalluMix](https://arxiv.org/abs/2505.00506) demonstrated that detection accuracy degrades significantly as context length increases. RAG systems that retrieve 10+ chunks create exactly this condition. Training data for long-context faithfulness is scarce.
+
+**Cross-document reasoning.** Current detectors verify each claim against the full context independently. They cannot catch contradictions *between* retrieved documents, or errors that arise from incorrectly synthesizing information across multiple sources. This requires reasoning about document relationships, not just claim-context entailment.
+
+**Domain transfer.** Models trained on general-domain data (news, Wikipedia) may not transfer to specialized domains (legal, medical, financial). The faithfulness patterns in a medical discharge summary differ from those in a customer support response. Domain-specific training data is expensive to produce.

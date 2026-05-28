@@ -36,7 +36,7 @@ Weakness: expensive (multiple LLM calls per response). Non-deterministic. The cl
 
 ### 1.2 DeepEval Faithfulness
 
-DeepEval's faithfulness metric uses a similar claim-verification structure but with a three-way verdict system instead of binary.
+DeepEval's faithfulness metric uses a similar claim-verification structure but with a [three-way verdict system](https://github.com/confident-ai/deepeval/blob/main/deepeval/metrics/faithfulness/template.py) instead of binary.
 
 **How it works:**
 1. Extract **truths** from the retrieval_context (factual statements the context establishes).
@@ -71,44 +71,9 @@ Verdicts:
 
 Score = 2/3 = 0.67 (one direct contradiction).
 
-### 1.3 Classifier-Based: NLI and Trained Models
+### 1.3 How Accurate Is Faithfulness Detection?
 
-Natural Language Inference (NLI) is a classification task where a model determines the relationship between two texts: given a *premise* and a *hypothesis*, the model predicts whether the premise **entails** the hypothesis, **contradicts** it, or is **neutral**. NLI models are trained on large datasets of human-annotated text pairs (e.g., SNLI, MultiNLI).
-
-Applied to faithfulness: the retrieved context is the premise, the generated response (or individual sentences from it) is the hypothesis. If the context entails the response, the response is grounded. If not, it may be hallucinated.
-
-The [TRUE benchmark (Honovich et al., 2022)](https://arxiv.org/abs/2204.04991) validated this approach, finding that "large-scale NLI and question generation-and-answering-based approaches achieve strong and complementary results."
-
-Production-oriented classifiers in this category:
-
-| Model | Type | Key Property |
-|-------|------|-------------|
-| **Vectara HHEM-2.1-Open** | Small binary classifier | Free, fast, deterministic. Replaces LLM-based verification for production use. |
-| **Fine-tuned DeBERTa** (as in ARES) | NLI model fine-tuned on domain data | ROC-AUC improved from 0.56 to 0.85 with ~1000 task-specific training examples |
-
-Strength: deterministic, fast, cheap (no LLM API calls). Can run on CPU or small GPU.
-
-Weakness: less flexible than LLM-based approaches. NLI models trained on general entailment data may not transfer well to domain-specific language. Requires fine-tuning on task-specific data to achieve strong performance.
-
-### 1.4 How Accurate Is Faithfulness Detection?
-
-Detecting hallucination is itself an unsolved problem. Current accuracy of different approaches:
-
-| Approach | Accuracy / Performance | Source |
-|----------|----------------------|--------|
-| ChatGPT (zero-shot) | 53.8-58.5% accuracy on HaluEval | HaluEval benchmark |
-| Claude 2 (zero-shot) | 53.8-58.5% accuracy on HaluEval | HaluEval benchmark |
-| Off-the-shelf NLI model | ROC-AUC 0.56 | TRUE benchmark |
-| NLI fine-tuned on ~1000 domain examples | ROC-AUC 0.85 | TRUE benchmark follow-up |
-| ChainPoll (Galileo) | AUROC 0.781 | arXiv:2310.18344 |
-
-The gap between zero-shot LLM detection (~55% accuracy, barely above random) and fine-tuned classifiers (ROC-AUC 0.85) is striking. It suggests that faithfulness detection requires task-specific training to be reliable. General-purpose LLMs are surprisingly poor at detecting hallucinations in their own outputs without specialized prompting or fine-tuning.
-
-### 1.5 What Faithfulness Metrics Cannot Catch
-
-A response can be perfectly faithful (every claim supported by context) while being *wrong*, because the reasoning that connects those facts is incorrect. Faithfulness checks attribution, not inference quality.
-
-Example: if the context says "Company X revenue was $10M in 2023" and "Company X revenue was $8M in 2022", a response stating "Company X revenue declined by 50%" is faithful (both numbers are in the context) but the arithmetic is wrong. No faithfulness metric catches this because each individual claim ("revenue was $10M", "revenue was $8M", "revenue declined") can be attributed to the context. The error is in the reasoning between claims, not in the claims themselves.
+Zero-shot frontier LLMs (GPT-4o) achieve ~75.9% balanced accuracy on faithfulness detection. Specialized fine-tuned models reach 84%. On adversarially hard cases, even the best approaches hit ~50%. How do you train better detectors, and what are the current options? [Part 3]({% post_url rag-evaluation/2026-05-25-rag-evaluation-llm-judges %}) covers this in depth.
 
 ---
 
