@@ -118,9 +118,10 @@ RANKING MODEL
 This post is Part 1 of a series. Each subsequent post deep-dives into one stage with production examples, source code, and design tradeoffs:
 
 1. **A Taxonomy of Deep Learning for Ranking Models** — this post (the map)
-2. **[Input Representation](/posts/ranking-models-input-representation)** — how raw features become dense vectors: embeddings, numerical encoding, pretrained representations, multi-source computed features, and sequence encoding
-3. **Feature Interaction** — how features combine: MLP, FM, DCN, DIN attention *(coming soon)*
-4. **Production Architectures** — two full systems compared end-to-end *(coming soon)*
-5. **Training & Evaluation** — loss functions, multi-task balancing, and metrics *(coming soon)*
+2. **[Input Representation Part 1: Encoding Individual Features](/posts/ranking-models-input-representation-part1)** — categorical embeddings, extreme-scale solutions, numerical approaches, pretrained representations
+3. **[Input Representation Part 2: Sequences, Computed Features, and Assembly](/posts/ranking-models-input-representation-part2)** — multi-source computed features, sequence encoding, and how everything assembles
+4. **Feature Interaction** — how features combine: MLP, FM, DCN, DIN attention *(coming soon)*
+5. **Production Architectures** — two full systems compared end-to-end *(coming soon)*
+6. **Training & Evaluation** — loss functions, multi-task balancing, and metrics *(coming soon)*
 6. **Serving & Design Tradeoffs** — latency constraints, cold-start, and architectural choices *(coming soon)*
 
