@@ -61,7 +61,7 @@ The loss averages over all $G = 8$ completions generated for this video. The neg
 
 $$\frac{1}{|c_i|} \sum_{t=1}^{|c_i|} (\text{...per-token policy objective...})$$
 
-For a single completion $i$ (the $i$-th of the 8 generated responses), the loss computes the policy objective (the combination of policy gradient and KL penalty) at every token position $t$, then averages across all positions. The $\frac{1}{|c_i|}$ normalization ensures short and long completions contribute equally regardless of their token count.
+For a single completion $i$ (the $i$-th of the 8 generated responses), the loss computes the policy objective (the combination of policy gradient and KL penalty) at every token position $t$, then averages across all positions. The $\frac{1}{\lvert c\_i \rvert}$ normalization ensures short and long completions contribute equally regardless of their token count.
 
 **Inner layer: per-token policy gradient + KL penalty.**
 
@@ -77,7 +77,7 @@ Each token contributes two terms:
 
 - $G = 8$ is the group size (number of completions per prompt)
 
-- $|c_i|$ is the length of completion $i$ in tokens. Completion $i$ refers to the $i$-th of the 8 generated responses for the same video prompt.
+- $\lvert c\_i \rvert$ is the length of completion $i$ in tokens. Completion $i$ refers to the $i$-th of the 8 generated responses for the same video prompt.
 
 - $\hat{A}_i$ is the normalized advantage for completion $i$ (from step 4 in the training step overview above). Positive for above-average completions, negative for below-average.
 
@@ -89,7 +89,7 @@ Each token contributes two terms:
 
 - $\beta = 0.04$ is the KL penalty coefficient, controlling how strongly the model is pulled back toward the SFT checkpoint.
 
-- $\text{KL}_t = \exp(\log \pi_{\text{ref}}(a_t \mid s_t) - \log \pi_\theta(a_t \mid s_t)) - (\log \pi_{\text{ref}}(a_t \mid s_t) - \log \pi_\theta(a_t \mid s_t)) - 1$ is the per-token KL divergence from the reference model. Breaking this down:
+- $\text{KL}\_t = \exp(\log \pi\_{\text{ref}}(a\_t \mid s\_t) - \log \pi\_\theta(a\_t \mid s\_t)) - (\log \pi\_{\text{ref}}(a\_t \mid s\_t) - \log \pi\_\theta(a\_t \mid s\_t)) - 1$ is the per-token KL divergence from the reference model. Breaking this down:
   - $\pi_{\text{ref}}(a_t \mid s_t)$ is the probability the reference model (the frozen SFT checkpoint) assigns to token $a_t$ given context $s_t$. This never changes during RL training.
   - $\pi_\theta(a_t \mid s_t)$ is the probability the current model (being trained) assigns to the same token in the same context. This changes as weights are updated.
   - $\log \pi_{\text{ref}} - \log \pi_\theta$ is the log-ratio between the reference and current model. If the current model assigns higher probability to this token than the reference did, this value is negative. If lower, it is positive.
