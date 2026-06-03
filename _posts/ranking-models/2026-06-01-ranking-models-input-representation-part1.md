@@ -42,7 +42,7 @@ The sections that follow explain how each feature type reaches this uniform form
 
 For a feature with vocabulary size $V$, one-hot produces a binary vector of length $V$ with a single 1 at the feature's index. For example, if there are 20,000 unique advertisers in the system:
 
-$$\text{one\_hot}(\text{advertiser\_id}=7823) = [0, 0, \ldots, \underbrace{1}_{\text{index 7823}}, \ldots, 0] \in \mathbb{R}^{20000}$$
+$$\text{one}\_\text{hot}(\text{advertiser}\_\text{id}=7823) = [0, 0, \ldots, \underbrace{1}_{\text{index 7823}}, \ldots, 0] \in \mathbb{R}^{20000}$$
 
 With 100 such features, the input vector reaches millions of dimensions, almost entirely zeros. The first layer would need millions of parameters, most learning nothing because their corresponding input is permanently zero.
 
@@ -50,7 +50,7 @@ With 100 such features, the input vector reaches millions of dimensions, almost 
 
 Replace the sparse lookup with a dense one. Store a trainable matrix $E \in \mathbb{R}^{V \times d}$ where $d \ll V$. The forward pass is a simple index operation:
 
-$$\text{embed}(\text{advertiser\_id}=7823) = E[7823] \in \mathbb{R}^{12}$$
+$$\text{embed}(\text{advertiser}\_\text{id}=7823) = E[7823] \in \mathbb{R}^{12}$$
 
 This is mathematically equivalent to one-hot times a weight matrix — selecting row 7823 — but without constructing the sparse vector or performing the multiply-by-zero.
 
@@ -107,7 +107,7 @@ Section 1 showed how categorical features become embeddings via direct table loo
 
 Use $K$ hash functions to map each ID into a small set of tables, then combine the results through a learned MLP:
 
-$$\text{hash\_embed}(id) = \text{MLP}\left(\text{concat}\left[T_1[h_1(id)],\ T_2[h_2(id)],\ T_3[h_3(id)]\right]\right)$$
+$$\text{hash}\_\text{embed}(id) = \text{MLP}\left(\text{concat}\left[T_1[h_1(id)],\ T_2[h_2(id)],\ T_3[h_3(id)]\right]\right)$$
 
 Here $h_1, h_2, h_3$ are three different hash functions (each with different random seeds), and $T_1, T_2, T_3$ are three separate small embedding tables (each 10,000 rows × 16 dims). The process for a single ID:
 
@@ -368,7 +368,7 @@ The solution is to reuse the upstream model's output as a starting point, while 
 
 For categorical features like product IDs, a frozen embedding table stores the upstream model's representations. The ranking model looks up the ID, gets a fixed vector, and projects it through a trainable MLP:
 
-$$\text{output} = \text{MLP}(\text{frozen\_embedding}[id])$$
+$$\text{output} = \text{MLP}(\text{frozen}\_\text{embedding}[id])$$
 
 The frozen table stays fixed during training (no gradient flows into it) while the projection MLP adjusts freely. At serving time, since the frozen embedding never changes, you can precompute `MLP(embedding[id])` for every ID in the vocabulary and store the result as a new, smaller embedding table — collapsing the two-step operation into a single direct lookup.
 
