@@ -1,5 +1,5 @@
 ---
-title: "Ranking Models Deep Dive: Input Representation — Sequences, Computed Features, and Assembly"
+title: "Input Representation II: Sequences, Computed Features, and Assembly"
 date: 2026-06-01 20:00:00 +0000
 categories: [Ranking Models]
 tags: [Deep Learning, Recommendation Systems, Sequence Encoding, DIN, Attention]

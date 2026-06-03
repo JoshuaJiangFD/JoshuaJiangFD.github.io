@@ -1,5 +1,5 @@
 ---
-title: "Ranking Models Deep Dive: Input Representation — Encoding Individual Features"
+title: "Input Representation I: Encoding Individual Features"
 date: 2026-06-01 19:00:00 +0000
 categories: [Ranking Models]
 tags: [Deep Learning, Recommendation Systems, Feature Engineering, Embeddings]
