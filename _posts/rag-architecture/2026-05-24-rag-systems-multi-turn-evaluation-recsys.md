@@ -1,6 +1,7 @@
 ---
 title: "The New RAG: From Single-Turn QA to Agentic Loops, and What It Shares with Recommendation Systems"
 date: 2026-05-24 18:00:00 +0000
+published: false
 categories: [RAG Architecture]
 tags: [RAG, Agentic RAG, Evaluation, Recommendation Systems, Multi-Turn, Retrieval]
 mermaid: true

@@ -191,20 +191,20 @@ Consider a user who has watched both crime thrillers and cooking shows. If the s
 
 The core mechanism: for each history item $h_t$ and the candidate $c$, compute a relevance score:
 
-$$\text{score}_t = \text{MLP}\left(\left[h_t;\ c;\ h_t \odot c;\ h_t - c;\ |h_t - c|\right]\right)$$
+$$\text{score}_t = \text{MLP}\left(\left[h_t;\ c;\ h_t \odot c;\ h_t - c;\ \lvert h_t - c \rvert\right]\right)$$
 
 The input to the scoring MLP contains five different views of the history-candidate relationship:
 1. **The history item itself** ($h_t$): what was in the history
 2. **The candidate itself** ($c$): what's being scored
 3. **Element-wise product** ($h_t \odot c$): similarity in each dimension
 4. **Difference** ($h_t - c$): how they diverge
-5. **Absolute difference** ($|h_t - c|$): magnitude of divergence
+5. **Absolute difference** ($\lvert h_t - c \rvert$): magnitude of divergence
 
 These five signals give the scoring MLP rich information to determine relevance. After scoring all positions, softmax converts scores into weights that sum to 1:
 
 $$\alpha = \text{softmax}(\text{scores}) \in \mathbb{R}^T$$
 
-$$\text{user\_repr} = \sum_{t=1}^{T} \alpha_t \cdot h_t$$
+$$\text{user}\_\text{repr} = \sum_{t=1}^{T} \alpha_t \cdot h_t$$
 
 The result is a user representation that is *different for every candidate item*. When scoring a crime thriller, the user representation emphasizes past thriller-watching. When scoring a cooking show, it emphasizes cooking content. This per-candidate personalization is what makes attention fundamentally different from the fixed patterns of FM and DCN.
 
