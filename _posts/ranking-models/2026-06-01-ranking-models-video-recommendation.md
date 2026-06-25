@@ -7,7 +7,7 @@ mermaid: true
 math: true
 ---
 
-This is Part 5 of a series on deep learning for ranking models. [Part 1 (the overview)](/posts/ranking-models-overview) presents the full pipeline and taxonomy. Parts 2a and 2b covered [encoding individual features](/posts/ranking-models-input-representation-part1) and [sequences/assembly](/posts/ranking-models-input-representation-part2). [Part 3](/posts/ranking-models-feature-interaction) covered feature interaction. [Part 4](/posts/ranking-models-prediction-training) walked through the ad prediction system. This post walks through the other production system: a video recommendation model that invests its complexity in attention over rich behavioral sequences.
+This is Part 5 of a series on deep learning for ranking models. [Part 1 (the overview)](/posts/ranking-models-overview) presents the full pipeline and taxonomy. Parts 2a and 2b covered [encoding individual features](/posts/ranking-models-input-representation-part1) and [sequences/assembly](/posts/ranking-models-input-representation-part2). [Part 3](/posts/ranking-models-feature-interaction) covered feature interaction. [Part 4](/posts/ranking-models-ad-prediction) walked through the ad prediction system. This post walks through the other production system: a video recommendation model that invests its complexity in attention over rich behavioral sequences.
 
 ---
 
