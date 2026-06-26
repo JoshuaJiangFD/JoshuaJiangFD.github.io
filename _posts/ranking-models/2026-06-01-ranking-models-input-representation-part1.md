@@ -48,11 +48,11 @@ With 100 such features, the input vector reaches millions of dimensions, almost 
 
 ### The standard approach: learned embeddings
 
-Replace the sparse lookup with a dense one. Store a trainable matrix $E \in \mathbb{R}^{V \times d}$ where $d \ll V$. The forward pass is a simple index operation:
+Replace the sparse lookup with a dense one. Store a trainable matrix $E \in \mathbb{R}^{V \times d}$, where $V$ is the vocabulary size (the number of unique IDs) and $d \ll V$ is the embedding dimension (how many numbers represent each ID). For the advertiser feature, $V = 20{,}000$ and $d = 12$, so $E \in \mathbb{R}^{20000 \times 12}$. The forward pass is a simple index operation:
 
 $$\text{embed}(\text{advertiser}\_\text{id}=7823) = E[7823] \in \mathbb{R}^{12}$$
 
-This is mathematically equivalent to one-hot times a weight matrix — selecting row 7823 — but without constructing the sparse vector or performing the multiply-by-zero.
+Note that 7823 is *not* the vocabulary size — it is the *index* of the particular advertiser being looked up, i.e. which of the $V = 20{,}000$ rows of $E$ to select. The lookup returns that single row, a $d = 12$ dimensional vector. This is mathematically equivalent to one-hot times a weight matrix — selecting row 7823 — but without constructing the sparse vector or performing the multiply-by-zero.
 
 ```python
 # Integer in → dense vector out
@@ -68,34 +68,54 @@ output = embedding(torch.tensor([7823]))  # → tensor of shape [12]
 
 ### Embedding dimension selection
 
-The embedding dimension — how many numbers represent each ID — follows a logarithmic heuristic:
+How many numbers should represent each ID? There is no universal formula, but the heuristics that dominate practice all share one property: the embedding dimension $d$ grows *sublinearly* with the cardinality $n$ — far slower than the vocabulary itself. Doubling the vocabulary does not double the dimension; in fact, you hit sharply diminishing returns, where a larger table buys little additional accuracy.
 
-| Vocabulary Size | Embedding Dim | Rationale                                    |
-| --------------- | ------------- | -------------------------------------------- |
-| $\leq 10$       | 8             | Very few values, minimal information content |
-| $\leq 50$       | 16            | Small set, moderate capacity needed          |
-| $\leq 1000$     | 32            | Standard categorical features                |
-| $\leq 20000$    | 64            | Medium-cardinality features                  |
-| $> 20000$       | 128-256       | High-cardinality (title IDs, product IDs)    |
+Three heuristics are widely used (let $n$ = cardinality, $d$ = embedding dimension):
 
-Production systems make different choices based on their total feature count. A system with 100+ categorical features (ad prediction) uses small dimensions (4-16) to keep the concatenated vector manageable, relying on feature interaction modules (FM, DCN) to build expressiveness from combinations. A system with fewer features (video recommendation, ~65 categorical) can afford larger dimensions (up to 256) for richer individual representations.
+1. **Fourth-root rule** $d \approx n^{0.25}$ (TensorFlow / Google guidance). The most conservative; yields very small dimensions.
+2. **Scaled fourth-root** $d \approx 6 \cdot n^{0.25}$ (common practitioner variant). The same curve scaled up ~6×; this is the one most published category-embedding tables track.
+3. **fastai rule** $d = \min\!\left(600,\ \text{round}(1.6 \cdot n^{0.56})\right)$. Grows faster (exponent 0.56) but is hard-capped at 600.
+
+Across a range of cardinalities, the formulas give very different numbers — note how slowly all of them grow relative to $n$. In practice, teams round to a power of two (8, 16, 32, …) for kernel efficiency and collapse the formula into a few cardinality buckets. The **Bucketed pick** column below is a typical such starting point, which closely tracks the $6\,n^{0.25}$ curve:
+
+| Cardinality $n$ | $n^{0.25}$ | $6\,n^{0.25}$ | fastai $1.6\,n^{0.56}$ | Bucketed pick | Rationale                                    |
+| --------------- | ---------- | ------------- | ---------------------- | ------------- | -------------------------------------------- |
+| 10              | 2          | 11            | 6                      | 8             | Very few values, minimal information content |
+| 50              | 3          | 16            | 14                     | 16            | Small set, moderate capacity needed          |
+| 100             | 3          | 19            | 21                     | 32            | Standard categorical features                |
+| 1,000           | 6          | 34            | 77                     | 32            | Standard categorical features                |
+| 10,000          | 10         | 60            | 278                    | 64            | Medium-cardinality features                  |
+| 20,000          | 12         | 71            | 410                    | 64            | Medium-cardinality features                  |
+| 100,000         | 18         | 107           | 600 (cap)              | 128           | High-cardinality (title IDs, product IDs)    |
+| 1,000,000       | 32         | 190           | 600 (cap)              | 256           | High-cardinality (title IDs, product IDs)    |
+
+**Caveats that matter more than the exact formula.** The number you pick from any of these heuristics is a starting point, not an optimum:
+
+- **They are starting points, not optima.** The right $d$ depends on how much signal the feature actually carries and how much training data you have to populate the table. Treat it as a hyperparameter to tune, not a constant to read off a table.
+- **Total embedding budget dominates.** A formula sizes *one* embedding in isolation. Real models concatenate dozens of them into a single input vector, so the per-feature dimension is really a function of *how many features there are*. With many features you deliberately undershoot these numbers; with few, you can overshoot. (This is exactly why the two systems below diverge — see the next section.)
+- **Use powers of two.** 8, 16, 32, 64, … — hardware/kernel efficiency, with no accuracy cost.
+- **Diminishing returns are real.** Going 64 → 256 on a high-cardinality feature roughly 4× the parameters of that table while often adding little, because the formulas grow sublinearly for a reason.
 
 ### Examples from production systems
 
-| Role       | Feature                 | Cardinality | Embedding Dim | System               |
-| ---------- | ----------------------- | ----------- | ------------- | -------------------- |
-| Item       | `ad_id`                 | 300,000     | 8             | Ad prediction        |
-| Item       | `title_id` (content ID) | ~2,000,000  | 256           | Video recommendation |
-| Item       | `genre`                 | ~500        | 32            | Video recommendation |
-| Advertiser | `advertiser_id`         | 20,000      | 12            | Ad prediction        |
-| Advertiser | `campaign_id`           | 100,000     | 12            | Ad prediction        |
-| User       | `profile_type`          | ~10         | 16            | Video recommendation |
-| User       | `territory_code`        | ~5,000      | 64            | Video recommendation |
-| Context    | `device_type`           | 11          | 4             | Ad prediction        |
-| Context    | `day_of_week`           | 7           | 8             | Video recommendation |
-| Context    | `slot_position`         | 11          | 8             | Ad prediction        |
+The same heuristics, two opposite design points. In the table below, the **Recommended Dim** column applies the bucketed heuristic above to each feature's cardinality, while **Actual Dim** is what the system ships — and the gap between them is the story. The two systems *bracket* the practical recommendation: the video recommendation model rides the top edge of the recommended ranges, while the ad prediction model sits well below it, with total feature count as the deciding factor.
 
-The ad prediction system uses 85+ categorical features with small embeddings (4-16 dims); the video recommendation system uses 34 with larger embeddings (8-256 dims).
+| System               | Role       | Feature                 | Cardinality | Recommended Dim | Actual Dim |
+| -------------------- | ---------- | ----------------------- | ----------- | --------------- | ---------- |
+| Ad prediction        | Item       | `ad_id`                 | 300,000     | 128–256         | 8          |
+| Ad prediction        | Advertiser | `advertiser_id`         | 20,000      | 64              | 12         |
+| Ad prediction        | Advertiser | `campaign_id`           | 100,000     | 128–256         | 12         |
+| Ad prediction        | Context    | `device_type`           | 201         | 32              | 8          |
+| Ad prediction        | Context    | `slot_position`         | 11          | 16              | 8          |
+| Video recommendation | Item       | `title_id` (content ID) | ~2,000,000  | 128–256         | 256        |
+| Video recommendation | Item       | `genre`                 | ~500        | 32              | 32         |
+| Video recommendation | User       | `profile_type`          | ~30         | 16              | 16         |
+| Video recommendation | User       | `territory_code`        | ~5,000      | 64              | 64         |
+| Video recommendation | Context    | `day_of_week`           | 7           | 8               | 8          |
+
+**Video recommendation (~32 categorical features) follows the heuristic almost exactly.** Every feature lands at the top edge of its recommended range — `title_id` at 256 for millions of IDs, `territory_code` at 64 for ~5k, `genre` at 32 for ~500, `day_of_week` at 8 for 7. With relatively few features, the model can afford a rich per-feature representation, so it sizes each embedding directly from cardinality.
+
+**Ad prediction (~58 categorical features) deliberately ignores the heuristic for high-cardinality features.** `ad_id` (300k) gets 8 dimensions where the formula suggests 128–256; `campaign_id` (100k) and `advertiser_id` (20k) get 12 where the formula suggests 64+. The reason is the budget caveat: with ~58 features concatenated, sizing each one "correctly" would blow up the input vector, so the model caps per-feature dimensions at 8–12 and pushes expressiveness into feature-interaction modules (FM, DCN) that build signal from *combinations* rather than from large individual embeddings. Only the lowest-cardinality features (`slot_position`, `device_type`) land near the generic recommendation.
 
 ---
 
